@@ -128,6 +128,17 @@ class DatabaseMagicObject {
     return doAdoption($parentTable, $parentID, $childTable, $childID);
   }
 
+  /// Free an adopted child from this object
+  /// This function name is perfect in it's descriptiveness
+  function emancipate($child) {
+    $childTable  = $child->getTableName();
+    $childID     = $child->getID();
+    $parentTable = $this->tablename;
+    $parentID    = $this->getID();
+
+    return doEmancipation($parentTable, $parentID, $childTable, $childID);
+  }
+
   /// Retrieve a list of this object's "adopted" "children".
   /// Use this function to retrieve a list of objects previously "adopted" by this object using the adopt() method.
   /// $example is an instance of the object of the same type as those children you want to retrieve.

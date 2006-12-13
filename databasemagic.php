@@ -1,8 +1,8 @@
 <?php
 
-include_once 'rmbglobals.php';
+include_once dirname(__FILE__) . '/../databasemagicconfig.php';
 
-include 'databasemagicclass.php';
+include_once dirname(__FILE__) . '/databasemagicclass.php';
 
 
 define('TABLE_ORDER_PROD_MAP', SQL_TABLE_PREFIX . 'rmbcart_orderprodmap');
@@ -296,6 +296,21 @@ function updateTable($tableName, $customDefs=NULL) {
   return TRUE;
 }
 
+function sqlMagicYank($tableName, $params) {
+  $whereClause = " ";
+  $whereClauseLinker = "WHERE ";
+  foreach ($params as $key => $value) {
+    $whereClause .= $whereClauseLinker.$key."='".$value."'";
+    // If there is more than one requirement, we need to link the params
+    // together with a linker
+    $whereClauseLinker = " AND ";
+  }
+  $query = "DELETE FROM ".$tableName.$whereClause;
+  $data = makeQueryHappen($tableName, $query);
+
+  if ($data) return TRUE;
+  else       return FALSE;
+}
 
 function sqlMagicPut($tableName, $data) {
   $data = sqlFilter($data);
@@ -467,5 +482,17 @@ function doAdoption($parentTable, $parentID, $childTable, $childID) {
   }
 }
 
+function doEmancipation($parentTable, $parentID, $childTable, $childID) {
+  $mapName = getMapName($parentTable, $childTable);
+  GLOBAL $table_defs;
+  if (! isset($table_defs[$mapName])) {
+    $mapDef = array('parentID' => array("bigint(20) unsigned", "NO", "",    "",  ""),
+                    'childID'  => array("bigint(20) unsigned", "NO", "",    "",  "")
+                  );
+    // if ($customDef != NULL) { $mapDef += $customDef; } in case we ever pass custom defs
+    $table_defs += array($mapName => $mapDef);
+  }
+  return sqlMagicYank($mapName, array('parentID' => $parentID, 'childID' => $childID));
+}
 
 ?>
