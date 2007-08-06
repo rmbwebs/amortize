@@ -334,6 +334,24 @@ function sqlMagicPut($tableName, $data) {
   return makeQueryHappen($tableName, $query);
 }
 
+function sqlMagicSet($tableName, $set, $where) {
+  $whereClause = " ";
+  $whereClauseLinker = "WHERE ";
+  foreach ($where as $key => $value) {
+    $whereClause .= $whereClauseLinker.$key."='".$value."'";
+    $whereClauseLinker = " AND ";
+  }
+  $setClause = " ";
+  $setClauseLinker = "SET ";
+  foreach ($set as $key => $value) {
+    $setClause .= $setClauseLinker.$key."='".$value."'";
+    $setClauseLinker = " , ";
+  }
+  $query = "UPDATE ".$tableName.$setClause.$whereClause;
+  $result = makeQueryHappen($tableName, $query);
+  return $result;
+}
+
 function sqlMagicGet($tableName, $params) {
   $whereClause = " ";
   $whereClauseLinker = "WHERE ";
@@ -438,16 +456,16 @@ function getMapName($table1, $table2) {
 
 function getChildrenList($parentTable, $parentID, $childTable, $params=NULL) {
   $tableName = getMapName($parentTable, $childTable);
-  $query  = "SELECT ".$tableName.".childID FROM ".$tableName.", ".$childTable.
-            " WHERE ".$tableName.".parentID='".$parentID."' AND".
-            " ".$childTable.".".findTableKey($childTable)."=".$tableName.".childID";
+  $extendedWhere = "";
   if ($params != NULL) {
-    $extendedWhere = "";
     foreach($params as $key => $value) {
       $extendedWhere .= " AND ".$childTable.".".$key."='".mysql_real_escape_string($value)."'";
     }
-    $query .= $extendedWhere;
   }
+  $query  = "SELECT ".$tableName.".childID FROM ".$tableName.", ".$childTable.
+            " WHERE ".$tableName.".parentID='".$parentID."' AND".
+            " ".$childTable.".".findTableKey($childTable)."=".$tableName.".childID ".$extendedWhere." ".
+            "ORDER BY ".$tableName.".ordering";
   $data = makeQueryHappen($tableName, $query);
   if ($data) {
     $returnVal = array();
@@ -460,14 +478,31 @@ function getChildrenList($parentTable, $parentID, $childTable, $params=NULL) {
   }
 }
 
+function reorderChildren ($parentTable, $parentID, $childTable, $childOrdering) {
+  $mapName = getMapName($parentTable, $childTable);
+  GLOBAL $table_defs;
+  if (! isset($table_defs[$mapName])) {
+    $mapDef = array('parentID' => array("bigint(20) unsigned", "NO", "",    "",  ""),
+                    'childID'  => array("bigint(20) unsigned", "NO", "",    "",  ""),
+                    'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
+                  );
+    $table_defs += array($mapName => $mapDef);
+  }
+  // Run the Set Commands
+  foreach ($childOrdering as $child => $order) {
+    sqlMagicSet($mapName, array('ordering' => $order), array('parentID' => $parentID, 'childID' => $child));
+  }
+  // That should do it
+}
+
 function doAdoption($parentTable, $parentID, $childTable, $childID) {
   $mapName = getMapName($parentTable, $childTable);
   GLOBAL $table_defs;
   if (! isset($table_defs[$mapName])) {
     $mapDef = array('parentID' => array("bigint(20) unsigned", "NO", "",    "",  ""),
-                    'childID'  => array("bigint(20) unsigned", "NO", "",    "",  "")
+                    'childID'  => array("bigint(20) unsigned", "NO", "",    "",  ""),
+                    'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
                   );
-    // if ($customDef != NULL) { $mapDef += $customDef; } in case we ever pass custom defs
     $table_defs += array($mapName => $mapDef);
   }
 
@@ -487,7 +522,8 @@ function doEmancipation($parentTable, $parentID, $childTable, $childID) {
   GLOBAL $table_defs;
   if (! isset($table_defs[$mapName])) {
     $mapDef = array('parentID' => array("bigint(20) unsigned", "NO", "",    "",  ""),
-                    'childID'  => array("bigint(20) unsigned", "NO", "",    "",  "")
+                    'childID'  => array("bigint(20) unsigned", "NO", "",    "",  ""),
+                    'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
                   );
     // if ($customDef != NULL) { $mapDef += $customDef; } in case we ever pass custom defs
     $table_defs += array($mapName => $mapDef);

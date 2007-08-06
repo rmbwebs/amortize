@@ -139,6 +139,15 @@ class DatabaseMagicObject {
     return doEmancipation($parentTable, $parentID, $childTable, $childID);
   }
 
+  /// Sets the children of this class into proper order
+  function orderChildren($example, $ordering) {
+    $childTable  = $example->getTableName();
+    $parentTable = $this->getTableName();
+    $parentID    = $this->getID();
+
+    reorderChildren($parentTable, $parentID, $childTable, $ordering);
+  }
+
   /// Retrieve a list of this object's "adopted" "children".
   /// Use this function to retrieve a list of objects previously "adopted" by this object using the adopt() method.
   /// $example is an instance of the object of the same type as those children you want to retrieve.
