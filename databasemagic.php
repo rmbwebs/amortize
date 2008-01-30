@@ -4,55 +4,7 @@ include_once dirname(__FILE__) . '/../databasemagicconfig.php';
 
 include_once dirname(__FILE__) . '/databasemagicclass.php';
 
-
-define('TABLE_ORDER_PROD_MAP', SQL_TABLE_PREFIX . 'rmbcart_orderprodmap');
-define('TABLE_ORDERS',         SQL_TABLE_PREFIX . 'rmbcart_orders');
-define('TABLE_CUSTOMERS',      SQL_TABLE_PREFIX . 'rmbcart_customers');
-
-$table_defs =
-  array(TABLE_ORDER_PROD_MAP =>
-          array('orderID'   => array("bigint(20)", "NO", "", "", ""),
-                'productID' => array("bigint(20)", "NO", "", "", ""),
-                'price'     => array("float",      "NO", "", "", ""),
-                'quantity'  => array("int(11)",    "NO", "", "", "")),
-
-        TABLE_ORDERS =>
-          array('ID'            => array("bigint(20) unsigned", "NO",  "PRI", "",                    "auto_increment"),
-                'customerID'    => array("bigint(20) unsigned", "YES", "",    "1",                   ""),
-                'orderStatus'   => array("tinytext",            "YES", "",    "",                    ""),
-                'transactionID' => array("tinytext",            "YES", "",    "",                    ""),
-                'orderTotal'    => array("float",               "YES", "",    "",                    ""),
-                'shippingCost'  => array("float",               "YES", "",    "",                    ""),
-                'billaddress'   => array("tinytext",            "YES", "",    "",                    ""),
-                'shipaddress'   => array("tinytext",            "YES", "",    "",                    ""),
-                'orderTime'     => array("timestamp",           "YES", "",    "0000-00-00 00:00:00", ""),
-                'taxCost'       => array("float",               "YES", "",    "",                    ""),
-                'productCost'   => array("float",               "YES", "",    "",                    "")),
-
-        TABLE_CUSTOMERS =>
-          array('ID'            => array("bigint(20)",  "NO ", "PRI", "", "auto_increment"),
-                'code'          => array("varchar(10)", "YES", "",    "", ""),
-                'billlastName'  => array("tinytext",    "YES", "",    "", ""),
-                'billfirstName' => array("tinytext",    "YES", "",    "", ""),
-                'paypalID'      => array("tinytext",    "YES", "",    "", ""),
-                'email'         => array("tinytext",    "YES", "",    "", ""),
-                'siteUpdates'   => array("tinytext",    "YES", "",    "", ""),
-                'newProducts'   => array("tinytext",    "YES", "",    "", ""),
-                'billaddress1'  => array("tinytext",    "YES", "",    "", ""),
-                'billaddress2'  => array("tinytext",    "YES", "",    "", ""),
-                'billcity'      => array("tinytext",    "YES", "",    "", ""),
-                'billstate'     => array("tinytext",    "YES", "",    "", ""),
-                'billzip'       => array("tinytext",    "YES", "",    "", ""),
-                'billcountry'   => array("tinytext",    "YES", "",    "", ""),
-                'shiplastName'  => array("tinytext",    "YES", "",    "", ""),
-                'shipfirstName' => array("tinytext",    "YES", "",    "", ""),
-                'shipaddress1'  => array("tinytext",    "YES", "",    "", ""),
-                'shipaddress2'  => array("tinytext",    "YES", "",    "", ""),
-                'shipcity'      => array("tinytext",    "YES", "",    "", ""),
-                'shipstate'     => array("tinytext",    "YES", "",    "", ""),
-                'shipzip'       => array("tinytext",    "YES", "",    "", ""),
-                'shipcountry'   => array("tinytext",    "YES", "",    "", ""))
-       );
+$table_defs = array();
 
 define('E_SQL_CANNOT_CONNECT', "
 <h2>Cannot connect to SQL Server</h2>

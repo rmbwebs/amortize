@@ -10,10 +10,9 @@
  */
 class DatabaseMagicObject {
 
-  /// Name of the database table that this object is stored in.
-  /// The value of this variable must coincide with some entry in the global table_defs array.
-  /// tablename is essentially the defining factor of what data is stored in an object.
-  protected $tablename;
+  /// An array that determines how the data for this object will be stored in the database
+  /// Format is array(tablename => array(collumn1name => array(type, null, key, default, extras), column2name => array(...), etc.))
+  protected $table_defs;
 
   /// Object status.
   /// Possible statuses are "needs saving", etc.
