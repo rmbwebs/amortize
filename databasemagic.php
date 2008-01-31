@@ -8,7 +8,7 @@ function do_backtrace ($one, $two) {
 
 include_once dirname(__FILE__) . '/../databasemagicconfig.php';
 
-include_once dirname(__FILE__) . '/databasemagicclass.php';
+include_once dirname(__FILE__) . '/class_DatabaseMagicObject.php';
 
 define('E_SQL_CANNOT_CONNECT', "
 <h2>Cannot connect to SQL Server</h2>
