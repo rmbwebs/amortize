@@ -41,7 +41,7 @@ class DatabaseMagicObject {
   function initialize() {
     $cols = getTableColumns($this->table_defs);
     foreach ($cols as $col) { $this->attributes[$col] = ""; }
-    $key = findTableKey($this->tabl_defs);
+    $key = findTableKey($this->table_defs);
     $this->attributes[$key] = 0;
     $this->status = "clean";
   }
@@ -61,7 +61,7 @@ class DatabaseMagicObject {
     $key = findTableKey($this->table_defs);
     $query = array($key => $id);
     $info = sqlMagicGet($this->table_defs, $query);
-    $this->setAttribs($info[0]);
+    $this->setAttribs($info[0]); // $info[0] because sqlMagicget always returns an array, even with one result.
     $this->status = "clean";
   }
 
@@ -172,11 +172,19 @@ class DatabaseMagicObject {
     }
     return $children;
   }
-	
-	/// Dumps the contents of attribs vi print_r()
+
+	/// Retrieve an array of all the known IDs for all saved instances of this class
+	function getAll() {
+		$list = getAllIDs($this->table_defs);
+		return $list;
+	}
+
+	/// Dumps the contents of attribs via print_r()
 	/// Useful for debugging, but that's about it
 	function dumpview() {
-
+		echo "\n<pre>\n";
+		print_r($this->attribs);
+		echo "\n</pre>\n";
 	}
 
 }

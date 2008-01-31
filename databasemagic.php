@@ -1,4 +1,10 @@
 <?php
+set_error_handler ("do_backtrace");
+function do_backtrace ($one, $two) {
+	echo "<pre>\nError {$one}, {$two}\n";
+	debug_print_backtrace();
+	echo "\n</pre>\n";
+}
 
 include_once dirname(__FILE__) . '/../databasemagicconfig.php';
 
@@ -17,7 +23,7 @@ There is an error in your databaseMagic configuration.
 function getTableCreateQuery($customDefs) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
-	
+
   if (! isset($customDefs[$tableName])) {
     return NULL;
   }
@@ -26,7 +32,7 @@ function getTableCreateQuery($customDefs) {
 
   $rm      = "";
   $columns = "";
-  $header  = "CREATE TABLE `".$tableName."` (\n  ";
+  $header  = "CREATE TABLE `".SQL_TABLE_PREFIX.$tableName."` (\n  ";
   $comma   = "";
 
   foreach ($table_def as $field => $details) {
@@ -127,7 +133,7 @@ function getCreationDefinition($field, $details) {
 function getTableColumns($customDefs) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
-	
+
 	if (! isset($customDefs[$tableName])) {
 		return FALSE;
 	}
@@ -171,7 +177,7 @@ function findKey($def) {
 function updateTable($customDefs) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
-	
+
   if (! isset($customDefs[$tableName])) {
     return FALSE;
   }
@@ -186,12 +192,12 @@ function updateTable($customDefs) {
   $actualKey = findKey($actualdef);
   if ($wantedKey != $actualKey) {
     if ($actualKey) {
-      $query  = "ALTER TABLE ".$tableName."\n";
+      $query  = "ALTER TABLE ".SQL_TABLE_PREFIX.$tableName."\n";
       $query .= "  DROP PRIMARY KEY";
       if (! mysql_query($query, $sqlConnection) ) return FALSE;
     }
     if ($wantedKey) {
-      $query  = "ALTER TABLE ".$tableName."\n";
+      $query  = "ALTER TABLE ".SQL_TABLE_PREFIX.$tableName."\n";
       $query .= "  ADD PRIMARY KEY (".$wantedKey.")";
       if (! mysql_query($query, $sqlConnection) ) return FALSE;
 }
@@ -203,13 +209,13 @@ function updateTable($customDefs) {
     $creationDef = getCreationDefinition($name, $options);
     // Find a column that needs creating
     if (! isset($actualdef[$name]) ) {
-      $query  = "ALTER TABLE ".$tableName."\n";
+      $query  = "ALTER TABLE ".SQL_TABLE_PREFIX.$tableName."\n";
       $query .= "  ADD COLUMN " . $creationDef . " " . $location;
       if (! mysql_query($query, $sqlConnection) ) return FALSE;
 }
     // Find a column that needs modifying
     else if ($wanteddef[$name] != $actualdef[$name]) {
-      $query  = "ALTER TABLE ".$tableName."\n";
+      $query  = "ALTER TABLE ".SQL_TABLE_PREFIX.$tableName."\n";
       $query .= "  MODIFY COLUMN " . $creationDef . " " . $location;
       if (! mysql_query($query, $sqlConnection) ) return FALSE;
 
@@ -223,7 +229,7 @@ function updateTable($customDefs) {
   foreach($actualdef as $name => $options) {
     // Find a column that needs deleting
     if (! isset($wanteddef[$name]) ) {
-      $query  = "ALTER TABLE ".$tableName."\n";
+      $query  = "ALTER TABLE ".SQL_TABLE_PREFIX.$tableName."\n";
       $query .= "  DROP COLUMN " . $name;
       if (! mysql_query($query, $sqlConnection) ) return FALSE;
 }
@@ -235,7 +241,7 @@ function updateTable($customDefs) {
 function sqlMagicYank($customDefs, $params) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
-	
+
 	$whereClause = " ";
   $whereClauseLinker = "WHERE ";
   foreach ($params as $key => $value) {
@@ -244,7 +250,7 @@ function sqlMagicYank($customDefs, $params) {
     // together with a linker
     $whereClauseLinker = " AND ";
   }
-  $query = "DELETE FROM ".$tableName.$whereClause;
+  $query = "DELETE FROM ".SQL_TABLE_PREFIX.$tableName.$whereClause;
   $data = makeQueryHappen($customDefs, $query);
 
   if ($data) return TRUE;
@@ -272,14 +278,14 @@ function sqlMagicPut($customDefs, $data) {
   }
   $columnList .= ")";
   $valueList  .= ")";
-  $query .= "INTO ".$tableName."\n  ".$columnList."\n  VALUES\n  ".$valueList;
+  $query .= "INTO ".SQL_TABLE_PREFIX.$tableName."\n  ".$columnList."\n  VALUES\n  ".$valueList;
   return makeQueryHappen($customDefs, $query);
 }
 
 function sqlMagicSet($customDefs, $set, $where) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
-	
+
 	$whereClause = " ";
   $whereClauseLinker = "WHERE ";
   foreach ($where as $key => $value) {
@@ -292,7 +298,7 @@ function sqlMagicSet($customDefs, $set, $where) {
     $setClause .= $setClauseLinker.$key."='".$value."'";
     $setClauseLinker = " , ";
   }
-  $query = "UPDATE ".$tableName.$setClause.$whereClause;
+  $query = "UPDATE ".SQL_TABLE_PREFIX.$tableName.$setClause.$whereClause;
   $result = makeQueryHappen($customDefs, $query);
   return $result;
 }
@@ -300,7 +306,7 @@ function sqlMagicSet($customDefs, $set, $where) {
 function sqlMagicGet($customDefs, $params) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
-	
+
 	$whereClause = " ";
   $whereClauseLinker = "WHERE ";
   foreach ($params as $key => $value) {
@@ -309,7 +315,7 @@ function sqlMagicGet($customDefs, $params) {
     // together with a linker
     $whereClauseLinker = " AND ";
   }
-  $query = "SELECT * FROM ".$tableName.$whereClause;
+  $query = "SELECT * FROM ".SQL_TABLE_PREFIX.$tableName.$whereClause;
   $data = makeQueryHappen($customDefs, $query);
 
   if ($data) {
@@ -322,6 +328,10 @@ function sqlMagicGet($customDefs, $params) {
 }
 
 function makeQueryHappen($customDefs, $query) {
+// echo "<p style='color:red;'>$query</p>\n<pre style='color:red;'>";
+// debug_print_backtrace();
+// echo "</pre>\n";
+
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
   //echo "Running Query: \n<font color=red>\n". $query . "\n</font><br />\n";
@@ -367,7 +377,7 @@ function table_exists($tableName) {
   $sql = getSQLConnection();
   $result = mysql_query("SHOW TABLES", $sql);
   while ($row = mysql_fetch_row($result)) {
-    if ($row[0] == $tableName)
+    if ($row[0] == SQL_TABLE_PREFIX.$tableName)
       return TRUE;
   }
   return FALSE;
@@ -388,6 +398,25 @@ function createTable($customDefs) {
 	}
 }
 
+function getAllIDs($customDefs) {
+	$tableNames = array_keys($customDefs);
+	$tableName = $tableNames[0];
+
+	$key = findTableKey($customDefs);
+	$query = "SELECT {$key} FROM ".SQL_TABLE_PREFIX.$tableName;
+
+	$data = makeQueryHappen($customDefs, $query);
+	if ($data) {
+    $returnVal = array();
+    foreach ($data as $row) {
+      $returnVal[] = $row[$key];
+    }
+    return $returnVal;
+	} else {
+		return null;
+	}
+}
+
 function getMapName($table1, $table2) {
   if ($table1 == $table2) {
     return rtrim($table1, "_")."_map_to_self";
@@ -404,13 +433,13 @@ function getChildrenList($parentTableName, $parentID, $childTableName, $params=N
   $extendedWhere = "";
   if ($params != NULL) {
     foreach($params as $key => $value) {
-      $extendedWhere .= " AND ".$childTableName.".".$key."='".mysql_real_escape_string($value)."'";
+      $extendedWhere .= " AND ".SQL_TABLE_PREFIX.$childTableName.".".$key."='".mysql_real_escape_string($value)."'";
     }
   }
-  $query  = "SELECT ".$tableName.".childID FROM ".$tableName.", ".$childTableName.
-            " WHERE ".$tableName.".parentID='".$parentID."' AND".
-            " ".$childTableName.".".findActualTableKey($childTableName)."=".$tableName.".childID ".$extendedWhere." ".
-            "ORDER BY ".$tableName.".ordering";
+  $query  = "SELECT ".SQL_TABLE_PREFIX.$tableName.".childID FROM ".SQL_TABLE_PREFIX.$tableName.", ".SQL_TABLE_PREFIX.$childTableName.
+            " WHERE ".SQL_TABLE_PREFIX.$tableName.".parentID='".$parentID."' AND".
+            " ".SQL_TABLE_PREFIX.$childTableName.".".findActualTableKey($childTableName)."=".SQL_TABLE_PREFIX.$tableName.".childID ".$extendedWhere." ".
+            "ORDER BY ".SQL_TABLE_PREFIX.$tableName.".ordering";
   $data = makeQueryHappen(array($tableName, null), $query);
   if ($data) {
     $returnVal = array();
@@ -453,8 +482,12 @@ function doAdoption($parentTable, $parentID, $childTable, $childID) {
 }
 
 function doEmancipation($parentTable, $parentID, $childTable, $childID) {
-  $mapName = getMapName($parentTable, $childTable);
-  return sqlMagicYank(array($mapName => $mapDef), array('parentID' => $parentID, 'childID' => $childID));
+	$mapName = getMapName($parentTable, $childTable);
+	$mapDef = array('parentID' => array("bigint(20) unsigned", "NO", "",    "",  ""),
+	                'childID'  => array("bigint(20) unsigned", "NO", "",    "",  ""),
+	                'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
+	               );
+	return sqlMagicYank(array($mapName => $mapDef), array('parentID' => $parentID, 'childID' => $childID));
 }
 
 ?>
