@@ -12,7 +12,7 @@ include_once dirname(__FILE__) . '/class_DatabaseMagicObject.php';
 
 define('E_SQL_CANNOT_CONNECT', "
 <h2>Cannot connect to SQL Server</h2>
-There is an error in your databaseMagic configuration.
+There is an error in your DatabaseMagic configuration.
 ");
 
 

@@ -39,9 +39,9 @@ class DatabaseMagicObject {
   /// Sets all the attributes to blank and the table key to 0.
   /// used for initializing new blank objects.
   function initialize() {
-    $cols = getTableColumns($this->table_defs);
+    $cols = getTableColumns($this->getTableDefs());
     foreach ($cols as $col) { $this->attributes[$col] = ""; }
-    $key = findTableKey($this->table_defs);
+    $key = findTableKey($this->getTableDefs());
     $this->attributes[$key] = 0;
     $this->status = "clean";
   }
@@ -49,7 +49,7 @@ class DatabaseMagicObject {
   /// Returns ID
   /// Returns the ID of this object.  The ID is the column in this object's table which is the primary key.
   function getID() {
-    $key = findTableKey($this->table_defs);
+    $key = findTableKey($this->getTableDefs());
     return $this->attributes[$key];
   }
 
@@ -58,9 +58,9 @@ class DatabaseMagicObject {
   /// This function has the ability to totally transform an object into a different instance of the same object.
   /// What I mean is, this function will set ALL attributes, including the ID.
   function load($id) {
-    $key = findTableKey($this->table_defs);
+    $key = findTableKey($this->getTableDefs());
     $query = array($key => $id);
-    $info = sqlMagicGet($this->table_defs, $query);
+    $info = sqlMagicGet($this->getTableDefs(), $query);
     $this->setAttribs($info[0]); // $info[0] because sqlMagicget always returns an array, even with one result.
     $this->status = "clean";
   }
@@ -69,10 +69,10 @@ class DatabaseMagicObject {
   /// This function records the attributes of the object into a row in the database.
   function save($force = FALSE) {
     if ( ($this->status != "clean") || ($force) ) {
-      if ($id = sqlMagicPut($this->table_defs, $this->attributes)) {
+      if ($id = sqlMagicPut($this->getTableDefs(), $this->attributes)) {
         // Successful Save
         $this->status = "clean";
-        $this->attributes[findTableKey($this->table_defs)] = $id;
+        $this->attributes[findTableKey($this->getTableDefs())] = $id;
         return TRUE;
       } else {
         die("Save Failed!\n".mysql_error());
@@ -90,7 +90,7 @@ class DatabaseMagicObject {
   /// Set Attribs
   /// Sets attribute data for this object.
   function setAttribs($info) {
-    $columns = getTableColumns($this->table_defs);
+    $columns = getTableColumns($this->getTableDefs());
     $returnVal = FALSE;
     foreach ($columns as $column) {
       if (isset($info[$column])) {
@@ -104,10 +104,16 @@ class DatabaseMagicObject {
     return $returnVal;
   }
 
+	/// Returns the table definitions for this object
+	/// Will be changed to a more complex function in the future
+	function getTableDefs() {
+		return $this->table_defs;
+	}
+
   /// Returns the name of the table that this object saves and loads under.
   /// Prety easy function really.
   function getTableName() {
-    $tableNames = array_keys($this->table_defs);
+    $tableNames = array_keys($this->getTableDefs());
 		return $tableNames[0];
   }
 
@@ -175,7 +181,7 @@ class DatabaseMagicObject {
 
 	/// Retrieve an array of all the known IDs for all saved instances of this class
 	function getAll() {
-		$list = getAllIDs($this->table_defs);
+		$list = getAllIDs($this->getTableDefs());
 		return $list;
 	}
 
