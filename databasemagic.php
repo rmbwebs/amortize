@@ -91,7 +91,7 @@ function getSQLConnection() {
  ***************************************/
 function getActualTableDefs($tableName) {
   $sqlConnection = getSQLConnection();
-  $query = "DESCRIBE " . $tableName;
+  $query = "DESCRIBE ".SQL_TABLE_PREFIX.$tableName;
   if (! $results = mysql_query($query, $sqlConnection) ) {
     return FALSE;
   }
