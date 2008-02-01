@@ -12,11 +12,11 @@ class DatabaseMagicObject {
 
   /// An array that determines how the data for this object will be stored in the database
   /// Format is array(tablename => array(collumn1name => array(type, null, key, default, extras), column2name => array(...), etc.))
-  protected $table_defs;
+  protected $table_defs = null;
 
   /// Object status.
   /// Possible statuses are "needs saving", etc.
-  protected $status;
+  protected $status = null;
 
   /// Object attributes are the data that is stored in the object and is saved to the database.
   /// Every instance of a DatabaseMagicObject has an array of attributes.  Each attribute corresponds
@@ -35,16 +35,19 @@ class DatabaseMagicObject {
     }
   }
 
-  /// Initialize.
-  /// Sets all the attributes to blank and the table key to 0.
-  /// used for initializing new blank objects.
-  function initialize() {
-    $cols = getTableColumns($this->getTableDefs());
-    foreach ($cols as $col) { $this->attributes[$col] = ""; }
-    $key = findTableKey($this->getTableDefs());
-    $this->attributes[$key] = 0;
-    $this->status = "clean";
-  }
+	/// Initialize.
+	/// Sets all the attributes to blank and the table key to 0.
+	/// used for initializing new blank objects.
+	function initialize() {
+		$defs = $this->getTableDefs();
+		if (is_array($defs)) {
+			$cols = getTableColumns($this->getTableDefs());
+			foreach ($cols as $col) { $this->attributes[$col] = ""; }
+			$key = findTableKey($this->getTableDefs());
+			$this->attributes[$key] = 0;
+		}
+		$this->status = "clean";
+	}
 
   /// Returns ID
   /// Returns the ID of this object.  The ID is the column in this object's table which is the primary key.
@@ -105,15 +108,46 @@ class DatabaseMagicObject {
   }
 
 	/// Returns the table definitions for this object
-	/// Will be changed to a more complex function in the future
+	/// Recursively merges in any table definitions from extended classes
 	function getTableDefs() {
-		return $this->table_defs;
+		if (get_class($this)==__CLASS__) {
+			// We are a DatabaseMagicObject
+			return $this->table_defs;
+		} else {
+			// We are something that extends DatabaseMagicObject
+			$extensionClass = get_parent_class($this);
+			$extension = new $extensionClass;
+			$extensionTableDefs = $extension->getTableDefs();
+				// Bail out if we don't get an array for the extended class table def
+				if (!is_array($extensionTableDefs)) { return $this->table_defs; }
+			$extensionTableName = $extension->getTableName();
+			$extensionDefs      = $extensionTableDefs[$extensionTableName];
+			$extensionPrimary   = findKey($extensionDefs);
+			$myTableDefs = $this->table_defs;
+			$myTableName = $this->getTableName();
+			$myDefs      = $myTableDefs[$myTableName];
+			$myPrimary   = findKey($myDefs);
+
+			// Build the merged table
+			$mergedDefs = array();
+			foreach ($myDefs as $key => $value) {
+				$mergedDefs[$key] = $value;
+			}
+			foreach ($extensionDefs as $key => $value) {
+				// Avoid more than one primary key in the merged table and don't overwrite defs
+				if (($key!=$extensionPrimary || !$myPrimary) && !isset($mergedDefs[$key])) {
+					$mergedDefs[$key] = $value;
+				}
+			}
+			$returnMe = array($myTableName => $mergedDefs);
+			return $returnMe;
+		}
 	}
 
   /// Returns the name of the table that this object saves and loads under.
   /// Prety easy function really.
   function getTableName() {
-    $tableNames = array_keys($this->getTableDefs());
+    $tableNames = array_keys($this->table_defs);
 		return $tableNames[0];
   }
 
