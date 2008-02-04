@@ -111,11 +111,14 @@ function getActualTableDefs($tableName) {
  * Returns the creation definition for a table column, used in add column, modify column, and create table
  ******************************************/
 function getCreationDefinition($field, $details) {
-  $type    = $details[0];
-  $null    = $details[1];
-  $key     = $details[2];
-  $default = $details[3];
-  $extra   = $details[4];
+	if (!is_array($details)) {
+		$details = array($details);
+	}
+  $type    = isset($details[0]) ? $details[0] : "tinytext";
+  $null    = isset($details[1]) ? $details[1] : "YES";
+  $key     = isset($details[2]) ? $details[2] : "";
+  $default = isset($details[3]) ? $details[3] : "";
+  $extra   = isset($details[4]) ? $details[4] : "";
 
   if ($null == "NO") { $nullOut = "NOT NULL"; }
   else               { $nullOut = "";         }
@@ -323,7 +326,8 @@ function sqlMagicGet($customDefs, $params) {
     return $data;
   } else {
     // we didn't get valid data.
-    return $params;
+//     return $params; WTF?
+		return null;
   }
 }
 
@@ -418,14 +422,7 @@ function getAllIDs($customDefs) {
 }
 
 function getMapName($table1, $table2) {
-  if ($table1 == $table2) {
-    return rtrim($table1, "_")."_map_to_self";
-  }
-  $i=0; while ((strncmp($table1, $table2, $i) == 0) && ($i <= strlen($table1))) { $i++; }
-  $base = rtrim(substr($table1, 0, $i-1), "_");
-  $ext1 =  trim(substr($table1, $i-1), "_");
-  $ext2 =  trim(substr($table2, $i-1), "_");
-  return $base."_map_".$ext1."_to_".$ext2;
+  return "map_{$table1}_to_{$table2}";
 }
 
 function getChildrenList($parentTableName, $parentID, $childTableName, $params=NULL) {
@@ -440,7 +437,7 @@ function getChildrenList($parentTableName, $parentID, $childTableName, $params=N
             " WHERE ".SQL_TABLE_PREFIX.$tableName.".parentID='".$parentID."' AND".
             " ".SQL_TABLE_PREFIX.$childTableName.".".findActualTableKey($childTableName)."=".SQL_TABLE_PREFIX.$tableName.".childID ".$extendedWhere." ".
             "ORDER BY ".SQL_TABLE_PREFIX.$tableName.".ordering";
-  $data = makeQueryHappen(array($tableName, null), $query);
+  $data = makeQueryHappen(array($tableName => null), $query);
   if ($data) {
     $returnVal = array();
     foreach ($data as $row) {

@@ -1,12 +1,17 @@
 <?php
 
+
+/**
+ * This is an extension of DatabaseMagicObject that merely provides a default table Primary key
+ */
+class PrimaryDatabaseMagicObject extends DatabaseMagicObject {
+	protected $table_defs = array("databasemagic" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
+}
+
 /**
  * This object makes it easy for a developer to create abstract objects which can save themselves
  * into and load themselves from an SQL database.  Objects are defined by setting a large array which
  * describes the way the data is stored in the database
- *
- *
- *
  */
 class DatabaseMagicObject {
 
@@ -44,16 +49,21 @@ class DatabaseMagicObject {
 			$cols = getTableColumns($this->getTableDefs());
 			foreach ($cols as $col) { $this->attributes[$col] = ""; }
 			$key = findTableKey($this->getTableDefs());
-			$this->attributes[$key] = 0;
+			$this->attributes[$key] = null;
 		}
 		$this->status = "clean";
 	}
 
-  /// Returns ID
-  /// Returns the ID of this object.  The ID is the column in this object's table which is the primary key.
-  function getID() {
+	/// A replacement for the (deprecated) getID() function
+	function getPrimary() {
     $key = findTableKey($this->getTableDefs());
     return $this->attributes[$key];
+	}
+
+  /// Returns ID (deprecated)
+  /// Returns the value of the Primary Key for this object.
+  function getID() {
+		return $this->getPrimary();
   }
 
   /// Loads an object from the database.
@@ -64,8 +74,10 @@ class DatabaseMagicObject {
     $key = findTableKey($this->getTableDefs());
     $query = array($key => $id);
     $info = sqlMagicGet($this->getTableDefs(), $query);
-    $this->setAttribs($info[0]); // $info[0] because sqlMagicget always returns an array, even with one result.
-    $this->status = "clean";
+    if ($info) {
+			$this->setAttribs($info[0]); // $info[0] because sqlMagicget always returns an array, even with one result.
+			$this->status = "clean";
+		}
   }
 
   /// Saves the object data to the database.
@@ -87,7 +99,15 @@ class DatabaseMagicObject {
   /// Returns the array of attributes for the object.
   /// Pretty self-explainatory.
   function getAttribs() {
-    return $this->attributes;
+		$returnMe = $this->attributes;
+
+		$key = findTableKey($this->getTableDefs());
+		if ($returnMe[$key] == null) {
+			// Unsaved Object, don't return the key attribute with the results
+			unset($returnMe[$key]);
+		}
+
+    return $returnMe;
   }
 
   /// Set Attribs
@@ -190,11 +210,19 @@ class DatabaseMagicObject {
 
   /// Retrieve a list of this object's "adopted" "children".
   /// Use this function to retrieve a list of objects previously "adopted" by this object using the adopt() method.
-  /// $example is an instance of the object of the same type as those children you want to retrieve.
+  /// $example can be the name of the class you want to retrieve, or an example object of the same type as those
+  /// children you want to retrieve.
   /// Example:  $products = $mycategory->getChildren(new Product());
+  /// Example:  $products = $mycategory->getChildren("Product");
   function getChildren($example, $parameters = NULL) {
-    $prototype = clone $example;
-    $prototype->initialize();
+		if (is_object($example)) {
+			$prototype = clone $example;
+			$prototype->initialize();
+		} else if (is_string($example) && class_exists($example)) {
+			$prototype = new $example;
+		} else {
+			return NULL;
+		}
 
     $parentTable = $this->getTableName();
     $parentID    = $this->getID();
