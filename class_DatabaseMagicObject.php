@@ -182,32 +182,32 @@ class DatabaseMagicObject {
     $this->save(TRUE);
     $child->save(TRUE);
 
-    $childTable  = $child->getMyTableName();
-    $childID     = $child->getID();
-		$parentTable = $this->getMyTableName();
-    $parentID    = $this->getID();
+    $childTableDefs  = $child->getTableDefs();
+    $childID         = $child->getID();
+		$parentTableDefs = $this->getTableDefs();
+    $parentID        = $this->getID();
 
-    return doAdoption($parentTable, $parentID, $childTable, $childID);
+    return doAdoption($parentTableDefs, $parentID, $childTableDefs, $childID);
   }
 
   /// Free an adopted child from this object
   /// This function name is perfect in it's descriptiveness
   function emancipate($child) {
-    $childTable  = $child->getMyTableName();
+    $childTableDefs  = $child->getTableDefs();
     $childID     = $child->getID();
-		$parentTable = $this->getMyTableName();
+		$parentTableDefs = $this->getTableDefs();
     $parentID    = $this->getID();
 
-    return doEmancipation($parentTable, $parentID, $childTable, $childID);
+    return doEmancipation($parentTableDefs, $parentID, $childTableDefs, $childID);
   }
 
   /// Sets the children of this class into proper order
   function orderChildren($example, $ordering) {
-    $childTable  = $example->getMyTableName();
-    $parentTable = $this->getMyTableName();
+    $childTableDefs  = $example->getTableDefs();
+    $parentTableDefs = $this->getTableDefs();
     $parentID    = $this->getID();
 
-    reorderChildren($parentTable, $parentID, $childTable, $ordering);
+    reorderChildren($parentTableDefs, $parentID, $childTableDefs, $ordering);
   }
 
   /// Retrieve a list of this object's "adopted" "children".
@@ -226,11 +226,11 @@ class DatabaseMagicObject {
 			return NULL;
 		}
 
-    $parentTable = $this->getMyTableName();
-    $parentID    = $this->getID();
-    $childTable  = $prototype->getMyTableName();
+    $parentTableDefs = $this->getTableDefs();
+    $parentID        = $this->getPrimary();
+    $childTableDefs  = $prototype->getTableDefs();
 
-    $list = getChildrenList($parentTable, $parentID, $childTable, $parameters);
+    $list = getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters);
 
     $children = array();
     if (is_array($list)) {

@@ -443,7 +443,9 @@ function getMapDefs($parentDefs, $childDefs) {
 	);
 }
 
-function getChildrenList($parentTableName, $parentID, $childTableName, $params=NULL) {
+function getChildrenList($parentTableDefs, $parentID, $childTableDefs, $params=NULL) {
+  $parentTableName = getTableName($parentTableDefs);
+  $childTableName  = getTableName($childTableDefs);
   $tableName = getMapName($parentTableName, $childTableName);
   $extendedWhere = "";
   if ($params != NULL) {
@@ -467,42 +469,34 @@ function getChildrenList($parentTableName, $parentID, $childTableName, $params=N
   }
 }
 
-function reorderChildren ($parentTable, $parentID, $childTable, $childOrdering) {
-  $mapName = getMapName($parentTable, $childTable);
-	$mapDef = array('parentID' => array("bigint(20) unsigned", "NO", "",    "",  ""),
-									'childID'  => array("bigint(20) unsigned", "NO", "",    "",  ""),
-									'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
-								 );
+function reorderChildren ($parentTableDefs, $parentID, $childTableDefs, $childOrdering) {
+	$mapName = getMapName(getTableName($parentTableDefs), getTableName($childTableDefs));
+	$mapDefs  = getMapDefs($parentTableDefs, $childTableDefs);
 	foreach ($childOrdering as $child => $order) {
-		sqlMagicSet(array($mapName => $mapDef), array('ordering' => $order), array('parentID' => $parentID, 'childID' => $child));
+		sqlMagicSet(array($mapName => $mapDefs), array('ordering' => $order), array('parentID' => $parentID, 'childID' => $child));
   }
   // That should do it
 }
 
-function doAdoption($parentTable, $parentID, $childTable, $childID) {
-	$mapName = getMapName($parentTable, $childTable);
-	$mapDef = array('parentID' => array("bigint(20) unsigned", "NO", "",    "",  ""),
-	                'childID'  => array("bigint(20) unsigned", "NO", "",    "",  ""),
-	                'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
-	               );
+function doAdoption($parentTableDefs, $parentID, $childTableDefs, $childID) {
+	$mapName = getMapName(getTableName($parentTableDefs), getTableName($childTableDefs));
+	$mapDefs = getMapDefs($parentTableDefs, $childTableDefs);
 	// Prevent adopting the same object twice
-	$family = getChildrenList($parentTable, $parentID, $childTable);
+
+	$family = getChildrenList($parentTableDefs, $parentID, $childTableDefs);
 	if ( (!is_array($family)) || ( array_search($childID, $family) === FALSE )) {
 		// Welcome to the family.
-		return sqlMagicPut(array($mapName => $mapDef), array('parentID' => $parentID, 'childID' => $childID));
+		return sqlMagicPut(array($mapName => $mapDefs), array('parentID' => $parentID, 'childID' => $childID));
 	} else {
 		// Already in the family.
 		return TRUE;
 	}
 }
 
-function doEmancipation($parentTable, $parentID, $childTable, $childID) {
-	$mapName = getMapName($parentTable, $childTable);
-	$mapDef = array('parentID' => array("bigint(20) unsigned", "NO", "",    "",  ""),
-	                'childID'  => array("bigint(20) unsigned", "NO", "",    "",  ""),
-	                'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
-	               );
-	return sqlMagicYank(array($mapName => $mapDef), array('parentID' => $parentID, 'childID' => $childID));
+function doEmancipation($parentTableDefs, $parentID, $childTableDefs, $childID) {
+	$mapName = getMapName(getTableName($parentTableDefs), getTableName($childTableDefs));
+	$mapDefs = getMapDefs($parentTableDefs, $childTableDefs);
+	return sqlMagicYank(array($mapName => $mapDefs), array('parentID' => $parentID, 'childID' => $childID));
 }
 
 
