@@ -425,6 +425,24 @@ function getMapName($table1, $table2) {
   return "map_{$table1}_to_{$table2}";
 }
 
+function getMapDefs($parentDefs, $childDefs) {
+	$parentTableName   = getTableName($parentDefs);
+	$parentTableDefs   = $parentDefs[$parentTableName];
+	$parentTableKey    = findKey($parentTableDefs);
+	$parentTableKeyDef = $parentTableDefs[$parentTableKey];
+
+	$childTableName   = getTableName($childDefs);
+	$childTableDefs   = $childDefs[$childTableName];
+	$childTableKey    = findKey($childTableDefs);
+	$childTableKeyDef = $childTableDefs[$childTableKey];
+
+	return array(
+		'parentID' => $parentTableKeyDef,
+		'childID'  => $childTableKeyDef,
+		'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
+	);
+}
+
 function getChildrenList($parentTableName, $parentID, $childTableName, $params=NULL) {
   $tableName = getMapName($parentTableName, $childTableName);
   $extendedWhere = "";
@@ -453,7 +471,7 @@ function reorderChildren ($parentTable, $parentID, $childTable, $childOrdering) 
   $mapName = getMapName($parentTable, $childTable);
 	$mapDef = array('parentID' => array("bigint(20) unsigned", "NO", "",    "",  ""),
 									'childID'  => array("bigint(20) unsigned", "NO", "",    "",  ""),
-																			'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
+									'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
 								 );
 	foreach ($childOrdering as $child => $order) {
 		sqlMagicSet(array($mapName => $mapDef), array('ordering' => $order), array('parentID' => $parentID, 'childID' => $child));
@@ -485,6 +503,12 @@ function doEmancipation($parentTable, $parentID, $childTable, $childID) {
 	                'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
 	               );
 	return sqlMagicYank(array($mapName => $mapDef), array('parentID' => $parentID, 'childID' => $childID));
+}
+
+
+function getTableName($defs) {
+	$tableNames = array_keys($defs);
+	return $tableNames[0];
 }
 
 ?>

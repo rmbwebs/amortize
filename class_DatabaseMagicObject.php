@@ -143,11 +143,11 @@ class DatabaseMagicObject {
 			$extensionTableDefs = $extension->getTableDefs();
 				// Bail out if we don't get an array for the extended class table def
 				if (!is_array($extensionTableDefs)) { return $this->table_defs; }
-			$extensionTableName = $extension->getTableName();
+			$extensionTableName = $extension->getMyTableName();
 			$extensionDefs      = $extensionTableDefs[$extensionTableName];
 			$extensionPrimary   = findKey($extensionDefs);
 			$myTableDefs = $this->table_defs;
-			$myTableName = $this->getTableName();
+			$myTableName = $this->getMyTableName();
 			$myDefs      = $myTableDefs[$myTableName];
 			$myPrimary   = findKey($myDefs);
 
@@ -169,9 +169,8 @@ class DatabaseMagicObject {
 
   /// Returns the name of the table that this object saves and loads under.
   /// Prety easy function really.
-  function getTableName() {
-    $tableNames = array_keys($this->table_defs);
-		return $tableNames[0];
+  function getMyTableName() {
+		return getTableName($this->table_defs);
   }
 
   /// "Adopts" another instance or extension of DatabaseMagicObject.
@@ -183,9 +182,9 @@ class DatabaseMagicObject {
     $this->save(TRUE);
     $child->save(TRUE);
 
-    $childTable  = $child->getTableName();
+    $childTable  = $child->getMyTableName();
     $childID     = $child->getID();
-		$parentTable = $this->getTableName();
+		$parentTable = $this->getMyTableName();
     $parentID    = $this->getID();
 
     return doAdoption($parentTable, $parentID, $childTable, $childID);
@@ -194,9 +193,9 @@ class DatabaseMagicObject {
   /// Free an adopted child from this object
   /// This function name is perfect in it's descriptiveness
   function emancipate($child) {
-    $childTable  = $child->getTableName();
+    $childTable  = $child->getMyTableName();
     $childID     = $child->getID();
-		$parentTable = $this->getTableName();
+		$parentTable = $this->getMyTableName();
     $parentID    = $this->getID();
 
     return doEmancipation($parentTable, $parentID, $childTable, $childID);
@@ -204,8 +203,8 @@ class DatabaseMagicObject {
 
   /// Sets the children of this class into proper order
   function orderChildren($example, $ordering) {
-    $childTable  = $example->getTableName();
-    $parentTable = $this->getTableName();
+    $childTable  = $example->getMyTableName();
+    $parentTable = $this->getMyTableName();
     $parentID    = $this->getID();
 
     reorderChildren($parentTable, $parentID, $childTable, $ordering);
@@ -227,9 +226,9 @@ class DatabaseMagicObject {
 			return NULL;
 		}
 
-    $parentTable = $this->getTableName();
+    $parentTable = $this->getMyTableName();
     $parentID    = $this->getID();
-    $childTable  = $prototype->getTableName();
+    $childTable  = $prototype->getMyTableName();
 
     $list = getChildrenList($parentTable, $parentID, $childTable, $parameters);
 
