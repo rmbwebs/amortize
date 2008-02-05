@@ -3,7 +3,7 @@ set_error_handler ("do_backtrace");
 function do_backtrace ($one, $two) {
 	echo "<pre>\nError {$one}, {$two}\n";
 	debug_print_backtrace();
-	echo "\n</pre>\n";
+	echo "</pre>\n\n";
 }
 
 include_once dirname(__FILE__) . '/../databasemagicconfig.php';

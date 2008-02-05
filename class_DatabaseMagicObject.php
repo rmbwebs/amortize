@@ -33,7 +33,6 @@ class DatabaseMagicObject {
   /// The constructor initializes the object by setting the name of the table (setting the object type)
   /// and possibly loading the object if an ID is passed to the constructor.
   function __construct($id = NULL, $table = "") {
-    $this->tablename = $table;
     $this->initialize();
     if ($id != NULL) {
       $this->load($id);
@@ -44,6 +43,10 @@ class DatabaseMagicObject {
 	/// Sets all the attributes to blank and the table key to 0.
 	/// used for initializing new blank objects.
 	function initialize() {
+		if ((!is_array($this->table_defs)) && (is_string($this->table_defs))) {
+			$tablename = $this->table_defs;
+			$this->table_defs = array($tablename => getActualTableDefs($tablename));
+		}
 		$defs = $this->getTableDefs();
 		if (is_array($defs)) {
 			$cols = getTableColumns($this->getTableDefs());
@@ -250,9 +253,7 @@ class DatabaseMagicObject {
 	/// Dumps the contents of attribs via print_r()
 	/// Useful for debugging, but that's about it
 	function dumpview() {
-		echo "\n<pre>\n";
-		print_r($this->attribs);
-		echo "\n</pre>\n";
+		print_r($this->attributes);
 	}
 
 }
