@@ -357,6 +357,7 @@ function makeQueryHappen($customDefs, $query) {
 // debug_print_backtrace();
 // echo "</pre>\n";
 
+
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
   //echo "Running Query: \n<font color=red>\n". $query . "\n</font><br />\n";
@@ -423,14 +424,39 @@ function createTable($customDefs) {
 	}
 }
 
-function getAllIDs($customDefs) {
+function getAllSomething($customDefs, $column, $params=NULL, $limit=NULL, $offset=NULL) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
-
 	$key = findTableKey($customDefs);
-	$query = "SELECT {$key} FROM ".SQL_TABLE_PREFIX.$tableName;
+	$column = (is_string($column)) ? $column : "*";
+
+	$whereClause = " ";
+  $whereClauseLinker = "WHERE ";
+  if (is_array($params)) {
+		foreach ($params as $key => $value) {
+			$whereClause .= $whereClauseLinker.$key."='".$value."'";
+			// If there is more than one requirement, we need to link the params
+			// together with a linker
+			$whereClauseLinker = " AND ";
+			}
+	}
+
+	$query = "SELECT {$column} FROM ".SQL_TABLE_PREFIX.$tableName.$whereClause." ORDER BY {$key}";
+
+	if ($limit && is_numeric($limit)) {
+		$query .= " LIMIT {$limit}";
+	}
+	if ($offset && is_numeric($offset)) {
+		$query .= " OFFSET {$offset}";
+	}
 
 	$data = makeQueryHappen($customDefs, $query);
+	return $data;
+}
+
+function getAllIDs($customDefs, $limit=NULL, $offset=NULL, $params=NULL) {
+	$key = findTableKey($customDefs);
+	$data = getAllSomething($customDefs, $key, $params, $limit, $offset);
 	if ($data) {
     $returnVal = array();
     foreach ($data as $row) {

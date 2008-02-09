@@ -37,12 +37,12 @@ class PrimaryDatabaseMagicObject extends DatabaseMagicObject {
 class DatabaseMagicObject {
 
   /// An array that determines how the data for this object will be stored in the database
-  /// Format is array(tablename => array(collumn1name => array(type, null, key, default, extras), column2name => array(...), etc.))
-  protected $table_defs = null;
+  /// Format is array(tablename => array(collumn1name => array(type, NULL, key, default, extras), column2name => array(...), etc.))
+  protected $table_defs = NULL;
 
   /// Object status.
   /// Possible statuses are "needs saving", etc.
-  protected $status = null;
+  protected $status = NULL;
 
   /// Object attributes are the data that is stored in the object and is saved to the database.
   /// Every instance of a DatabaseMagicObject has an array of attributes.  Each attribute corresponds
@@ -73,7 +73,7 @@ class DatabaseMagicObject {
 			$cols = getTableColumns($this->getTableDefs());
 			foreach ($cols as $col) { $this->attributes[$col] = ""; }
 			$key = findTableKey($this->getTableDefs());
-			$this->attributes[$key] = null;
+			$this->attributes[$key] = NULL;
 		}
 		$this->status = "clean";
 	}
@@ -126,7 +126,7 @@ class DatabaseMagicObject {
 		$returnMe = $this->attributes;
 
 		$key = findTableKey($this->getTableDefs());
-		if ($returnMe[$key] == null) {
+		if ($returnMe[$key] == NULL) {
 			// Unsaved Object, don't return the key attribute with the results
 			unset($returnMe[$key]);
 		}
@@ -265,9 +265,28 @@ class DatabaseMagicObject {
   }
 
 	/// Retrieve an array of all the known IDs for all saved instances of this class
-	function getAll() {
-		$list = getAllIDs($this->getTableDefs());
+	/// If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
+	function getAllPrimaries($limit=NULL, $offset=NULL, $params=NULL) {
+		$list = getAllIDs($this->getTableDefs(), $limit, $offset, $params);
 		return $list;
+	}
+
+	/// Retrieve an array of pre-loaded objects
+	function getAllLikeMe($limit=NULL, $offset=NULL, $params=NULL) {
+		$myDefs = $this->getTableDefs();
+		$list = getAllSomething($myDefs, "*", $limit, $offset, $params);
+		$key = findTableKey($myDefs);
+		$returnMe = array();
+		
+		if (is_array($list)) {
+			foreach ($list as $data) {
+// 				print_r($data);
+				$temp = clone $this;
+				$temp->setAttribs($data);
+				$returnMe[$data[$key]] = $temp;
+			}
+		}
+		return $returnMe;
 	}
 
 	/// Dumps the contents of attribs via print_r()
