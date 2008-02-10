@@ -2,32 +2,24 @@
 /*******************************************
 	Copyright Rich Bellamy, RMB Webs, 2008
 	Contact: rich@rmbwebs.com
-	
+
 	This file is part of Database Magic.
-	
+
 	Database Magic is free software: you can redistribute it and/or modify
 	it under the terms of the GNU Lesser General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
-	
+
 	Database Magic is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Lesser General Public License for more details.
-	
+
 	You should have received a copy of the GNU Lesser General Public License
 	along with Database Magic.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************/
 
 
-
-
-/**
- * This is an extension of DatabaseMagicObject that merely provides a default table Primary key
- */
-class PrimaryDatabaseMagicObject extends DatabaseMagicObject {
-	protected $table_defs = array("databasemagic" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
-}
 
 /**
  * This object makes it easy for a developer to create abstract objects which can save themselves
@@ -113,7 +105,11 @@ class DatabaseMagicObject {
         $this->status = "clean";
         $this->attributes[findTableKey($this->getTableDefs())] = $id;
         return TRUE;
-      } else {
+      } else if ($id !== false) {
+				// We are not working with an auto_increment ID
+				return TRUE;
+			} else {
+				// ID === false, there was an error
         die("Save Failed!\n".mysql_error());
         return FALSE;
       }
@@ -277,7 +273,7 @@ class DatabaseMagicObject {
 		$list = getAllSomething($myDefs, "*", $limit, $offset, $params);
 		$key = findTableKey($myDefs);
 		$returnMe = array();
-		
+
 		if (is_array($list)) {
 			foreach ($list as $data) {
 // 				print_r($data);
@@ -291,10 +287,98 @@ class DatabaseMagicObject {
 
 	/// Dumps the contents of attribs via print_r()
 	/// Useful for debugging, but that's about it
-	function dumpview() {
+	function dumpview($pre=false) {
+		if ($pre) echo "<pre>\n";
 		print_r($this->attributes);
+		if ($pre) echo "</pre>\n";
 	}
 
 }
+
+
+/***************************************************************************************************************/
+
+
+
+/**
+ * This is an extension of DatabaseMagicObject that merely provides a default table Primary key
+ */
+class PrimaryDatabaseMagicObject extends DatabaseMagicObject {
+	protected $table_defs = array("databasemagic" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
+}
+
+
+/**
+ * This is an extension of DatabaseMagicObject that provides form processing
+ *
+ */
+class DatabaseMagicObjectForms extends DatabaseMagicObject {
+
+	/**
+	 * Creates an input form from the object columns
+	 * $which is an array that tells what columns to show
+	 * $action sets the action for the form
+	 * $hidden is an array that can be used to hide columns from the form, or pass some hidden values into the form
+	 */
+	function inputForm($which = NULL, $action = NULL, $hidden=NULL) {
+		$actionString = ($action) ? "action=\"$action\"" : "";
+		$classname    = get_class($this);
+		$primary      = $this->getPrimary();
+		$which = ($which) ? $which : getTableColumns($this->getTableDefs());
+
+		echo <<<FORMOPEN
+<form id="{$classname}{$primary}" class="{$classname}" {$actionString} method="POST">\n
+FORMOPEN;
+
+		foreach ($which as $field) {
+			if (!isset($hidden[$field])) {
+				$this->inputField($field);
+			}
+		}
+		if (is_array($hidden)) {
+			foreach ($hidden as $key => $value) {
+				if ($value !== false) {
+					echo
+<<<HIDDENVALUE
+	<input type="hidden" name="{$key}" value="{$value}" />\n
+HIDDENVALUE;
+				}
+			}
+		}
+
+		echo <<<FORMCLOSE
+	<input type="submit" name="submit" value="Go"/>
+</form>
+
+FORMCLOSE;
+
+	}
+
+	function inputField($field) {
+		$classname = get_class($this);
+		$primary   = $this->getPrimary();
+		$attribs   = $this->getAttribs();
+		$value     = (isset($attribs[$field])) ? $attribs[$field] : NULL;
+		// FIXME Need to eventually customize this per the data type
+		echo <<<INPUT
+	<div id="{$classname}_{$field}_input_container" class="{$classname}_input_container">
+		<span class="{$classname}_{$field}_label" id="{$classname}_{$primary}_{$field}_label">{$field}</span>
+		<input name="{$field}" class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input" value="{$value}">
+	</div>
+
+INPUT;
+	}
+
+}
+
+
+/**
+ * This is an extension of DbMOForms that merely provides a default table Primary key
+ */
+class PrimaryDatabaseMagicObjectForms extends DatabaseMagicObjectForms {
+	protected $table_defs = array("databasemagic" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
+}
+
+
 
 ?>

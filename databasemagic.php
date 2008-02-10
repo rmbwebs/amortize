@@ -2,19 +2,19 @@
 /*******************************************
 	Copyright Rich Bellamy, RMB Webs, 2008
 	Contact: rich@rmbwebs.com
-	
+
 	This file is part of Database Magic.
-	
+
 	Database Magic is free software: you can redistribute it and/or modify
 	it under the terms of the GNU Lesser General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
-	
+
 	Database Magic is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Lesser General Public License for more details.
-	
+
 	You should have received a copy of the GNU Lesser General Public License
 	along with Database Magic.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************/
@@ -353,9 +353,9 @@ function sqlMagicGet($customDefs, $params) {
 }
 
 function makeQueryHappen($customDefs, $query) {
-// echo "<p style='color:red;'>$query</p>\n<pre style='color:red;'>";
-// debug_print_backtrace();
-// echo "</pre>\n";
+ //echo "<p style='color:red;'>$query</p>\n<pre style='color:red;'>";
+ //debug_print_backtrace();
+ //echo "</pre>\n";
 
 
 	$tableNames = array_keys($customDefs);
