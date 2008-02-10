@@ -425,7 +425,7 @@ function createTable($customDefs) {
 	}
 }
 
-function getAllSomething($customDefs, $column, $params=NULL, $limit=NULL, $offset=NULL) {
+function getAllSomething($customDefs, $column, $limit=NULL, $offset=NULL, $params=NULL) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
 	$key = findTableKey($customDefs);
@@ -457,7 +457,7 @@ function getAllSomething($customDefs, $column, $params=NULL, $limit=NULL, $offse
 
 function getAllIDs($customDefs, $limit=NULL, $offset=NULL, $params=NULL) {
 	$key = findTableKey($customDefs);
-	$data = getAllSomething($customDefs, $key, $params, $limit, $offset);
+	$data = getAllSomething($customDefs, $key, $limit, $offset, $params);
 	if ($data) {
     $returnVal = array();
     foreach ($data as $row) {
