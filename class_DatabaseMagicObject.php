@@ -380,19 +380,49 @@ FORMCLOSE;
 
 	}
 
+	protected $input_restrictions = NULL;
+
 	function inputField($field) {
 		$classname = get_class($this);
 		$primary   = $this->getPrimary();
 		$attribs   = $this->getAttribs();
 		$value     = (isset($attribs[$field])) ? $attribs[$field] : NULL;
 		// FIXME Need to eventually customize this per the data type
-		echo <<<INPUT
+		echo <<<start
 	<div id="{$classname}_{$field}_input_container" class="{$classname}_input_container">
-		<span class="{$classname}_{$field}_label" id="{$classname}_{$primary}_{$field}_label">{$field}</span>
-		<input name="{$field}" class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input" value="{$value}">
-	</div>
+		<span class="{$classname}_{$field}_label" id="{$classname}_{$primary}_{$field}_label">{$field}</span>\n
+start;
 
-INPUT;
+		$restrictions = (isset($this->input_restrictions[$field])) ? $this->input_restrictions[$field] : "input";
+		if (is_array($restrictions)) {
+
+			// Dropdown box
+			$size = (count($restrictions) <=5) ? " size=\"".count($restrictions)."\"" : "";
+			echo <<<open
+				<select class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input" name="{$field}"{$size}>\n
+open;
+			foreach ($restrictions as $option) {
+				$selected = ($option == $value) ? " selected" : "";
+				echo <<<option
+					<option value="{$option}"{$selected}>{$option}</option>\n
+option;
+			}
+			echo <<<close
+				</select>\n
+close;
+		} else if ($restrictions == "textarea") {
+			echo <<<textarea
+				<textarea name="{$field}" class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input">{$value}</textarea>\n
+textarea;
+		} else {
+		echo <<<input
+			<input name="{$field}" class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input" value="{$value}">
+input;
+		}
+
+echo <<<end
+	</div>\n
+end;
 	}
 
 }
