@@ -34,7 +34,7 @@ class DatabaseMagicObject {
 
   /// Object status.
   /// Possible statuses are "needs saving", etc.
-  protected $status = NULL;
+  protected $status = array();
 
   /// Object attributes are the data that is stored in the object and is saved to the database.
   /// Every instance of a DatabaseMagicObject has an array of attributes.  Each attribute corresponds
@@ -63,11 +63,13 @@ class DatabaseMagicObject {
 		$defs = $this->getTableDefs();
 		if (is_array($defs)) {
 			$cols = getTableColumns($this->getTableDefs());
-			foreach ($cols as $col) { $this->attributes[$col] = ""; }
+			foreach ($cols as $col) {
+				$this->attributes[$col] = "";
+				$this->status[$col] = "clean";
+			}
 			$key = findTableKey($this->getTableDefs());
 			$this->attributes[$key] = NULL;
 		}
-		$this->status = "clean";
 	}
 
 	/// A replacement for the (deprecated) getID() function
@@ -92,29 +94,51 @@ class DatabaseMagicObject {
     $info = sqlMagicGet($this->getTableDefs(), $query);
     if ($info) {
 			$this->setAttribs($info[0]); // $info[0] because sqlMagicget always returns an array, even with one result.
-			$this->status = "clean";
+			foreach ($info[0] as $col => $value) {
+				$this->status[$col] = "clean";
+			}
 		}
   }
 
-  /// Saves the object data to the database.
-  /// This function records the attributes of the object into a row in the database.
-  function save($force = FALSE) {
-    if ( ($this->status != "clean") || ($force) ) {
-      if ($id = sqlMagicPut($this->getTableDefs(), $this->attributes)) {
-        // Successful Save
-        $this->status = "clean";
-        $this->attributes[findTableKey($this->getTableDefs())] = $id;
-        return TRUE;
-      } else if ($id !== false) {
+	/// Saves the object data to the database.
+	/// This function records the attributes of the object into a row in the database.
+	function save($force = FALSE) {
+		$defs = $this->getTableDefs();
+		$columns = getTableColumns($defs);
+		$allclean = array();
+		$savedata = array();
+		$key = findTableKey($defs);
+		$a = $this->getAttribs();
+
+		foreach ($columns as $col) {
+			$allclean[$col] = "clean";  // conveniently loop to build this array
+			if (($this->status[$col] != "clean") || $force){
+				$savedata[$col] = $a[$col];
+			}
+		}
+
+		if ( count($savedata) >= 1 ) {
+			$savedata[$key] = $this->getPrimary();
+			$id = sqlMagicPut($defs, $savedata);
+
+			if ($id) {
+				// Successful auto_increment Save
+				$this->attributes[$key] = $id;
+				$this->status = $allclean;
+				return TRUE;
+			} else if ($id !== false) {
 				// We are not working with an auto_increment ID
+				$this->status = $allclean;
 				return TRUE;
 			} else {
 				// ID === false, there was an error
-        die("Save Failed!\n".mysql_error());
-        return FALSE;
-      }
-    }
-  }
+				die("Save Failed!\n".mysql_error());
+				return FALSE;
+			}
+
+		}
+
+	}
 
   /// Returns the array of attributes for the object.
   /// Pretty self-explainatory.
@@ -139,10 +163,8 @@ class DatabaseMagicObject {
       if (isset($info[$column])) {
         $this->attributes[$column] = $info[$column];
         $returnVal = TRUE;
+				$this->status[$column] = "dirty";
       }
-    }
-    if ($returnVal) {
-      $this->status = "dirty";
     }
     return $returnVal;
   }
@@ -170,15 +192,19 @@ class DatabaseMagicObject {
 
 			// Build the merged table
 			$mergedDefs = array();
+			// If we have two primary keys, drop the extension key
+			if ($myPrimary && $extensionPrimary) {
+				unset($extensionDefs[$extensionPrimary]);
+			}
+			// Do extensiondefs first so they are first in the list, and so myDefs can overwrite a collision
+			foreach ($extensionDefs as $key => $value) {
+					$mergedDefs[$key] = $value;
+			}
+			// Follow with myDefs
 			foreach ($myDefs as $key => $value) {
 				$mergedDefs[$key] = $value;
 			}
-			foreach ($extensionDefs as $key => $value) {
-				// Avoid more than one primary key in the merged table and don't overwrite defs
-				if (($key!=$extensionPrimary || !$myPrimary) && !isset($mergedDefs[$key])) {
-					$mergedDefs[$key] = $value;
-				}
-			}
+
 			$returnMe = array($myTableName => $mergedDefs);
 			return $returnMe;
 		}

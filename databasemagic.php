@@ -287,7 +287,7 @@ function sqlMagicPut($customDefs, $data) {
 
   $data = sqlFilter($data);
   $key = findTableKey($customDefs);
-  if ( ($key) && (isset($data[$key])) && ($data[$key] == 0) ) {
+  if ( ($key) && (isset($data[$key])) && (($data[$key] == 0) || ($data[$key] == NULL)) ) {
     $query = "INSERT ";
   } else {
     $query = "REPLACE ";
@@ -353,9 +353,10 @@ function sqlMagicGet($customDefs, $params) {
 }
 
 function makeQueryHappen($customDefs, $query) {
- //echo "<p style='color:red;'>$query</p>\n<pre style='color:red;'>";
- //debug_print_backtrace();
- //echo "</pre>\n";
+//  echo "<p style='color:red;'>$query</p>\n";
+//  echo "<pre style='color:red;'>";
+//  debug_print_backtrace();
+//  echo "</pre>\n";
 
 
 	$tableNames = array_keys($customDefs);
