@@ -344,13 +344,15 @@ class DatabaseMagicObjectForms extends DatabaseMagicObject {
 	 * Creates an input form from the object columns
 	 * $which is an array that tells what columns to show
 	 * $action sets the action for the form
-	 * $hidden is an array that can be used to hide columns from the form, or pass some hidden values into the form
+	 * $hidden is an array that can be used to hide columns in the form (true), omit the column from the form (false)
+	 * or pass some hidden values into the form (non-boolean)
 	 */
 	function inputForm($which = NULL, $action = NULL, $hidden=NULL) {
 		$actionString = ($action) ? "action=\"$action\"" : "";
 		$classname    = get_class($this);
 		$primary      = $this->getPrimary();
 		$which = ($which) ? $which : getTableColumns($this->getTableDefs());
+		$attribs = $this->getAttribs();
 
 		echo <<<FORMOPEN
 <form id="{$classname}{$primary}" class="{$classname}" {$actionString} method="POST">\n
@@ -363,11 +365,19 @@ FORMOPEN;
 		}
 		if (is_array($hidden)) {
 			foreach ($hidden as $key => $value) {
-				if ($value !== false) {
+				if ($value === true) {
+					$attrib = $attribs[$key];
+					echo
+<<<HIDDENVALUE
+	<input type="hidden" name="{$key}" value="{$attrib}" />\n
+HIDDENVALUE;
+				} else if ($value !== false) {
 					echo
 <<<HIDDENVALUE
 	<input type="hidden" name="{$key}" value="{$value}" />\n
 HIDDENVALUE;
+				} else if ($value === false) {
+					//Do nothing, omit this field
 				}
 			}
 		}

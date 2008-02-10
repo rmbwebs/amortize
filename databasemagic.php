@@ -287,7 +287,7 @@ function sqlMagicPut($customDefs, $data) {
 
   $data = sqlFilter($data);
   $key = findTableKey($customDefs);
-  if ( ($key) && (isset($data[$key])) && (($data[$key] == 0) || ($data[$key] == NULL)) ) {
+  if ( ($key) && (isset($data[$key])) && (((is_numeric($data[$key]))&&($data[$key] == 0))  || ($data[$key] == NULL)) ) {
     $query = "INSERT ";
   } else {
     $query = "REPLACE ";
