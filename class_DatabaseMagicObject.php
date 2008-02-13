@@ -45,7 +45,7 @@ class DatabaseMagicObject {
   /// Constructor.
   /// The constructor initializes the object by setting the name of the table (setting the object type)
   /// and possibly loading the object if an ID is passed to the constructor.
-  function __construct($id = NULL, $table = "") {
+  function __construct($id = NULL) {
     $this->initialize();
     if ($id != NULL) {
       $this->load($id);
@@ -84,21 +84,21 @@ class DatabaseMagicObject {
 		return $this->getPrimary();
   }
 
-  /// Loads an object from the database.
-  /// This function loads the attributes for itself from the database, where the table primary key = $id
-  /// This function has the ability to totally transform an object into a different instance of the same object.
-  /// What I mean is, this function will set ALL attributes, including the ID.
-  function load($id) {
-    $key = findTableKey($this->getTableDefs());
-    $query = array($key => $id);
-    $info = sqlMagicGet($this->getTableDefs(), $query);
-    if ($info) {
+	/// Loads an object from the database.
+	/// This function loads the attributes for itself from the database, where the table primary key = $id
+	/// This function has the ability to totally transform an object into a different instance of the same object.
+	/// What I mean is, this function will set ALL attributes, including the ID.
+	function load($id) {
+		$key = findTableKey($this->getTableDefs());
+		$query = array($key => $id);
+		$info = sqlMagicGet($this->getTableDefs(), $query);
+		if ($info) {
 			$this->setAttribs($info[0]); // $info[0] because sqlMagicget always returns an array, even with one result.
 			foreach ($info[0] as $col => $value) {
 				$this->status[$col] = "clean";
 			}
 		}
-  }
+	}
 
 	/// Saves the object data to the database.
 	/// This function records the attributes of the object into a row in the database.
