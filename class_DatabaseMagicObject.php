@@ -410,16 +410,15 @@ start;
 
 		$restrictions = (isset($this->input_restrictions[$field])) ? $this->input_restrictions[$field] : "input";
 		if (is_array($restrictions)) {
-
 			// Dropdown box
-			$size = (count($restrictions) <=5) ? " size=\"".count($restrictions)."\"" : "";
+			$size = (count($restrictions) <= 4) ? " size=\"".count($restrictions)."\"" : "";
 			echo <<<open
 				<select class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input" name="{$field}"{$size}>\n
 open;
-			foreach ($restrictions as $option) {
+			foreach ($restrictions as $option => $text) {
 				$selected = ($option == $value) ? " selected" : "";
 				echo <<<option
-					<option value="{$option}"{$selected}>{$option}</option>\n
+					<option value="{$option}"{$selected}>{$text}</option>\n
 option;
 			}
 			echo <<<close
