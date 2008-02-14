@@ -25,7 +25,7 @@
  * The User class is a generic class that allows for logging in and out of
  * a custom app.
  */
-class DbMExtras_User extends PrimaryDatabaseMagicObjectForms {
+class DbMExtras_User extends DatabaseMagicObjectForms {
 	protected $table_defs = array(
 		'Users' => array(
 			'login'    => array("varchar(10)", "NO",  "PRI"),

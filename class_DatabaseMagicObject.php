@@ -72,9 +72,14 @@ class DatabaseMagicObject {
 		}
 	}
 
+	/// Tells you the column name that holds the primary
+	function getPrimaryKey() {
+    return findTableKey($this->getTableDefs());
+	}
+
 	/// A replacement for the (deprecated) getID() function
 	function getPrimary() {
-    $key = findTableKey($this->getTableDefs());
+    $key = $this->getPrimaryKey();
     return $this->attributes[$key];
 	}
 
