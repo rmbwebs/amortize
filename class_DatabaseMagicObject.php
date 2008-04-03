@@ -345,6 +345,52 @@ class PrimaryDatabaseMagicObject extends DatabaseMagicObject {
  */
 class DatabaseMagicObjectForms extends DatabaseMagicObject {
 
+
+	/**
+	 * Creates a div to display the data for this object
+	 * $which is an array that tells which fields to display
+	 * $hidden will hide fields
+	 */
+	function displayFull($which=null, $hidden=null) {
+		$which     = ($which)  ? $which  : getTableColumns($this->getTableDefs());
+		$hidden    = ($hidden) ? $hidden : array();
+		$primary   = $this->getPrimary();
+		$classname = get_class($this);
+
+		echo
+<<<startdisplay
+<div id="{$classname}_{$primary}_display_container" class="{$classname}_display_container display_container">
+startdisplay;
+		foreach ($which as $field) {
+			if (!isset($hidden[$field])) {
+				$this->displayField($field);
+			}
+		}
+		echo
+<<<enddisplay
+</div>
+enddisplay;
+	}
+
+	/**
+	 *
+	 *
+	 */
+	function displayField($field) {
+		$classname = get_class($this);
+		$primary   = $this->getPrimary();
+		$attribs   = $this->getAttribs();
+		$value     = (isset($attribs[$field])) ? $attribs[$field] : NULL;
+
+		echo
+<<<display
+	<div id="{$classname}_{$field}_field_container" class="{$classname}_field_container field_container">
+		<span id="{$classname}_{$primary}_{$field}_label" class="{$field}_label field_label">{$field}</span>
+		<span id="{$classname}_{$primary}_{$field}_value" class="{$field}_value field_value">{$value}</span>
+	</div>\n
+display;
+	}
+
 	/**
 	 * Creates an input form from the object columns
 	 * $which is an array that tells what columns to show
@@ -432,7 +478,7 @@ textarea;
 		echo <<<input
 			<input name="{$field}" class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input" value="{$value}">
 input;
-		}
+			}
 
 echo <<<end
 	</div>\n

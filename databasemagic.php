@@ -425,24 +425,44 @@ function createTable($customDefs) {
 	}
 }
 
+function buildWhereClause($params=null) {
+	if (is_string($params)) {
+		return $params;
+	} else if (is_array($params)) {
+		foreach ($params as $field => $target) {
+			if (!is_array($target)) {
+				$params[$field] = array('=' => $target);
+			}
+		}
+	} else {
+		return "";
+	}
+
+	$whereClause = "WHERE ";
+	foreach ($params as $field => $target) {
+		foreach ($target as $comparator => $value) {
+			$whereClause .= "`{$field}` {$comparator} '{$value}' AND";
+		}
+	}
+	// Pull the final " AND" from the whereclause
+	$whereClause = substr($whereClause, 0, -4);
+	// check that we had at least ONE results
+	if (strlen($whereClause) < 9) {
+		return "";
+	} else {
+		return $whereClause;
+	}
+}
+
 function getAllSomething($customDefs, $column, $limit=NULL, $offset=NULL, $params=NULL) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
 	$key = findTableKey($customDefs);
 	$column = (is_string($column)) ? $column : "*";
 
-	$whereClause = " ";
-  $whereClauseLinker = "WHERE ";
-  if (is_array($params)) {
-		foreach ($params as $key => $value) {
-			$whereClause .= $whereClauseLinker.$key."='".$value."'";
-			// If there is more than one requirement, we need to link the params
-			// together with a linker
-			$whereClauseLinker = " AND ";
-			}
-	}
+	$whereClause = buildWhereClause($params);
 
-	$query = "SELECT {$column} FROM ".SQL_TABLE_PREFIX.$tableName.$whereClause." ORDER BY {$key}";
+	$query = "SELECT {$column} FROM ".SQL_TABLE_PREFIX.$tableName." ".$whereClause." ORDER BY {$key}";
 
 	if ($limit && is_numeric($limit)) {
 		$query .= " LIMIT {$limit}";
