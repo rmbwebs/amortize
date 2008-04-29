@@ -297,7 +297,7 @@ function sqlMagicPut($customDefs, $data) {
   $comma      = "";
   foreach ($data as $column => $value) {
     $columnList .= $comma."`".$column."`";
-    $valueList  .= $comma."'".$value."'";
+    $valueList  .= $comma.'"'.$value.'"';
     $comma = ", ";
   }
   $columnList .= ")";
@@ -319,7 +319,7 @@ function sqlMagicSet($customDefs, $set, $where) {
   $setClause = " ";
   $setClauseLinker = "SET ";
   foreach ($set as $key => $value) {
-    $setClause .= $setClauseLinker.$key."='".$value."'";
+    $setClause .= $setClauseLinker.$key.'="'.$value.'"';
     $setClauseLinker = " , ";
   }
   $query = "UPDATE ".SQL_TABLE_PREFIX.$tableName.$setClause.$whereClause;
