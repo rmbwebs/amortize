@@ -112,12 +112,13 @@ logout;
 
 }
 
-
 /**
- * This is an extension of DatabaseMagicObject that provides form processing
+ * This is an extension of DatabaseMagicObject that provides form processing through a DOMDocument
  *
  */
-class DatabaseMagicObjectForms extends DatabaseMagicObject {
+class DatabaseMagicObjectDomForms extends DatabaseMagicObject {
+
+	protected $input_restrictions = NULL;
 
 	/**
 	 * Returns a DOMDocument Node that can be used to display the object
@@ -125,7 +126,7 @@ class DatabaseMagicObjectForms extends DatabaseMagicObject {
 	 * $which is an array that tells which fields to display
 	 * $hidden will hide fields
 	 */
-	function domDisplayFull($dom, $which=null, $hidden=null) {
+	function displayFull($dom, $which=null, $hidden=null) {
 		$which     = ($which)  ? $which  : getTableColumns($this->getTableDefs());
 		$hidden    = ($hidden) ? $hidden : array();
 		$primary   = $this->getPrimary();
@@ -144,38 +145,11 @@ class DatabaseMagicObjectForms extends DatabaseMagicObject {
 		return $returnMe;
 	}
 
-
 	/**
-	 * Generates fully-styleable markup for displaying this object
-	 * $which is an array that tells which fields to display
-	 * $hidden will hide fields
+	 * Returns a DOMDocument node that can be used to display the details of a specific field.
+	 * It is called by displayFull() for every field that is not on an exclude list
 	 */
-	function displayFull($which=null, $hidden=null) {
-		$which     = ($which)  ? $which  : getTableColumns($this->getTableDefs());
-		$hidden    = ($hidden) ? $hidden : array();
-		$primary   = $this->getPrimary();
-		$classname = get_class($this);
-
-		echo
-<<<startdisplay
-<div id="{$classname}_{$primary}_display_container" class="{$classname}_display_container display_container">
-startdisplay;
-		foreach ($which as $field) {
-			if (!isset($hidden[$field])) {
-				$this->displayField($field);
-			}
-		}
-		echo
-<<<enddisplay
-</div>
-enddisplay;
-	}
-
-	/**
-	 *
-	 *
-	 */
-	function domDisplayField($dom, $field) {
+	function displayField($dom, $field) {
 		$classname = get_class($this);
 		$primary   = $this->getPrimary();
 		$attribs   = $this->getAttribs();
@@ -200,33 +174,13 @@ enddisplay;
 	}
 
 	/**
-	 *
-	 *
-	 */
-	function displayField($field) {
-		$classname = get_class($this);
-		$primary   = $this->getPrimary();
-		$attribs   = $this->getAttribs();
-		$value     = (isset($attribs[$field])) ? $attribs[$field] : NULL;
-
-		echo
-<<<display
-	<div id="{$classname}_{$field}_field_container" class="{$classname}_field_container field_container">
-		<span id="{$classname}_{$primary}_{$field}_label" class="{$field}_label field_label">{$field}</span>
-		<span id="{$classname}_{$primary}_{$field}_value" class="{$field}_value field_value">{$value}</span>
-	</div>\n
-display;
-	}
-
-
-	/**
 	 * Creates an input form from the object columns
 	 * $which is an array that tells what columns to show
 	 * $action sets the action for the form
 	 * $hidden is an array that can be used to hide columns in the form (true), omit the column from the form (false)
 	 * or pass some hidden values into the form (non-boolean)
 	 */
-	function domInputForm($dom, $which = NULL, $action = NULL, $hidden=NULL) {
+	function inputForm($dom, $which = NULL, $action = NULL, $hidden=NULL) {
 		$classname    = get_class($this);
 		$primary      = $this->getPrimary();
 		$which = ($which) ? $which : getTableColumns($this->getTableDefs());
@@ -267,6 +221,124 @@ display;
 			}
 		}
 		return $form;
+	}
+
+	/**
+	 * returns a DOM node of a specific input for an object-altering form
+	 * It is called by inputForm() for every field that is not on an exclude list.
+	 */
+	function inputField($dom, $field) {
+		$classname = get_class($this);
+		$primary   = $this->getPrimary();
+		$attribs   = $this->getAttribs();
+		$value     = (isset($attribs[$field])) ? $attribs[$field] : NULL;
+
+		$container = $dom->createElement('div');
+			$container->setAttribute('id', "{$classname}_{$field}_input_container");
+			$container->setAttribute('class', "{$classname}_input_container");
+		$label = $dom->createElement('span', $field);
+			$label->setAttribute('id', "{$classname}_{$primary}_{$field}_label");
+			$label->setAttribute('class', "{$classname}_{$field}_label");
+
+		$restrictions = (isset($this->input_restrictions[$field])) ? $this->input_restrictions[$field] : "input";
+		if (is_array($restrictions)) {
+			// Dropdown box
+			$input = $dom->createElement('select');
+			if (count($restrictions) < 5) {
+				$input->setAttribute('size', count($restrictions));
+			}
+			foreach ($restrictions as $option => $text) {
+				$option = $dom->createElement('option', $text);
+					$option->setAttribute('value', $option);
+				if ($option == $value) {
+					$option->setAttribute('selected', "true");
+				}
+				$input->appendChild($option);
+			}
+		} else if ($restrictions == "textarea") {
+				//Textarea
+		  $input = $dom->createElement('textarea', $value);
+		} else {
+		  $input = $dom->createElement('input');
+				$input->setAttribute('value', $value);
+		}
+
+		$input->setAttribute('id',    "{$classname}_{$primary}_{$field}_input");
+		$input->setAttribute('class', "{$classname}_{$field}_input");
+		$input->setAttribute('name',  "{$field}");
+
+		$container->appendChild($label);
+		$container->appendChild($input);
+
+		return $container;
+	}
+
+}
+
+
+/**
+ * This is an extension of DatabaseMagicObjectDomForms that merely provides a default table Primary key
+ */
+class PrimaryDatabaseMagicObjectDomForms extends DatabaseMagicObjectForms {
+	protected $table_defs = array("databasemagic" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
+}
+
+
+
+
+/**
+ * This is an extension of DatabaseMagicObject that provides form processing
+ *
+ */
+class DatabaseMagicObjectForms extends DatabaseMagicObject {
+
+	protected $input_restrictions = NULL;
+
+
+	/**
+	 * Generates fully-styleable markup for displaying this object
+	 * $which is an array that tells which fields to display
+	 * $hidden will hide fields
+	 */
+	function displayFull($which=null, $hidden=null) {
+		$which     = ($which)  ? $which  : getTableColumns($this->getTableDefs());
+		$hidden    = ($hidden) ? $hidden : array();
+		$primary   = $this->getPrimary();
+		$classname = get_class($this);
+
+		echo
+<<<startdisplay
+<div id="{$classname}_{$primary}_display_container" class="{$classname}_display_container display_container">
+startdisplay;
+		foreach ($which as $field) {
+			if (!isset($hidden[$field])) {
+				$this->displayField($field);
+			}
+		}
+		echo
+<<<enddisplay
+</div>
+enddisplay;
+	}
+
+
+	/**
+	 *
+	 *
+	 */
+	function displayField($field) {
+		$classname = get_class($this);
+		$primary   = $this->getPrimary();
+		$attribs   = $this->getAttribs();
+		$value     = (isset($attribs[$field])) ? $attribs[$field] : NULL;
+
+		echo
+<<<display
+	<div id="{$classname}_{$field}_field_container" class="{$classname}_field_container field_container">
+		<span id="{$classname}_{$primary}_{$field}_label" class="{$field}_label field_label">{$field}</span>
+		<span id="{$classname}_{$primary}_{$field}_value" class="{$field}_value field_value">{$value}</span>
+	</div>\n
+display;
 	}
 
 
@@ -320,54 +392,6 @@ HIDDENVALUE;
 
 FORMCLOSE;
 
-	}
-
-	protected $input_restrictions = NULL;
-
-	function domInputField($dom, $field) {
-		$classname = get_class($this);
-		$primary   = $this->getPrimary();
-		$attribs   = $this->getAttribs();
-		$value     = (isset($attribs[$field])) ? $attribs[$field] : NULL;
-
-		$container = $dom->createElement('div');
-			$container->setAttribute('id', "{$classname}_{$field}_input_container");
-			$container->setAttribute('class', "{$classname}_input_container");
-		$label = $dom->createElement('span', $field);
-			$label->setAttribute('id', "{$classname}_{$primary}_{$field}_label");
-			$label->setAttribute('class', "{$classname}_{$field}_label");
-
-		$restrictions = (isset($this->input_restrictions[$field])) ? $this->input_restrictions[$field] : "input";
-		if (is_array($restrictions)) {
-			// Dropdown box
-			$input = $dom->createElement('select');
-			if (count($restrictions) < 5) {
-				$input->setAttribute('size', count($restrictions));
-			}
-			foreach ($restrictions as $option => $text) {
-				$option = $dom->createElement('option', $text);
-					$option->setAttribute('value', $option);
-				if ($option == $value) {
-					$option->setAttribute('selected', "true");
-				}
-				$input->appendChild($option);
-			}
-		} else if ($restrictions == "textarea") {
-				//Textarea
-		  $input = $dom->createElement('textarea', $value);
-		} else {
-		  $input = $dom->createElement('input');
-				$input->setAttribute('value', $value);
-		}
-
-		$input->setAttribute('id',    "{$classname}_{$primary}_{$field}_input");
-		$input->setAttribute('class', "{$classname}_{$field}_input");
-		$input->setAttribute('name',  "{$field}");
-
-		$container->appendChild($label);
-		$container->appendChild($input);
-
-		return $container;
 	}
 
 
