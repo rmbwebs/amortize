@@ -266,19 +266,12 @@ function sqlMagicYank($customDefs, $params) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
 
-	$whereClause = " ";
-  $whereClauseLinker = "WHERE ";
-  foreach ($params as $key => $value) {
-    $whereClause .= $whereClauseLinker.$key."='".$value."'";
-    // If there is more than one requirement, we need to link the params
-    // together with a linker
-    $whereClauseLinker = " AND ";
-  }
-  $query = "DELETE FROM ".SQL_TABLE_PREFIX.$tableName.$whereClause;
-  $data = makeQueryHappen($customDefs, $query);
+	$whereClause = buildWhereClause($params);
+	$query = "DELETE FROM ".SQL_TABLE_PREFIX.$tableName.$whereClause;
+	$data = makeQueryHappen($customDefs, $query);
 
-  if ($data) return TRUE;
-  else       return FALSE;
+	if ($data) return TRUE;
+	else       return FALSE;
 }
 
 function sqlMagicPut($customDefs, $data) {
@@ -310,46 +303,35 @@ function sqlMagicSet($customDefs, $set, $where) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
 
-	$whereClause = " ";
-  $whereClauseLinker = "WHERE ";
-  foreach ($where as $key => $value) {
-    $whereClause .= $whereClauseLinker.$key."='".$value."'";
-    $whereClauseLinker = " AND ";
-  }
-  $setClause = " ";
-  $setClauseLinker = "SET ";
-  foreach ($set as $key => $value) {
-    $setClause .= $setClauseLinker.$key.'="'.$value.'"';
-    $setClauseLinker = " , ";
-  }
-  $query = "UPDATE ".SQL_TABLE_PREFIX.$tableName.$setClause.$whereClause;
-  $result = makeQueryHappen($customDefs, $query);
-  return $result;
+	$whereClause =buildWhereClause($where);
+	
+	$setClause = " ";
+	$setClauseLinker = "SET ";
+	foreach ($set as $key => $value) {
+		$setClause .= $setClauseLinker.$key.'="'.$value.'"';
+		$setClauseLinker = " , ";
+	}
+	$query = "UPDATE ".SQL_TABLE_PREFIX.$tableName.$setClause.$whereClause;
+	$result = makeQueryHappen($customDefs, $query);
+	return $result;
 }
 
 function sqlMagicGet($customDefs, $params) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
 
-	$whereClause = " ";
-  $whereClauseLinker = "WHERE ";
-  foreach ($params as $key => $value) {
-    $whereClause .= $whereClauseLinker.$key."='".$value."'";
-    // If there is more than one requirement, we need to link the params
-    // together with a linker
-    $whereClauseLinker = " AND ";
-  }
-  $query = "SELECT * FROM ".SQL_TABLE_PREFIX.$tableName.$whereClause;
-  $data = makeQueryHappen($customDefs, $query);
+	$whereClause = buildWhereClause($params);
 
-  if ($data) {
-    // We have a successful Query!
-    return $data;
-  } else {
-    // we didn't get valid data.
-//     return $params; WTF?
+	$query = "SELECT * FROM ".SQL_TABLE_PREFIX.$tableName.$whereClause;
+	$data = makeQueryHappen($customDefs, $query);
+
+	if ($data) {
+		// We have a successful Query!
+		return $data;
+	} else {
+		// we didn't get valid data.
 		return null;
-  }
+	}
 }
 
 function makeQueryHappen($customDefs, $query) {
