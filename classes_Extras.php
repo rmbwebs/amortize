@@ -146,8 +146,8 @@ class DatabaseMagicObjectDomForms extends DatabaseMagicObject {
 	}
 
 	/**
-	 *
-	 *
+	 * Returns a DOMDocument node that can be used to display the details of a specific field.
+	 * It is called by displayFull() for every field that is not on an exclude list
 	 */
 	function displayField($dom, $field) {
 		$classname = get_class($this);
@@ -223,6 +223,10 @@ class DatabaseMagicObjectDomForms extends DatabaseMagicObject {
 		return $form;
 	}
 
+	/**
+	 * returns a DOM node of a specific input for an object-altering form
+	 * It is called by inputForm() for every field that is not on an exclude list.
+	 */
 	function inputField($dom, $field) {
 		$classname = get_class($this);
 		$primary   = $this->getPrimary();
@@ -273,7 +277,7 @@ class DatabaseMagicObjectDomForms extends DatabaseMagicObject {
 
 
 /**
- * This is an extension of DbMODomForms that merely provides a default table Primary key
+ * This is an extension of DatabaseMagicObjectDomForms that merely provides a default table Primary key
  */
 class PrimaryDatabaseMagicObjectDomForms extends DatabaseMagicObjectForms {
 	protected $table_defs = array("databasemagic" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
