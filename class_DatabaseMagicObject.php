@@ -216,55 +216,64 @@ class DatabaseMagicObject {
 	}
 
   /// Returns the name of the table that this object saves and loads under.
-  /// Prety easy function really.
+  /// Pretty easy function really.
   function getMyTableName() {
 		return getTableName($this->table_defs);
   }
 
-  /// "Adopts" another instance or extension of DatabaseMagicObject.
-  /// "Adopts" basically means that a relational table is created between this object's table and the
-  /// table of the object to be adopted, and an entry is placed in the relational table linking the two objects.
-  /// From this point on, the adopted object can be retrieved as part of a list by using the method
-  /// getChildren() on the adopting object.  Example:  A Category object "adopts" Product objects.
-  function adopt($child) {
-    $this->save(TRUE);
-    $child->save(TRUE);
 
-    $childTableDefs  = $child->getTableDefs();
-    $childID         = $child->getID();
+	/// An alias for the link() method.  Deprecated.
+	function adopt($child) {
+		return $this->link($child);
+	}
+
+	/**
+	 * Creates a link to another instance or extension of DatabaseMagicObject.
+	 * This means that a relational table is created between this object's table and the
+	 * table of the object to be linked to, and an entry is placed in the relational table linking
+	 * the two objects.  From this point on, the adopted object can be retrieved as part of a list
+	 * by using the method getLinks().
+	 * Example:
+	 * $fam = new Family("Smiths");
+	 * $joe = new Person("Joe");
+	 * $pam = new Person("Pam");
+	 * $fam->link($joe);  $fam->link($pam);
+	 * $people = $fam->getLinks("Person");  <--- Returns an array of Pam and Joe Person objects
+	 */
+	function link($subject) {
+		$this->save(TRUE);
+		$subject->save(TRUE);
+
+		$subjectTableDefs  = $subject->getTableDefs();
+		$subjectID         = $subject->getID();
 		$parentTableDefs = $this->getTableDefs();
-    $parentID        = $this->getID();
+		$parentID        = $this->getID();
 
-    return doAdoption($parentTableDefs, $parentID, $childTableDefs, $childID);
-  }
+		return doAdoption($parentTableDefs, $parentID, $subjectTableDefs, $subjectID);
+	}
 
-  /// Free an adopted child from this object
-  /// This function name is perfect in it's descriptiveness
-  function emancipate($child) {
-    $childTableDefs  = $child->getTableDefs();
-    $childID     = $child->getID();
+	/**
+	 * Breaks a link previously created by link()
+	 */
+	function deLink($subject)
+		$subjectTableDefs  = $subject->getTableDefs();
+		$subjectID     = $subject->getID();
 		$parentTableDefs = $this->getTableDefs();
-    $parentID    = $this->getID();
+		$parentID    = $this->getID();
 
-    return doEmancipation($parentTableDefs, $parentID, $childTableDefs, $childID);
-  }
+		return doEmancipation($parentTableDefs, $parentID, $subjectTableDefs, $subjectID);
+	}
 
-  /// Sets the children of this class into proper order
-  function orderChildren($example, $ordering) {
-    $childTableDefs  = $example->getTableDefs();
-    $parentTableDefs = $this->getTableDefs();
-    $parentID    = $this->getID();
-
-    reorderChildren($parentTableDefs, $parentID, $childTableDefs, $ordering);
-  }
-
-  /// Retrieve a list of this object's "adopted" "children".
-  /// Use this function to retrieve a list of objects previously "adopted" by this object using the adopt() method.
-  /// $example can be the name of the class you want to retrieve, or an example object of the same type as those
-  /// children you want to retrieve.
-  /// Example:  $products = $mycategory->getChildren(new Product());
-  /// Example:  $products = $mycategory->getChildren("Product");
-  function getChildren($example, $parameters = NULL) {
+	/**
+	 * Retrieve a list of this object's previously linked objects
+	 * Use this function to retrieve a list of objects previously linked  by this object
+	 * using the link() method.
+	 * $example can be the name of the class you want to retrieve, or an example object of the same type as those
+	 * children you want to retrieve.
+	 * Example:  $products = $mycategory->getLinks(new Product());
+	 * Example:  $products = $mycategory->getLinks("Product");
+	 */
+	function getLinks($example, $parameters = NULL) {
 		if (is_object($example)) {
 			$prototype = clone $example;
 			$prototype->initialize();
@@ -274,22 +283,41 @@ class DatabaseMagicObject {
 			return NULL;
 		}
 
-    $parentTableDefs = $this->getTableDefs();
-    $parentID        = $this->getPrimary();
-    $childTableDefs  = $prototype->getTableDefs();
+		$parentTableDefs = $this->getTableDefs();
+		$parentID        = $this->getPrimary();
+		$childTableDefs  = $prototype->getTableDefs();
 
-    $list = getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters);
+		$list = getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters);
 
-    $children = array();
-    if (is_array($list)) {
-      foreach($list as $childid) {
-        $temp = clone $prototype;
-        $temp->__construct($childid);
-        $children[] = $temp;
-      }
-    }
-    return $children;
-  }
+		$children = array();
+		if (is_array($list)) {
+			foreach($list as $childid) {
+				$temp = clone $prototype;
+				$temp->__construct($childid);
+				$children[] = $temp;
+			}
+		}
+		return $children;
+	}
+
+	/**
+	 * Works in reverse to getLinks()
+	 * A->link(B);
+	 * C = B->getBackLinks("classname of A");
+	 * C is an array that contains A
+	 */
+	function getBackLinks($example, $parameters = NULL) {
+		// Write Me
+		return null;
+	}
+	/// Can be used to set the order that a call for links will return as.
+	function orderLinks($example, $ordering) {
+		$childTableDefs  = $example->getTableDefs();
+		$parentTableDefs = $this->getTableDefs();
+		$parentID    = $this->getID();
+
+		reorderChildren($parentTableDefs, $parentID, $childTableDefs, $ordering);
+	}
 
 	/// Retrieve an array of all the known IDs for all saved instances of this class
 	/// If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
@@ -322,6 +350,21 @@ class DatabaseMagicObject {
 		if ($pre) echo "<pre>\n";
 		print_r($this->attributes);
 		if ($pre) echo "</pre>\n";
+	}
+
+	/// Alias for the deLink() method. Deprecated.
+	function emancipate($child) {
+		return $this->deLink($child);
+	}
+
+	/// Alias for the orderLinks() method.  Deprecated.
+	function orderChildren($example, $ordering) {
+		return $this->orderLinks($example, $ordering);
+	}
+
+	/// Alias for the getLinks() method.  Deprecated.
+	function getChildren($example, $parameters = NULL) {
+		return $this->getLinks($example, $parameters);
 	}
 
 }
