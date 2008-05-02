@@ -37,10 +37,10 @@ There is an error in your DatabaseMagic configuration.
 ");
 
 
-/************************************
+/**
  * getTableCreateQuery()
  * returns the query string that can be used to create a table based on it's definition
- ***********************************/
+ */
 function getTableCreateQuery($customDefs) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
@@ -96,20 +96,20 @@ function sqlFilter($data) {
   return $retVal;
 }
 
-/****************************************
+/**
  * function getSQLConnection()
  * Returns a valid SQL connection identifier based on the $SQLInfo setting above
- ***************************************/
+ */
 function getSQLConnection() {
   $sql   = mysql_connect(SQL_HOST, SQL_USER, SQL_PASS)  OR die(SQL_CANNOT_CONNECT);
            mysql_select_db(SQL_DBASE, $sql)             OR die(SQL_CANNOT_CONNECT);
   return $sql;
 }
 
-/****************************************
+/**
  * function getActualTableDefs()
  * Uses the "DESCRIBE" SQL keyword to get the actual definition of a table as it is in the MYSQL database
- ***************************************/
+ */
 function getActualTableDefs($tableName) {
   $sqlConnection = getSQLConnection();
   $query = "DESCRIBE ".SQL_TABLE_PREFIX.$tableName;
@@ -127,10 +127,10 @@ function getActualTableDefs($tableName) {
   return $definition;
 }
 
-/*******************************************
+/**
  * function getCreationDefinition()
  * Returns the creation definition for a table column, used in add column, modify column, and create table
- ******************************************/
+ */
 function getCreationDefinition($field, $details) {
 	if (!is_array($details)) {
 		$details = array($details);
@@ -150,10 +150,10 @@ function getCreationDefinition($field, $details) {
   return $return;
 }
 
-/*******************************************
+/**
  * function getTableColumns(table definition) {
  * takes a table name and returns an array of table column names
- ******************************************/
+ */
 function getTableColumns($customDefs) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
@@ -172,20 +172,20 @@ function findActualTableKey($tableName) {
 	return findKey(getActualTableDefs($tableName));
 }
 
-/*******************************************
+/**
  * function findTableKey(table definition) {
  * takes a table definition and returns the primary key for that table
- ******************************************/
+ */
 function findTableKey($tableDefs) {
 	$tableNames = array_keys($tableDefs);
 	$tableName = $tableNames[0];
 	return findKey($tableDefs[$tableName]);
 }
 
-/*******************************************
+/**
  * function findKey()
  * returns the name of the primary key for a particular table definition
- ******************************************/
+ */
 function findKey($def) {
 	foreach ($def as $field => $details) {
 		if ($details[2] == "PRI")
@@ -194,10 +194,10 @@ function findKey($def) {
 	return NULL;
 }
 
-/*******************************************
+/**
  * updateTable()
  * Bring the table up to the current definition
- ******************************************/
+ */
 function updateTable($customDefs) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
@@ -379,9 +379,9 @@ function makeQueryHappen($customDefs, $query) {
   }
 }
 
-/**********************************
+/**
  * returns if the table exists in the current database
- **********************************/
+ */
 function table_exists($tableName) {
   $sql = getSQLConnection();
   $result = mysql_query("SHOW TABLES", $sql);
