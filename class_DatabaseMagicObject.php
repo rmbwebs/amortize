@@ -222,11 +222,6 @@ class DatabaseMagicObject {
   }
 
 
-	/// An alias for the link() method.  Deprecated.
-	function adopt($child) {
-		return $this->link($child);
-	}
-
 	/**
 	 * Creates a link to another instance or extension of DatabaseMagicObject.
 	 * This means that a relational table is created between this object's table and the
@@ -350,6 +345,11 @@ class DatabaseMagicObject {
 		if ($pre) echo "<pre>\n";
 		print_r($this->attributes);
 		if ($pre) echo "</pre>\n";
+	}
+
+	/// An alias for the link() method.  Deprecated.
+	function adopt($child) {
+		return $this->link($child);
 	}
 
 	/// Alias for the deLink() method. Deprecated.
