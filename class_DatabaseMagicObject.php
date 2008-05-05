@@ -100,7 +100,9 @@ class DatabaseMagicObject {
 		foreach ($columns as $col) {
 			$allclean[$col] = "clean";  // conveniently loop to build this array
 			if (($this->status[$col] != "clean") || $force){
-				$savedata[$col] = $a[$col];
+				if (isset($a[$col])) {
+					$savedata[$col] = $a[$col];
+				}
 			}
 		}
 
@@ -298,14 +300,19 @@ class DatabaseMagicObject {
 		return $returnMe;
 	}
 
+	protected $actual_table_defs = array();
+
 	/// Returns the table definitions for this object
 	/// Recursively merges in any table definitions from extended classes
 	function getTableDefs() {
 		if (get_class($this)==__CLASS__) {
 			// We are a DatabaseMagicObject
 			return $this->table_defs;
+		} else if (count($this->actual_table_defs) > 0) {
+			// We already calculated the actual table defs.  Use those.
+			return $this->actual_table_defs;
 		} else {
-			// We are something that extends DatabaseMagicObject
+			// We are something that extends DatabaseMagicObject, and don't know the actual table defs
 			$extensionClass = get_parent_class($this);
 			$extension = new $extensionClass;
 			$extensionTableDefs = $extension->getTableDefs();
@@ -335,6 +342,8 @@ class DatabaseMagicObject {
 			}
 
 			$returnMe = array($myTableName => $mergedDefs);
+			// Cache the result
+			$this->actual_table_defs = $returnMe;
 			return $returnMe;
 		}
 	}
