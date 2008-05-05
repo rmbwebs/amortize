@@ -486,7 +486,12 @@ function getMapDefs($parentDefs, $childDefs) {
 	$childTableKey    = findKey($childTableDefs);
 	$childTableKeyDef = $childTableDefs[$childTableKey];
 
+	// We really only need the data type
+	$parentTableKeyDef = $parentTableKeyDef[0];
+	$childTableKeyDef = $childTableKeyDef[0];
+
 	return array(
+		'ID'       => array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment"),
 		'parentID' => $parentTableKeyDef,
 		'childID'  => $childTableKeyDef,
 		'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
