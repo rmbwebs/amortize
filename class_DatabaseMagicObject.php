@@ -320,6 +320,7 @@ class DatabaseMagicObject {
 	/// Useful for debugging, but that's about it
 	function dumpview($pre=false) {
 		if ($pre) echo "<pre style=\"color: blue\">\n";
+		echo "Attributes for this ".get_class($this).":\n";;
 		print_r($this->attributes);
 		if ($pre) echo "</pre>\n";
 	}
