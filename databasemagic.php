@@ -335,27 +335,29 @@ function sqlMagicGet($customDefs, $params) {
 }
 
 function makeQueryHappen($customDefs, $query) {
-	echo "<p style='color:red;'>$query</p>\n";
-//  echo "<pre style='color:red;'>";  debug_print_backtrace();  echo "</pre>\n";
-
 
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
-  //echo "Running Query: \n<font color=red>\n". $query . "\n</font><br />\n";
+	echo "<p style='color:red;'>$query</p>\n";
   $sql = getSQLConnection();
   $result = mysql_query($query, $sql);
   if (! $result) {
+		echo "<p class=\"error\">Query Failed . . .";
     // We have a problem here
     if (! table_exists($tableName)) {
+			echo " table $tableName doesn't exist.</p>\n";
       createTable($customDefs);
     } else {
       if ($customDefs[$tableName] != getActualTableDefs($tableName)) {
+			echo " table $tableName needs updating.</p>\n";
         updateTable($customDefs);
       }
     }
+		echo "<p style='color:red;'>$query</p>\n";
     $result = mysql_query($query, $sql);
     if (! $result) {
 			// We tried :(
+			echo "<p class=\"error\">Fail</p>";
       return FALSE;
     }
   }
@@ -394,6 +396,7 @@ function createTable($customDefs) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
 	$query = getTableCreateQuery($customDefs);
+	echo "<p style=\"color: purple;\">$query</p>\n";
 	if ($query == NULL) return FALSE;
 	//echo "Proper table does not exist.  Creating: \n<font color=red>\n". $query . "\n</font><br />\n";
 	$sql = getSQLConnection();
