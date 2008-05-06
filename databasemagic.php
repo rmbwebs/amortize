@@ -322,7 +322,7 @@ function sqlMagicGet($customDefs, $params) {
 
 	$whereClause = buildWhereClause($params);
 
-	$query = "SELECT * FROM ".SQL_TABLE_PREFIX.$tableName.$whereClause;
+	$query = "SELECT * FROM ".SQL_TABLE_PREFIX.$tableName." ".$whereClause;
 	$data = makeQueryHappen($customDefs, $query);
 
 	if ($data) {
