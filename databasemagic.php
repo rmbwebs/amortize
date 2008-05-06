@@ -335,10 +335,8 @@ function sqlMagicGet($customDefs, $params) {
 }
 
 function makeQueryHappen($customDefs, $query) {
-//  echo "<p style='color:red;'>$query</p>\n";
-//  echo "<pre style='color:red;'>";
-//  debug_print_backtrace();
-//  echo "</pre>\n";
+	echo "<p style='color:red;'>$query</p>\n";
+//  echo "<pre style='color:red;'>";  debug_print_backtrace();  echo "</pre>\n";
 
 
 	$tableNames = array_keys($customDefs);
