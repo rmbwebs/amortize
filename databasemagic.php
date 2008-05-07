@@ -516,7 +516,8 @@ function getChildrenList($parentTableDefs, $parentID, $childTableDefs, $params=N
       $extendedWhere .= "\n    AND ".SQL_TABLE_PREFIX.$childTableName.".".$key."='".mysql_real_escape_string($value)."'";
     }
   }
-  $query = "SELECT ".SQL_TABLE_PREFIX.$childTableName.".*"\n  FROM ".SQL_TABLE_PREFIX.$childTableName."\n".
+  $query = "SELECT ".SQL_TABLE_PREFIX.$childTableName.".*\n".
+           "  FROM ".SQL_TABLE_PREFIX.$childTableName."\n".
            "  INNER JOIN ".SQL_TABLE_PREFIX.$tableName."\n".
            "    ON ".SQL_TABLE_PREFIX.$childTableName.".".$childTableKey."=".SQL_TABLE_PREFIX.$tableName.".childID\n".
            "  WHERE ".SQL_TABLE_PREFIX.$tableName.".parentID='".$parentID."'".$extendedWhere."\n".
