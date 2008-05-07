@@ -228,9 +228,9 @@ class DatabaseMagicObject {
 
 		$children = array();
 		if (is_array($list)) {
-			foreach($list as $childid) {
+			foreach($list as $childid => $attribs) {
 				$temp = clone $prototype;
-				$temp->__construct($childid);
+				$temp->setAttribs($attribs);
 				$children[] = $temp;
 			}
 		}
