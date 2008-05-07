@@ -42,9 +42,9 @@ class DatabaseMagicObject {
   /// Through member functions, attributes can be read and set to and from an object.
   protected $attributes = array();
 
-  /// Constructor.
-  /// The constructor initializes the object by setting the name of the table (setting the object type)
-  /// and possibly loading the object if an ID is passed to the constructor.
+
+
+	/// Calls initialize() and calls load($id) if $id != null.
   function __construct($id = NULL) {
     $this->initialize();
     if ($id != NULL) {
@@ -52,8 +52,7 @@ class DatabaseMagicObject {
     }
   }
 
-	/// Initialize.
-	/// Sets all the attributes to blank and the table key to 0.
+	/// Sets all the attributes to blank and the table key to null.
 	/// used for initializing new blank objects.
 	function initialize() {
 		if ((!is_array($this->table_defs)) && (is_string($this->table_defs))) {
@@ -71,23 +70,6 @@ class DatabaseMagicObject {
 			$this->attributes[$key] = NULL;
 		}
 	}
-
-	/// Tells you the column name that holds the primary
-	function getPrimaryKey() {
-    return findTableKey($this->getTableDefs());
-	}
-
-	/// A replacement for the (deprecated) getID() function
-	function getPrimary() {
-    $key = $this->getPrimaryKey();
-    return $this->attributes[$key];
-	}
-
-  /// Returns ID (deprecated)
-  /// Returns the value of the Primary Key for this object.
-  function getID() {
-		return $this->getPrimary();
-  }
 
 	/// Loads an object from the database.
 	/// This function loads the attributes for itself from the database, where the table primary key = $id
@@ -118,7 +100,9 @@ class DatabaseMagicObject {
 		foreach ($columns as $col) {
 			$allclean[$col] = "clean";  // conveniently loop to build this array
 			if (($this->status[$col] != "clean") || $force){
-				$savedata[$col] = $a[$col];
+				if (isset($a[$col])) {
+					$savedata[$col] = $a[$col];
+				}
 			}
 		}
 
@@ -146,7 +130,6 @@ class DatabaseMagicObject {
 	}
 
   /// Returns the array of attributes for the object.
-  /// Pretty self-explainatory.
   function getAttribs() {
 		$returnMe = $this->attributes;
 
@@ -159,7 +142,6 @@ class DatabaseMagicObject {
     return $returnMe;
   }
 
-  /// Set Attribs
   /// Sets attribute data for this object.
   function setAttribs($info) {
     $columns = getTableColumns($this->getTableDefs());
@@ -174,14 +156,163 @@ class DatabaseMagicObject {
     return $returnVal;
   }
 
+	/**
+	 * Creates a link to another instance or extension of DatabaseMagicObject.
+	 * This means that a relational table is created between this object's table and the
+	 * table of the object to be linked to, and an entry is placed in the relational table linking
+	 * the two objects.  From this point on, the adopted object can be retrieved as part of a list
+	 * by using the method getLinks().
+	 *
+	 * Example:\n
+	 * $fam = new Family("Smiths");\n
+	 * $joe = new Person("Joe");\n
+	 * $pam = new Person("Pam");\n
+	 * $fam->link($joe);  $fam->link($pam);\n
+	 * $people = $fam->getLinks("Person");  <--- Returns an array of Pam and Joe Person objects\n
+	 */
+	function link($subject) {
+		$this->save(TRUE);
+		$subject->save(TRUE);
+
+		$subjectTableDefs  = $subject->getTableDefs();
+		$subjectID         = $subject->getID();
+		$parentTableDefs = $this->getTableDefs();
+		$parentID        = $this->getID();
+
+		return doAdoption($parentTableDefs, $parentID, $subjectTableDefs, $subjectID);
+	}
+
+	/** Breaks a link previously created by link()
+	 * B will no longer be returned as part of A->getLinks() after A->deLink(B) is called.
+	 */
+	function deLink($subject) {
+		$subjectTableDefs  = $subject->getTableDefs();
+		$subjectID     = $subject->getID();
+		$parentTableDefs = $this->getTableDefs();
+		$parentID    = $this->getID();
+
+		return doEmancipation($parentTableDefs, $parentID, $subjectTableDefs, $subjectID);
+	}
+
+	/**
+	 * Retrieve a list of this object's previously linked objects of a specific type.
+	 * Use this function to retrieve a list of objects previously linked  by this object
+	 * using the link() method.
+	 * $example can be the name of the class you want to retrieve, or an example object of the same type as those
+	 * children you want to retrieve.
+	 *
+	 * Example: \n
+	 * $fido = new Dog("Fido"); \n
+	 * $fam = new Family("Smith"); \n
+	 * $bob = new Person("Bob"); \n
+	 * $fam->link($bob); \n
+	 * $fam->link($fido); \n 
+	 * $fam->getLinks("Dog");  // Returns an Array that contains Fido and any other Dogs linked in to the Smith Family \n
+	 * $fam->getLinks("Person");  // Returns an Array that contains Bob and any other Persons linked in to the Smith Family \n
+	 */
+	function getLinks($example, $parameters = NULL) {
+		if (is_object($example)) {
+			$prototype = clone $example;
+			$prototype->initialize();
+		} else if (is_string($example) && class_exists($example)) {
+			$prototype = new $example;
+		} else {
+			return NULL;
+		}
+
+		$parentTableDefs = $this->getTableDefs();
+		$parentID        = $this->getPrimary();
+		$childTableDefs  = $prototype->getTableDefs();
+
+		$list = getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters);
+
+		$children = array();
+		if (is_array($list)) {
+			foreach($list as $childid) {
+				$temp = clone $prototype;
+				$temp->__construct($childid);
+				$children[] = $temp;
+			}
+		}
+		return $children;
+	}
+
+	/**
+	 * Works in reverse to getLinks().
+	 * A->link(B); \n
+	 * C = B->getBackLinks("classname of A"); \n
+	 * C is an array that contains A \n
+	 */
+	function getBackLinks($example, $parameters = NULL) {
+		// Write Me
+		return null;
+	}
+
+	/// Can be used to set the order that a call for links will return as.
+	function orderLinks($example, $ordering) {
+		$childTableDefs  = $example->getTableDefs();
+		$parentTableDefs = $this->getTableDefs();
+		$parentID    = $this->getID();
+
+		reorderChildren($parentTableDefs, $parentID, $childTableDefs, $ordering);
+	}
+
+
+	/// Tells you the column name that holds the primary
+	function getPrimaryKey() {
+    return findTableKey($this->getTableDefs());
+	}
+
+	/** Returns the value of this object's primary key.
+	 * Primary key is the unique id for each object, used in the constructor and the load function
+	 * for example:
+	 *   $obj = new DatabaseMagicObject($key);
+	 *   $key2 = $obj->getPrimary();
+	 *   $key2 == $key
+	 */
+	function getPrimary() {
+    $key = $this->getPrimaryKey();
+    return $this->attributes[$key];
+	}
+
+	/// Retrieve an array of all the known IDs for all saved instances of this class
+	/// If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
+	function getAllPrimaries($limit=NULL, $offset=NULL, $params=NULL) {
+		$list = getAllIDs($this->getTableDefs(), $limit, $offset, $params);
+		return $list;
+	}
+
+	/// Retrieve an array of pre-loaded objects
+	function getAllLikeMe($limit=NULL, $offset=NULL, $params=NULL) {
+		$myDefs = $this->getTableDefs();
+		$list = getAllSomething($myDefs, "*", $limit, $offset, $params);
+		$key = findTableKey($myDefs);
+		$returnMe = array();
+
+		if (is_array($list)) {
+			foreach ($list as $data) {
+// 				print_r($data);
+				$temp = clone $this;
+				$temp->setAttribs($data);
+				$returnMe[$data[$key]] = $temp;
+			}
+		}
+		return $returnMe;
+	}
+
+	protected $actual_table_defs = array();
+
 	/// Returns the table definitions for this object
 	/// Recursively merges in any table definitions from extended classes
 	function getTableDefs() {
 		if (get_class($this)==__CLASS__) {
 			// We are a DatabaseMagicObject
 			return $this->table_defs;
+		} else if (count($this->actual_table_defs) > 0) {
+			// We already calculated the actual table defs.  Use those.
+			return $this->actual_table_defs;
 		} else {
-			// We are something that extends DatabaseMagicObject
+			// We are something that extends DatabaseMagicObject, and don't know the actual table defs
 			$extensionClass = get_parent_class($this);
 			$extension = new $extensionClass;
 			$extensionTableDefs = $extension->getTableDefs();
@@ -211,110 +342,22 @@ class DatabaseMagicObject {
 			}
 
 			$returnMe = array($myTableName => $mergedDefs);
+			// Cache the result
+			$this->actual_table_defs = $returnMe;
 			return $returnMe;
 		}
 	}
 
   /// Returns the name of the table that this object saves and loads under.
-  /// Prety easy function really.
+  /// Pretty easy function really.
   function getMyTableName() {
 		return getTableName($this->table_defs);
   }
 
-  /// "Adopts" another instance or extension of DatabaseMagicObject.
-  /// "Adopts" basically means that a relational table is created between this object's table and the
-  /// table of the object to be adopted, and an entry is placed in the relational table linking the two objects.
-  /// From this point on, the adopted object can be retrieved as part of a list by using the method
-  /// getChildren() on the adopting object.  Example:  A Category object "adopts" Product objects.
-  function adopt($child) {
-    $this->save(TRUE);
-    $child->save(TRUE);
-
-    $childTableDefs  = $child->getTableDefs();
-    $childID         = $child->getID();
-		$parentTableDefs = $this->getTableDefs();
-    $parentID        = $this->getID();
-
-    return doAdoption($parentTableDefs, $parentID, $childTableDefs, $childID);
+  /// An alias for the getPrimary() method.  \deprecated
+  function getID() {
+		return $this->getPrimary();
   }
-
-  /// Free an adopted child from this object
-  /// This function name is perfect in it's descriptiveness
-  function emancipate($child) {
-    $childTableDefs  = $child->getTableDefs();
-    $childID     = $child->getID();
-		$parentTableDefs = $this->getTableDefs();
-    $parentID    = $this->getID();
-
-    return doEmancipation($parentTableDefs, $parentID, $childTableDefs, $childID);
-  }
-
-  /// Sets the children of this class into proper order
-  function orderChildren($example, $ordering) {
-    $childTableDefs  = $example->getTableDefs();
-    $parentTableDefs = $this->getTableDefs();
-    $parentID    = $this->getID();
-
-    reorderChildren($parentTableDefs, $parentID, $childTableDefs, $ordering);
-  }
-
-  /// Retrieve a list of this object's "adopted" "children".
-  /// Use this function to retrieve a list of objects previously "adopted" by this object using the adopt() method.
-  /// $example can be the name of the class you want to retrieve, or an example object of the same type as those
-  /// children you want to retrieve.
-  /// Example:  $products = $mycategory->getChildren(new Product());
-  /// Example:  $products = $mycategory->getChildren("Product");
-  function getChildren($example, $parameters = NULL) {
-		if (is_object($example)) {
-			$prototype = clone $example;
-			$prototype->initialize();
-		} else if (is_string($example) && class_exists($example)) {
-			$prototype = new $example;
-		} else {
-			return NULL;
-		}
-
-    $parentTableDefs = $this->getTableDefs();
-    $parentID        = $this->getPrimary();
-    $childTableDefs  = $prototype->getTableDefs();
-
-    $list = getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters);
-
-    $children = array();
-    if (is_array($list)) {
-      foreach($list as $childid) {
-        $temp = clone $prototype;
-        $temp->__construct($childid);
-        $children[] = $temp;
-      }
-    }
-    return $children;
-  }
-
-	/// Retrieve an array of all the known IDs for all saved instances of this class
-	/// If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
-	function getAllPrimaries($limit=NULL, $offset=NULL, $params=NULL) {
-		$list = getAllIDs($this->getTableDefs(), $limit, $offset, $params);
-		return $list;
-	}
-
-	/// Retrieve an array of pre-loaded objects
-	function getAllLikeMe($limit=NULL, $offset=NULL, $params=NULL) {
-		$myDefs = $this->getTableDefs();
-		$list = getAllSomething($myDefs, "*", $limit, $offset, $params);
-		$key = findTableKey($myDefs);
-		$returnMe = array();
-
-		if (is_array($list)) {
-			foreach ($list as $data) {
-// 				print_r($data);
-				$temp = clone $this;
-				$temp->setAttribs($data);
-				$returnMe[$data[$key]] = $temp;
-			}
-		}
-		return $returnMe;
-	}
 
 	/// Dumps the contents of attribs via print_r()
 	/// Useful for debugging, but that's about it
@@ -323,6 +366,26 @@ class DatabaseMagicObject {
 		echo "Attributes for this ".get_class($this).":\n";;
 		print_r($this->attributes);
 		if ($pre) echo "</pre>\n";
+	}
+
+	/// An alias for the link() method.  \deprecated.
+	function adopt($child) {
+		return $this->link($child);
+	}
+
+	/// Alias for the deLink() method. \deprecated.
+	function emancipate($child) {
+		return $this->deLink($child);
+	}
+
+	/// Alias for the orderLinks() method.  \deprecated.
+	function orderChildren($example, $ordering) {
+		return $this->orderLinks($example, $ordering);
+	}
+
+	/// Alias for the getLinks() method.  \deprecated.
+	function getChildren($example, $parameters = NULL) {
+		return $this->getLinks($example, $parameters);
 	}
 
 }
