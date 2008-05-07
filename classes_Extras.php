@@ -279,7 +279,7 @@ class DatabaseMagicObjectDomForms extends DatabaseMagicObject {
 /**
  * This is an extension of DatabaseMagicObjectDomForms that merely provides a default table Primary key
  */
-class PrimaryDatabaseMagicObjectDomForms extends DatabaseMagicObjectForms {
+class PrimaryDatabaseMagicObjectDomForms extends DatabaseMagicObjectDomForms {
 	protected $table_defs = array("databasemagic" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
 }
 
