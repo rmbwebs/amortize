@@ -501,22 +501,25 @@ function getMapDefs($parentDefs, $childDefs) {
 function getChildrenList($parentTableDefs, $parentID, $childTableDefs, $params=NULL) {
   $parentTableName = getTableName($parentTableDefs);
   $childTableName  = getTableName($childTableDefs);
+  $childTableKey   = findKey($childTableDefs[$childTableName]);
   $tableName = getMapName($parentTableName, $childTableName);
   $extendedWhere = "";
   if ($params != NULL) {
     foreach($params as $key => $value) {
-      $extendedWhere .= " AND ".SQL_TABLE_PREFIX.$childTableName.".".$key."='".mysql_real_escape_string($value)."'";
+      $extendedWhere .= "\n    AND ".SQL_TABLE_PREFIX.$childTableName.".".$key."='".mysql_real_escape_string($value)."'";
     }
   }
-  $query  = "SELECT ".SQL_TABLE_PREFIX.$tableName.".childID FROM ".SQL_TABLE_PREFIX.$tableName.", ".SQL_TABLE_PREFIX.$childTableName.
-            " WHERE ".SQL_TABLE_PREFIX.$tableName.".parentID='".$parentID."' AND".
-            " ".SQL_TABLE_PREFIX.$childTableName.".".findActualTableKey($childTableName)."=".SQL_TABLE_PREFIX.$tableName.".childID ".$extendedWhere." ".
-            "ORDER BY ".SQL_TABLE_PREFIX.$tableName.".ordering";
+  $query = "SELECT ".SQL_TABLE_PREFIX.$childTableName.".".$childTableKey."\n  FROM ".SQL_TABLE_PREFIX.$childTableName."\n".
+           "  INNER JOIN ".SQL_TABLE_PREFIX.$tableName."\n".
+           "    ON ".SQL_TABLE_PREFIX.$childTableName.".".$childTableKey."=".SQL_TABLE_PREFIX.$tableName.".childID\n".
+           "  WHERE ".SQL_TABLE_PREFIX.$tableName.".parentID='".$parentID."'".$extendedWhere."\n".
+           "  ORDER BY ".SQL_TABLE_PREFIX.$tableName.".ordering";
+
   $data = makeQueryHappen(array($tableName => null), $query);
   if ($data) {
     $returnVal = array();
     foreach ($data as $row) {
-      $returnVal[] = $row['childID'];
+      $returnVal[] = $row[$childTableKey];
     }
     return $returnVal;
   } else {
