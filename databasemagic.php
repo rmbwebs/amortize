@@ -520,7 +520,7 @@ function getChildrenList($parentTableDefs, $parentID, $childTableDefs, $params=N
   if ($data) {
     $returnVal = array();
     foreach ($data as $row) {
-      $returnVal[$row[$childTableKey]] = $row;
+      $returnVal[] = $row;
     }
     return $returnVal;
   } else {
