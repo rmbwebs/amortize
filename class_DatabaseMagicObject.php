@@ -211,6 +211,22 @@ class DatabaseMagicObject {
 	 * $fam->getLinks("Person");  // Returns an Array that contains Bob and any other Persons linked in to the Smith Family \n
 	 */
 	function getLinks($example, $parameters = NULL) {
+		return doGetLinks($example, $parameters, false);
+	}
+	/**
+	 * Works in reverse to getLinks().
+	 * A->link(B); \n
+	 * C = B->getBackLinks("classname of A"); \n
+	 * C is an array that contains A \n
+	 */
+	function getBackLinks($example, $parameters = NULL) {
+		return doGetLinks($example, $parameters, true);
+	}
+
+	/**
+	 * Does the actual work for getLinks and getBackLinks
+	 */
+	function doGetLinks($example, $parameters = NULL, $backLinks=false) {
 		if (is_object($example)) {
 			$prototype = clone $example;
 			$prototype->initialize();
@@ -224,7 +240,11 @@ class DatabaseMagicObject {
 		$parentID        = $this->getPrimary();
 		$childTableDefs  = $prototype->getTableDefs();
 
-		$list = getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters);
+		if ($backLinks) {
+			$list =  getParentsList($parentTableDefs, $parentID, $childTableDefs, $parameters);
+		} else {
+			$list = getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters);
+		}
 
 		$children = array();
 		if (is_array($list)) {
@@ -235,17 +255,6 @@ class DatabaseMagicObject {
 			}
 		}
 		return $children;
-	}
-
-	/**
-	 * Works in reverse to getLinks().
-	 * A->link(B); \n
-	 * C = B->getBackLinks("classname of A"); \n
-	 * C is an array that contains A \n
-	 */
-	function getBackLinks($example, $parameters = NULL) {
-		// Write Me
-		return null;
 	}
 
 	/// Can be used to set the order that a call for links will return as.
