@@ -211,7 +211,7 @@ class DatabaseMagicObject {
 	 * $fam->getLinks("Person");  // Returns an Array that contains Bob and any other Persons linked in to the Smith Family \n
 	 */
 	function getLinks($example, $parameters = NULL) {
-		return doGetLinks($example, $parameters, false);
+		return $this->doGetLinks($example, $parameters, false);
 	}
 	/**
 	 * Works in reverse to getLinks().
@@ -220,7 +220,7 @@ class DatabaseMagicObject {
 	 * C is an array that contains A \n
 	 */
 	function getBackLinks($example, $parameters = NULL) {
-		return doGetLinks($example, $parameters, true);
+		return $this->doGetLinks($example, $parameters, true);
 	}
 
 	/**
