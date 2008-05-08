@@ -506,6 +506,14 @@ function getMapDefs($parentDefs, $childDefs) {
 }
 
 function getChildrenList($parentTableDefs, $parentID, $childTableDefs, $params=NULL) {
+	return getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params=NULL, "parentID", "childID");
+}
+
+function getParentsList($parentTableDefs, $parentID, $childTableDefs, $params=NULL) {
+	return getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params=NULL, "childID", "parentID");
+}
+
+function getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params=NULL, $parentMapName="parentID", $childMapName="childID") {
   $parentTableName = getTableName($parentTableDefs);
   $childTableName  = getTableName($childTableDefs);
   $childTableKey   = findKey($childTableDefs[$childTableName]);
@@ -519,8 +527,8 @@ function getChildrenList($parentTableDefs, $parentID, $childTableDefs, $params=N
   $query = "SELECT ".SQL_TABLE_PREFIX.$childTableName.".*\n".
            "  FROM ".SQL_TABLE_PREFIX.$childTableName."\n".
            "  INNER JOIN ".SQL_TABLE_PREFIX.$tableName."\n".
-           "    ON ".SQL_TABLE_PREFIX.$childTableName.".".$childTableKey."=".SQL_TABLE_PREFIX.$tableName.".childID\n".
-           "  WHERE ".SQL_TABLE_PREFIX.$tableName.".parentID='".$parentID."'".$extendedWhere."\n".
+           "    ON ".SQL_TABLE_PREFIX.$childTableName.".".$childTableKey."=".SQL_TABLE_PREFIX.$tableName.".".$childMapName."\n".
+           "  WHERE ".SQL_TABLE_PREFIX.$tableName.".".$parentMapName."='".$parentID."'".$extendedWhere."\n".
            "  ORDER BY ".SQL_TABLE_PREFIX.$tableName.".ordering";
 
   $data = makeQueryHappen(array($tableName => null), $query);
