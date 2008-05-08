@@ -3,6 +3,7 @@
 header("Content-type: text/html");
 
 include_once 'databasemagic.php';
+
 ?>
 <html>
 	<head>
@@ -17,8 +18,6 @@ include_once 'databasemagic.php';
 	</head>
 	<body>
 <?php
-
-
 
 class Book extends PrimaryDatabaseMagicObject {
 	protected $table_defs = array(

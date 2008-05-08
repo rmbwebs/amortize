@@ -59,15 +59,20 @@ function getTableCreateQuery($customDefs) {
   $header  = "CREATE TABLE `".SQL_TABLE_PREFIX.$tableName."` (\n  ";
   $comma   = "";
 
+	$pri = array();
+
   foreach ($table_def as $field => $details) {
     $creationDefiniton = getCreationDefinition($field, $details);
     $columns .= $comma.$creationDefiniton;
     $comma = ",\n  ";
+		if ($details[2] == "PRI") {
+			$pri[] = "`{$field}`";
+		}
   }
 
-  $pri = findKey($table_def);
+  //$pri = findKey($table_def);
 
-  if ($pri != NULL) { $columns .= $comma . "PRIMARY KEY (`".$pri."`)"; }
+  if (count($pri) > 0) { $columns .= $comma . "PRIMARY KEY (".implode(",", $pri).")"; }
 
   $footer = "\n) ENGINE=MyISAM DEFAULT CHARSET=latin1\n";
 
@@ -494,11 +499,10 @@ function getMapDefs($parentDefs, $childDefs) {
 	$childTableKeyDef = $childTableDefs[$childTableKey];
 
 	// We really only need the data type
-	$parentTableKeyDef = $parentTableKeyDef[0];
-	$childTableKeyDef = $childTableKeyDef[0];
+	$parentTableKeyDef = array($parentTableKeyDef[0], "NO", "PRI");
+	$childTableKeyDef = array($childTableKeyDef[0], "NO", "PRI");
 
 	return array(
-		'ID'       => array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment"),
 		'parentID' => $parentTableKeyDef,
 		'childID'  => $childTableKeyDef,
 		'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
@@ -565,16 +569,7 @@ function reorderChildren ($parentTableDefs, $parentID, $childTableDefs, $childOr
 function doAdoption($parentTableDefs, $parentID, $childTableDefs, $childID) {
 	$mapName = getMapName(getTableName($parentTableDefs), getTableName($childTableDefs));
 	$mapDefs = getMapDefs($parentTableDefs, $childTableDefs);
-	// Prevent adopting the same object twice
-
-	$family = getChildrenList($parentTableDefs, $parentID, $childTableDefs);
-	if ( (!is_array($family)) || ( array_search($childID, $family) === FALSE )) {
-		// Welcome to the family.
-		return sqlMagicPut(array($mapName => $mapDefs), array('parentID' => $parentID, 'childID' => $childID));
-	} else {
-		// Already in the family.
-		return TRUE;
-	}
+	return sqlMagicPut(array($mapName => $mapDefs), array('parentID' => $parentID, 'childID' => $childID));
 }
 
 function doEmancipation($parentTableDefs, $parentID, $childTableDefs, $childID) {
