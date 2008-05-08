@@ -134,7 +134,7 @@ foreach ( $bookReviews as $review ) {
 
 dbm_debug("info", "Loading a Review by itself, Review 1");
 $review = new Review(1);
-$review->dumpview();
+$review->dumpview(true);
 
 dbm_debug("info", "Determining which review this book is for. . .");
 $books = $review->getBackLinks("Book");
