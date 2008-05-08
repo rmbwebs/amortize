@@ -133,6 +133,17 @@ foreach ( $bookReviews as $review ) {
 }
 
 
+dbm_debug("info", "Loading a Review by itself, Review 1");
+$review = new Review(1);
+$review->dumpview();
+
+dbm_debug("info", "Determining which review this book is for. . .");
+$books = $review->getBackLinks("Book");
+foreach ($books as $book) {
+	$info = $book->getAttribs();
+	dbm_debug("info", "written about {$info['title']} by {$info['author']}.");
+}
+
 
 ?>
 	</body>
