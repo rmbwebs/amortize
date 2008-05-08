@@ -506,18 +506,28 @@ function getMapDefs($parentDefs, $childDefs) {
 }
 
 function getChildrenList($parentTableDefs, $parentID, $childTableDefs, $params=NULL) {
-	return getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params=NULL, "parentID", "childID");
+	return getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params, false);
 }
 
 function getParentsList($parentTableDefs, $parentID, $childTableDefs, $params=NULL) {
-	return getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params=NULL, "childID", "parentID");
+	return getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params, true);
 }
 
-function getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params=NULL, $parentMapName="parentID", $childMapName="childID") {
+function getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params=NULL, $reverse=false) {
   $parentTableName = getTableName($parentTableDefs);
   $childTableName  = getTableName($childTableDefs);
   $childTableKey   = findKey($childTableDefs[$childTableName]);
-  $tableName = getMapName($parentTableName, $childTableName);
+
+	if ($reverse) {
+		$tableName = getMapName($childTableName, $parentTableName);
+		$childMapName = "parentID";
+		$parentMapName = "childID";
+	} else {
+		$tableName = getMapName($parentTableName, $childTableName);
+		$childMapName = "childID";
+		$parentMapName = "parentID";
+	}
+
   $extendedWhere = "";
   if ($params != NULL) {
     foreach($params as $key => $value) {
