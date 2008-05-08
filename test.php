@@ -2,7 +2,7 @@
 
 header("Content-type: text/html");
 
-include_once 'databasemagic/databasemagic.php';
+include_once 'databasemagic.php';
 
 class Book extends PrimaryDatabaseMagicObject {
 	protected $table_defs = array(
