@@ -498,19 +498,20 @@ function getMapDefs($parentDefs, $childDefs) {
 	return array(
 		'parentID' => $parentTableKeyDef,
 		'childID'  => $childTableKeyDef,
+		'relation' => array("tinytext", "NO", "PRI"),
 		'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
 	);
 }
 
-function getChildrenList($parentTableDefs, $parentID, $childTableDefs, $params=NULL) {
-	return getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params, false);
+function getChildrenList($parentTableDefs, $parentID, $childTableDefs, $params=NULL, $relation=NULL) {
+	return getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params, false, $relation);
 }
 
 function getParentsList($parentTableDefs, $parentID, $childTableDefs, $params=NULL) {
-	return getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params, true);
+	return getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params, true, $relation);
 }
 
-function getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params=NULL, $reverse=false) {
+function getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params=NULL, $reverse=false, $relation=NULL) {
   $parentTableName = getTableName($parentTableDefs);
   $childTableName  = getTableName($childTableDefs);
   $childTableKey   = findKey($childTableDefs[$childTableName]);
@@ -526,6 +527,9 @@ function getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $para
 	}
 
   $extendedWhere = "";
+	if ($relation != NULL) {
+		$extendedWhere .= "\n    AND ".SQL_TABLE_PREFIX.$tableName.".relation='".mysql_real_escape_string($relation)."'";
+	}
   if ($params != NULL) {
     foreach($params as $key => $value) {
       $extendedWhere .= "\n    AND ".SQL_TABLE_PREFIX.$childTableName.".".$key."='".mysql_real_escape_string($value)."'";
@@ -559,16 +563,20 @@ function reorderChildren ($parentTableDefs, $parentID, $childTableDefs, $childOr
   // That should do it
 }
 
-function doAdoption($parentTableDefs, $parentID, $childTableDefs, $childID) {
+function doAdoption($parentTableDefs, $parentID, $childTableDefs, $childID, $relation=NULL) {
 	$mapName = getMapName(getTableName($parentTableDefs), getTableName($childTableDefs));
 	$mapDefs = getMapDefs($parentTableDefs, $childTableDefs);
-	return sqlMagicPut(array($mapName => $mapDefs), array('parentID' => $parentID, 'childID' => $childID));
+	$values = array('parentID' => $parentID, 'childID' => $childID);
+	if ($relation != NULL) { $values['relation'] = $relation; }
+	return sqlMagicPut(array($mapName => $mapDefs), $values);
 }
 
-function doEmancipation($parentTableDefs, $parentID, $childTableDefs, $childID) {
+function doEmancipation($parentTableDefs, $parentID, $childTableDefs, $childID, $relation=NULL) {
 	$mapName = getMapName(getTableName($parentTableDefs), getTableName($childTableDefs));
 	$mapDefs = getMapDefs($parentTableDefs, $childTableDefs);
-	return sqlMagicYank(array($mapName => $mapDefs), array('parentID' => $parentID, 'childID' => $childID));
+	$values = array('parentID' => $parentID, 'childID' => $childID);
+	if ($relation != NULL) { $values['relation'] = $relation; }
+	return sqlMagicYank(array($mapName => $mapDefs), $values);
 }
 
 

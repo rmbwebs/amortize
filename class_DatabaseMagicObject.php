@@ -170,7 +170,7 @@ class DatabaseMagicObject {
 	 * $fam->link($joe);  $fam->link($pam);\n
 	 * $people = $fam->getLinks("Person");  <--- Returns an array of Pam and Joe Person objects\n
 	 */
-	function link($subject) {
+	function link($subject, $relation=NULL) {
 		$this->save(TRUE);
 		$subject->save(TRUE);
 
@@ -179,19 +179,19 @@ class DatabaseMagicObject {
 		$parentTableDefs = $this->getTableDefs();
 		$parentID        = $this->getID();
 
-		return doAdoption($parentTableDefs, $parentID, $subjectTableDefs, $subjectID);
+		return doAdoption($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
 	}
 
 	/** Breaks a link previously created by link()
 	 * B will no longer be returned as part of A->getLinks() after A->deLink(B) is called.
 	 */
-	function deLink($subject) {
+	function deLink($subject, $relation=NULL) {
 		$subjectTableDefs  = $subject->getTableDefs();
 		$subjectID     = $subject->getID();
 		$parentTableDefs = $this->getTableDefs();
 		$parentID    = $this->getID();
 
-		return doEmancipation($parentTableDefs, $parentID, $subjectTableDefs, $subjectID);
+		return doEmancipation($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
 	}
 
 	/**
@@ -210,8 +210,8 @@ class DatabaseMagicObject {
 	 * $fam->getLinks("Dog");  // Returns an Array that contains Fido and any other Dogs linked in to the Smith Family \n
 	 * $fam->getLinks("Person");  // Returns an Array that contains Bob and any other Persons linked in to the Smith Family \n
 	 */
-	function getLinks($example, $parameters = NULL) {
-		return $this->doGetLinks($example, $parameters, false);
+	function getLinks($example, $parameters = NULL, $relation=NULL) {
+		return $this->doGetLinks($example, $parameters, $relation, false);
 	}
 	/**
 	 * Works in reverse to getLinks().
@@ -219,14 +219,14 @@ class DatabaseMagicObject {
 	 * C = B->getBackLinks("classname of A"); \n
 	 * C is an array that contains A \n
 	 */
-	function getBackLinks($example, $parameters = NULL) {
-		return $this->doGetLinks($example, $parameters, true);
+	function getBackLinks($example, $parameters=NULL, $relation=NULL) {
+		return $this->doGetLinks($example, $parameters, $relation, true);
 	}
 
 	/**
 	 * Does the actual work for getLinks and getBackLinks
 	 */
-	function doGetLinks($example, $parameters = NULL, $backLinks=false) {
+	function doGetLinks($example, $parameters = NULL, $relation = NULL, $backLinks=false) {
 		if (is_object($example)) {
 			$prototype = clone $example;
 			$prototype->initialize();
@@ -241,9 +241,9 @@ class DatabaseMagicObject {
 		$childTableDefs  = $prototype->getTableDefs();
 
 		if ($backLinks) {
-			$list =  getParentsList($parentTableDefs, $parentID, $childTableDefs, $parameters);
+			$list =  getParentsList($parentTableDefs, $parentID, $childTableDefs, $parameters, $relation);
 		} else {
-			$list = getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters);
+			$list = getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters, $relation);
 		}
 
 		$children = array();
