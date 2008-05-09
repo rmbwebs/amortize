@@ -4,6 +4,21 @@ header("Content-type: text/html");
 
 include_once 'databasemagic.php';
 
+?>
+<html>
+	<head>
+		<title>DatabaseMagic Testing Script</title>
+		<style>
+			pre.info {font-variant: small-caps; color: green;}
+			pre.query {border: 2px solid; margin-left: 1em;}
+			pre.regular {border-color: blue;}
+			pre.system {border-color: red; margin-left: 2em;}
+			pre.error { font-weight: bold; color: red;}
+		</style>
+	</head>
+	<body>
+<?php
+
 class Book extends PrimaryDatabaseMagicObject {
 	protected $table_defs = array(
 		'myBooks' => array(
@@ -26,7 +41,7 @@ class Review extends PrimaryDatabaseMagicObject {
 }
 
 
-echo "Creating a fresh book<br />";
+dbm_debug("info", "Creating a fresh book");
 $aBook = new Book();
 $aBook->dumpview(true);
 
@@ -36,17 +51,17 @@ $bookAttributes = array(
 	'title'  => "Monster Hunter International",
 	'pubyear' => "2007"
 );
-echo "Setting book attributes . . . ";
+
+dbm_debug("info", "Setting book attributes . . . ");
 $aBook->setAttribs($bookAttributes);
-echo "done.<br />";
+dbm_debug("info", "done.");
 $aBook->dumpview(true);
-echo "Saving book . . . ";
+dbm_debug("info", "Saving book . . . ");
 $aBook->save();
-echo "done.<br />";
+dbm_debug("info", "done.");
 $aBook->dumpview(true);
 
-
-echo "<br /><br /><br />Creating a fresh book<br />";
+dbm_debug("info", "Creating a fresh book");
 $aBook = new Book();
 $aBook->dumpview(true);
 
@@ -56,26 +71,32 @@ $bookAttributes = array(
 	'title'  => "The Art of the Rifle",
 	'pubyear' => "2002"
 );
-echo "Setting book attributes . . . ";
+dbm_debug("info", "Setting book attributes . . . ");
 $aBook->setAttribs($bookAttributes);
-echo "done.<br />";
+dbm_debug("info", "done.");
+
 $aBook->dumpview(true);
-echo "Saving book . . . ";
+
+dbm_debug("info", "Saving book . . . ");
 $aBook->save();
-echo "done.<br />";
+dbm_debug("info", "done.");
+
 $aBook->dumpview(true);
 
 
+dbm_debug("info", "Loading book 2 . . . ");
+$greatBook = new Book(2);  // Loads Cooper's book from the database
+dbm_debug("info", "done.");
 
-echo "<br /><br /><br />Loading book 2 . . . ";
-$greatBook = new Book("2");  // Loads Cooper's book from the database
-echo "done.<br />";
 $greatBook->dumpview(true);
-echo "Creating a fresh Review . . . ";
+
+dbm_debug("info", "Creating a fresh Review . . . ");
 $myReview = new Review;    // Create a new review
-echo "Done.<br />";
+dbm_debug("info", "Done.");
+
 $myReview->dumpview(true);
-echo "Setting attributes on the Review . . . ";
+
+dbm_debug("info", "Setting attributes on the Review . . . ");
 $myReview->setAttribs(
 	array(
 		'reviewtext' => "RIP, Colonel.  Thanks for the great book.",
@@ -83,29 +104,46 @@ $myReview->setAttribs(
 		'revdate'    => "2008-02-03"
 	)
 );
-echo "done.<br />";
+dbm_debug("info", "done.");
+
 $myReview->dumpview(true);
 
 
-echo "Linking the Review. . .<br />";
-
-// Saves the review and uses the relational database to link
-// this review with this book (creating the relational databases as needed)
+dbm_debug("info", "Linking the Review. . .");
 $greatBook->link($myReview);
-echo "done.<br />";
+dbm_debug("info", "done.");
+
 $greatBook->dumpview(true);
+
 $myReview->dumpview(true);
 
 
+dbm_debug("info", "Creating a new Book, telling it to load Book 2");
 
 $book = new Book(2);  // Load AotR
+dbm_debug("info", "Getting all reviews for Book 2. . .");
 $bookReviews = $book->getLinks("Review");
+dbm_debug("info", "Done");
+
 foreach ( $bookReviews as $review ) {
 	$info = $review->getAttribs();
-	echo "Book Review by ".$info['reviewer']."<br />";
-	echo "\"".$info['reviewtext']."\"<br /><br />";
+ dbm_debug("info", "Book Review by ".$info['reviewer']."");
+ dbm_debug("info", "\"".$info['reviewtext']."\"");
 }
 
 
+dbm_debug("info", "Loading a Review by itself, Review 1");
+$review = new Review(1);
+$review->dumpview(true);
+
+dbm_debug("info", "Determining which review this book is for. . .");
+$books = $review->getBackLinks("Book");
+foreach ($books as $book) {
+	$info = $book->getAttribs();
+	dbm_debug("info", "written about {$info['title']} by {$info['author']}.");
+}
+
 
 ?>
+	</body>
+</html>

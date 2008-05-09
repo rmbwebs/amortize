@@ -19,6 +19,15 @@
 	along with Database Magic.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************/
 
+include_once dirname(__FILE__) . '/../databasemagicconfig.php';
+
+include_once dirname(__FILE__) . '/class_DatabaseMagicObject.php';
+
+function dbm_debug($class, $message) {
+	if (DBM_DEBUG) {
+		echo "<pre class=\"$class\">$message</pre>\n";
+	}
+}
 
 set_error_handler ("do_backtrace");
 function do_backtrace ($one, $two) {
@@ -26,10 +35,6 @@ function do_backtrace ($one, $two) {
 	debug_print_backtrace();
 	echo "</pre>\n\n";
 }
-
-include_once dirname(__FILE__) . '/../databasemagicconfig.php';
-
-include_once dirname(__FILE__) . '/class_DatabaseMagicObject.php';
 
 define('E_SQL_CANNOT_CONNECT', "
 <h2>Cannot connect to SQL Server</h2>
@@ -223,13 +228,15 @@ function updateTable($customDefs) {
     if ($actualKey) {
       $query  = "ALTER TABLE ".SQL_TABLE_PREFIX.$tableName."\n";
       $query .= "  DROP PRIMARY KEY";
+      dbm_debug("server query", $query);
       if (! mysql_query($query, $sqlConnection) ) return FALSE;
     }
     if ($wantedKey) {
       $query  = "ALTER TABLE ".SQL_TABLE_PREFIX.$tableName."\n";
       $query .= "  ADD PRIMARY KEY (".$wantedKey.")";
+      dbm_debug("server query", $query);
       if (! mysql_query($query, $sqlConnection) ) return FALSE;
-}
+    }
   }
 
   // Run through the wanted definition for what needs changing
@@ -340,29 +347,28 @@ function sqlMagicGet($customDefs, $params) {
 }
 
 function makeQueryHappen($customDefs, $query) {
-//  echo "<p style='color:red;'>$query</p>\n";
-//  echo "<pre style='color:red;'>";
-//  debug_print_backtrace();
-//  echo "</pre>\n";
-
 
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
-  //echo "Running Query: \n<font color=red>\n". $query . "\n</font><br />\n";
+	dbm_debug("regular query", $query);
   $sql = getSQLConnection();
   $result = mysql_query($query, $sql);
   if (! $result) {
     // We have a problem here
     if (! table_exists($tableName)) {
+			dbm_debug("error", "Query Failed . . . table $tableName doesn't exist.");
       createTable($customDefs);
     } else {
       if ($customDefs[$tableName] != getActualTableDefs($tableName)) {
+				dbm_debug("error", "Query Failed . . . table $tableName needs updating.");
         updateTable($customDefs);
       }
     }
+		dbm_debug("regular query", $query);
     $result = mysql_query($query, $sql);
     if (! $result) {
 			// We tried :(
+			dbm_debug("error", "Query Retry Failed . . . table $tableName could not be fixed.");
       return FALSE;
     }
   }
@@ -402,12 +408,15 @@ function createTable($customDefs) {
 	$tableName = $tableNames[0];
 	$query = getTableCreateQuery($customDefs);
 	if ($query == NULL) return FALSE;
-	//echo "Proper table does not exist.  Creating: \n<font color=red>\n". $query . "\n</font><br />\n";
+	dbm_debug("info", "Creating table $tableName");
+	dbm_debug("system query", $query);
 	$sql = getSQLConnection();
 	$result = mysql_query($query, $sql) OR die($query . "\n\n" . mysql_error());
 	if ($result) {
+		dbm_debug("info", "Success creating table $tableName");
 		return TRUE;
 	} else {
+		dbm_debug("info", "Failed creating table $tableName");
 		return FALSE;
 	}
 }

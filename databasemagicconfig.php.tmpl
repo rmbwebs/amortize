@@ -1,10 +1,12 @@
 <?php
   // Fill me in
-  $sqlHost     = "";  // Hostname of your SQL server, or "localhost"
-  $sqlUser     = "";  // SQL user name
-  $sqlPass     = "";  // SQL password
-  $sqlDatabase = "";  // Database name on SQL server
-  $sqlPrefix   = "";  // A prefix to use on all table names, optional but it help you sort your tables
+  $sqlHost     = "";     // Hostname of your SQL server, or "localhost"
+  $sqlUser     = "";     // SQL user name
+  $sqlPass     = "";     // SQL password
+  $sqlDatabase = "";     // Database name on SQL server
+  $sqlPrefix   = "";     // A prefix to use on all table names, optional but it help you sort your tables
+  $dbmDebug    = false;   // Set to true if you want to enable debugging output
+
 
   //SQL options
   define('SQL_HOST',         $sqlHost);
@@ -12,4 +14,7 @@
   define('SQL_PASS',         $sqlPass);
   define('SQL_DBASE',        $sqlDatabase);
   define('SQL_TABLE_PREFIX', $sqlPrefix);
+
+	//General Options
+	define('DBM_DEBUG',        $dbmDebug);
 ?>
