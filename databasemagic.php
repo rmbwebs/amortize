@@ -19,8 +19,14 @@
 	along with Database Magic.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************/
 
+include_once dirname(__FILE__) . '/../databasemagicconfig.php';
+
+include_once dirname(__FILE__) . '/class_DatabaseMagicObject.php';
+
 function dbm_debug($class, $message) {
-	echo "<pre class=\"$class\">$message</pre>\n";
+	if (DBM_DEBUG) {
+		echo "<pre class=\"$class\">$message</pre>\n";
+	}
 }
 
 set_error_handler ("do_backtrace");
@@ -29,10 +35,6 @@ function do_backtrace ($one, $two) {
 	debug_print_backtrace();
 	echo "</pre>\n\n";
 }
-
-include_once dirname(__FILE__) . '/../databasemagicconfig.php';
-
-include_once dirname(__FILE__) . '/class_DatabaseMagicObject.php';
 
 define('E_SQL_CANNOT_CONNECT', "
 <h2>Cannot connect to SQL Server</h2>
