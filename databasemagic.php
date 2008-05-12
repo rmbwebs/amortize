@@ -507,7 +507,7 @@ function getMapDefs($parentDefs, $childDefs) {
 	return array(
 		'parentID' => $parentTableKeyDef,
 		'childID'  => $childTableKeyDef,
-		'relation' => array("tinytext", "NO", "PRI"),
+		'relation' => array("varchar(20)", "YES", "PRI"),
 		'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
 	);
 }
@@ -516,7 +516,7 @@ function getChildrenList($parentTableDefs, $parentID, $childTableDefs, $params=N
 	return getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params, false, $relation);
 }
 
-function getParentsList($parentTableDefs, $parentID, $childTableDefs, $params=NULL) {
+function getParentsList($parentTableDefs, $parentID, $childTableDefs, $params=NULL, $relation=NULL) {
 	return getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params, true, $relation);
 }
 
@@ -536,7 +536,7 @@ function getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $para
 	}
 
   $extendedWhere = "";
-	if ($relation != NULL) {
+	if ($relation !== true) {  //True means match all, so exclude this test
 		$extendedWhere .= "\n    AND ".SQL_TABLE_PREFIX.$tableName.".relation='".mysql_real_escape_string($relation)."'";
 	}
   if ($params != NULL) {
