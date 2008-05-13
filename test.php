@@ -56,51 +56,43 @@ $pub->save();
 $pub->dumpview(true);
 
 
-dbm_debug("info", "Creating a fresh book");
+dbm_debug("info", "Creating Monster Hunter Internationl");
 $aBook = new Book();
-$aBook->dumpview(true);
-
-$bookAttributes = array(
-	'isbn'   => "0-7414-4456-9",
-	'author' => "Larry Correia",
-	'title'  => "Monster Hunter International",
-	'pubyear' => "2007"
+$aBook->setAttribs(
+	array(
+		'isbn'   => "0-7414-4456-9",
+		'author' => "Larry Correia",
+		'title'  => "Monster Hunter International",
+		'pubyear' => "2007"
+	)
 );
-
-dbm_debug("info", "Setting book attributes . . . ");
-$aBook->setAttribs($bookAttributes);
-dbm_debug("info", "done.");
 $aBook->dumpview(true);
 dbm_debug("info", "Saving book . . . ");
 $aBook->save();
-dbm_debug("info", "done.");
+dbm_debug("info", "done.  ");
 $aBook->dumpview(true);
 
-dbm_debug("info", "Creating a fresh book");
+
+dbm_debug("info", "Creating The Art of the Rifle");
 $aBook = new Book();
-$aBook->dumpview(true);
-
-$bookAttributes = array(
-	'isbn'   => "9781581603071",
-	'author' => "Jeff Cooper",
-	'title'  => "The Art of the Rifle",
-	'pubyear' => "2002"
+$aBook->setAttribs(
+	array(
+		'isbn'   => "9781581603071",
+		'author' => "Jeff Cooper",
+		'title'  => "The Art of the Rifle",
+		'pubyear' => "2002"
+	)
 );
-dbm_debug("info", "Setting book attributes . . . ");
-$aBook->setAttribs($bookAttributes);
-dbm_debug("info", "done.");
-
 $aBook->dumpview(true);
-
 dbm_debug("info", "Saving book . . . ");
 $aBook->save();
-dbm_debug("info", "done.");
-
+dbm_debug("info", "done.  ");
 $aBook->dumpview(true);
 
 
-$otherbook = new Book();
-$otherbook->setAttribs(
+dbm_debug("info", "Creating The Revolution: A Manifesto");
+$aBook = new Book();
+$aBook->setAttribs(
 	array(
 		'title'   => "The Revolution: A Manifesto",
 		'isbn'    => "0-446-53751-9",
@@ -108,9 +100,12 @@ $otherbook->setAttribs(
 		'pubyear' => "2008"
 	)
 );
-$otherbook->save();
-dbm_debug("info", "Third book:");
-$otherbook->dumpview(true);
+$aBook->dumpview(true);
+dbm_debug("info", "Saving book . . . ");
+$aBook->save();
+dbm_debug("info", "done.  ");
+$aBook->dumpview(true);
+
 
 
 dbm_debug("info", "Loading book 2 . . . ");
