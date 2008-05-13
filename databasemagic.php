@@ -536,7 +536,7 @@ function getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $para
 	}
 
   $extendedWhere = "";
-	if ($relation !== true) {  //True means match all, so exclude this test
+	if ($relation !== true) {  // True means match all, so exclude this test
 		$extendedWhere .= "\n    AND ".SQL_TABLE_PREFIX.$tableName.".relation='".mysql_real_escape_string($relation)."'";
 	}
   if ($params != NULL) {
@@ -544,7 +544,7 @@ function getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $para
       $extendedWhere .= "\n    AND ".SQL_TABLE_PREFIX.$childTableName.".".$key."='".mysql_real_escape_string($value)."'";
     }
   }
-  $query = "SELECT ".SQL_TABLE_PREFIX.$childTableName.".*\n".
+  $query = "SELECT DISTINCT ".SQL_TABLE_PREFIX.$childTableName.".*\n".
            "  FROM ".SQL_TABLE_PREFIX.$childTableName."\n".
            "  INNER JOIN ".SQL_TABLE_PREFIX.$tableName."\n".
            "    ON ".SQL_TABLE_PREFIX.$childTableName.".".$childTableKey."=".SQL_TABLE_PREFIX.$tableName.".".$childMapName."\n".

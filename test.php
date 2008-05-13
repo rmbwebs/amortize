@@ -217,7 +217,7 @@ foreach ($books as $book) {
 	$book->dumpview(true);
 }
 
-dbm_debug("info", "Attempting to find all linked books");
+dbm_debug("info", "Attempting to find all linked books (should be all three books with no repeats)");
 $books = $publisher->getLinks("Book", true);
 foreach ($books as $book) {
 	$book->dumpview(true);
