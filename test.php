@@ -67,11 +67,16 @@ $aBook->save();
 dbm_debug("info", "done.  ");
 $aBook->dumpview(true);
 $id = $aBook->getPrimary();
-dbm_debug("info", "The database gave this book a key value of {$id}.  Loading Book({$id}). . .");
+dbm_debug("info", "Upon saving, the database gave this book a key value of {$id}.  We will load Book({$id}) for comparison to the original. . .");
 $newBook = new Book($id);
 dbm_debug("info", "Comparing the two:");
 $aBook->dumpview(true);
 $newBook->dumpview(true);
+if ($aBook->getAttribs() == $newBook->getAttribs()) {
+	dbm_debug("info", "Loaded data matches saved data.");
+} else {
+	dbm_debug("error", "The object loaded from the database does not match what was saved to the database.");
+}
 
 
 dbm_debug("info", "Creating the Book \"The Art of the Rifle\"");
