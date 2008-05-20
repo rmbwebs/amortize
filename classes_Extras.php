@@ -322,24 +322,24 @@ start;
 			// Dropdown box
 			$size = (count($restrictions) <= 4) ? " size=\"".count($restrictions)."\"" : "";
 			echo <<<open
-				<select class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input" name="{$field}"{$size}>\n
+		<select class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input" name="{$field}"{$size}>\n
 open;
 			foreach ($restrictions as $option => $text) {
 				$selected = ($option == $value) ? " selected" : "";
 				echo <<<option
-					<option value="{$option}"{$selected}>{$text}</option>\n
+			<option value="{$option}"{$selected}>{$text}</option>\n
 option;
 			}
 			echo <<<close
-				</select>\n
+		</select>\n
 close;
 		} else if ($restrictions == "textarea") {
 			echo <<<textarea
-				<textarea name="{$field}" class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input">{$value}</textarea>\n
+		<textarea name="{$field}" class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input">{$value}</textarea>\n
 textarea;
 		} else {
 		echo <<<input
-			<input name="{$field}" class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input" value="{$value}">
+		<input name="{$field}" class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input" value="{$value}">\n
 input;
 			}
 
