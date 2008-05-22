@@ -437,7 +437,7 @@ function buildWhereClause($params=null) {
 	$whereClause = "WHERE ";
 	foreach ($params as $field => $target) {
 		foreach ($target as $comparator => $value) {
-			$whereClause .= "`{$field}` {$comparator} '{$value}' AND";
+			$whereClause .= "`{$field}` {$comparator} '{$value}' AND ";
 		}
 	}
 	// Pull the final " AND" from the whereclause
