@@ -216,8 +216,8 @@ class DatabaseMagicObject {
 	 * $fam->getLinks("Dog");  // Returns an Array that contains Fido and any other Dogs linked in to the Smith Family \n
 	 * $fam->getLinks("Person");  // Returns an Array that contains Bob and any other Persons linked in to the Smith Family \n
 	 */
-	function getLinks($example, $relation=NULL, $parameters = NULL) {
-		return $this->doGetLinks($example, $relation, $parameters, false);
+	function getLinks($example, $parameters = NULL, $relation=NULL) {
+		return $this->doGetLinks($example, $parameters, $relation, false);
 	}
 	/**
 	 * Works in reverse to getLinks().
@@ -225,14 +225,14 @@ class DatabaseMagicObject {
 	 * C = B->getBackLinks("classname of A"); \n
 	 * C is an array that contains A \n
 	 */
-	function getBackLinks($example, $relation=NULL, $parameters=NULL) {
-		return $this->doGetLinks($example, $relation, $parameters, true);
+	function getBackLinks($example, $parameters=NULL, $relation=NULL) {
+		return $this->doGetLinks($example, $parameters, $relation, true);
 	}
 
 	/**
 	 * Does the actual work for getLinks and getBackLinks
 	 */
-	function doGetLinks($example, $relation = NULL, $parameters = NULL, $backLinks=false) {
+	function doGetLinks($example, $parameters = NULL, $relation = NULL, $backLinks=false) {
 		if (is_object($example)) {
 			$prototype = clone $example;
 			$prototype->initialize();
