@@ -204,7 +204,6 @@ class DatabaseMagicObjectForms extends DatabaseMagicObject {
 
 	protected $input_restrictions = NULL;
 
-
 	/**
 	 * Generates fully-styleable markup for displaying this object
 	 * $which is an array that tells which fields to display
@@ -252,8 +251,6 @@ display;
 	}
 
 
-
-
 	/**
 	 * Creates an input form from the object columns
 	 * $which is an array that tells what columns to show
@@ -269,7 +266,7 @@ display;
 		$attribs = $this->getAttribs();
 
 		echo <<<FORMOPEN
-<form id="{$classname}{$primary}" class="{$classname}" {$actionString} method="POST">\n
+<form id="{$classname}_{$primary}" class="{$classname}" {$actionString} method="POST">\n
 FORMOPEN;
 
 		foreach ($which as $field) {
@@ -305,7 +302,6 @@ FORMCLOSE;
 	}
 
 
-
 	function inputField($field) {
 		$classname = get_class($this);
 		$primary   = $this->getPrimary();
@@ -333,7 +329,7 @@ option;
 			echo <<<close
 		</select>\n
 close;
-		} else if ($restrictions == "textarea") {
+} else if ($restrictions == "textarea") {
 			echo <<<textarea
 		<textarea name="{$field}" class="{$classname}_{$field}_input" id="{$classname}_{$primary}_{$field}_input">{$value}</textarea>\n
 textarea;

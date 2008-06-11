@@ -25,7 +25,13 @@ include_once dirname(__FILE__) . '/class_DatabaseMagicObject.php';
 
 function dbm_debug($class, $message) {
 	if (DBM_DEBUG) {
-		echo "<pre class=\"$class\">$message</pre>\n";
+		echo "<pre class=\"$class\">\n";
+		if (is_string($message)) {
+			echo $message;
+		} else {
+			print_r($message);
+		}
+		echo "\n</pre>\n";
 	}
 }
 
@@ -160,22 +166,17 @@ function getCreationDefinition($field, $details) {
   return $return;
 }
 
+function getTableColumnDefs($customDefs) {
+	$tableName = getTableName($customDefs);
+	return (isset($customDefs[$tableName])) ? $customDefs[$tableName] : array();
+}
+
 /**
  * function getTableColumns(table definition) {
  * takes a table name and returns an array of table column names
  */
 function getTableColumns($customDefs) {
-	$tableNames = array_keys($customDefs);
-	$tableName = $tableNames[0];
-
-	if (! isset($customDefs[$tableName])) {
-		return FALSE;
-	}
-	$table_def = $customDefs[$tableName];
-
-	$returnVal = array_keys($table_def);
-
-	return $returnVal;
+	return array_keys(getTableColumnDefs($customDefs));
 }
 
 function findActualTableKey($tableName) {
@@ -279,7 +280,7 @@ function sqlMagicYank($customDefs, $params) {
 	$tableName = $tableNames[0];
 
 	$whereClause = buildWhereClause($params);
-	$query = "DELETE FROM ".SQL_TABLE_PREFIX.$tableName.$whereClause;
+	$query = "DELETE FROM ".SQL_TABLE_PREFIX.$tableName." ".$whereClause;
 	$data = makeQueryHappen($customDefs, $query);
 
 	if ($data) return TRUE;
@@ -301,6 +302,10 @@ function sqlMagicPut($customDefs, $data) {
   $valueList  = "(";
   $comma      = "";
   foreach ($data as $column => $value) {
+		// handle the table column type "set"
+		if (is_array($value)) {
+			$value = implode(',', $value);
+		}
     $columnList .= $comma."`".$column."`";
     $valueList  .= $comma.'"'.$value.'"';
     $comma = ", ";
@@ -580,11 +585,12 @@ function doAdoption($parentTableDefs, $parentID, $childTableDefs, $childID, $rel
 	return sqlMagicPut(array($mapName => $mapDefs), $values);
 }
 
-function doEmancipation($parentTableDefs, $parentID, $childTableDefs, $childID, $relation=NULL) {
+function doEmancipation($parentTableDefs, $parentID, $childTableDefs, $childID=NULL, $relation=NULL) {
 	$mapName = getMapName(getTableName($parentTableDefs), getTableName($childTableDefs));
 	$mapDefs = getMapDefs($parentTableDefs, $childTableDefs);
-	$values = array('parentID' => $parentID, 'childID' => $childID);
-	if ($relation != NULL) { $values['relation'] = $relation; }
+	$values = array('parentID' => $parentID);
+	if (!is_null($childID))  { $values['childID']  = $childID;  }
+	if (!is_null($relation)) { $values['relation'] = $relation; }
 	return sqlMagicYank(array($mapName => $mapDefs), $values);
 }
 
@@ -592,6 +598,17 @@ function doEmancipation($parentTableDefs, $parentID, $childTableDefs, $childID, 
 function getTableName($defs) {
 	$tableNames = array_keys($defs);
 	return $tableNames[0];
+}
+
+function getInitial($columnDef) {
+	if (is_array($columnDef)) {
+		$columnDef = $columnDef[0];
+	}
+	if (strtoupper(substr($columnDef, 0, 3)) == "SET") {
+		return array();
+	} else {
+	return "";
+	}
 }
 
 ?>

@@ -46,7 +46,7 @@ class DatabaseMagicObject {
 
 	/// Calls initialize() and calls load($id) if $id != null.
   function __construct($id = NULL) {
-    $this->initialize();
+    $this->initialize($id);
     if ($id != NULL) {
       $this->load($id);
     }
@@ -54,20 +54,21 @@ class DatabaseMagicObject {
 
 	/// Sets all the attributes to blank and the table key to null.
 	/// used for initializing new blank objects.
-	function initialize() {
+	function initialize($id=NULL) {
 		if ((!is_array($this->table_defs)) && (is_string($this->table_defs))) {
 			$tablename = $this->table_defs;
 			$this->table_defs = array($tablename => getActualTableDefs($tablename));
 		}
 		$defs = $this->getTableDefs();
 		if (is_array($defs)) {
-			$cols = getTableColumns($this->getTableDefs());
-			foreach ($cols as $col) {
-				$this->attributes[$col] = "";
+			$cols = getTableColumnDefs($defs);
+			foreach ($cols as $col => $coldef) {
+				$this->attributes[$col] = getInitial($coldef);
 				$this->status[$col] = "clean";
 			}
-			$key = findTableKey($this->getTableDefs());
-			$this->attributes[$key] = NULL;
+			$key = findTableKey($defs);
+			$this->attributes[$key] = $id;
+			$this->status[$key] = "dirty";
 		}
 	}
 
@@ -198,6 +199,23 @@ class DatabaseMagicObject {
 		$parentID    = $this->getID();
 
 		return doEmancipation($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
+	}
+
+	/** Breaks links to all previously linked $example.
+	 * $example can be either a string of the classname, or an instance of the class itself
+	 */
+	function deLinkAll($example, $relation=NULL) {
+		if (is_string($example)) {
+			$subject = new $example;
+		} else {
+			$subject = $example;
+		}
+		$subjectTableDefs  = $subject->getTableDefs();
+		$subjectID     = $subject->getID();
+		$parentTableDefs = $this->getTableDefs();
+		$parentID    = $this->getID();
+
+		return doEmancipation($parentTableDefs, $parentID, $subjectTableDefs, NULL, $relation);
 	}
 
 	/**
