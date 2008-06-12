@@ -151,10 +151,15 @@ class DatabaseMagicObject {
 
   /// Sets attribute data for this object.
   function setAttribs($info) {
-    $columns = getTableColumns($this->getTableDefs());
+    $columns = $this->getTableDefs();
+    $columns = $columns[getTableName($columns)];
     $returnVal = FALSE;
-    foreach ($columns as $column) {
+    foreach ($columns as $column => $def) {
+			$def = (is_array($def)) ? $def[0] : $def;
       if (isset($info[$column])) {
+				if (is_array($info[$column])) { // Filter HTML type arrays to support setAttribs($_POST);
+					$info[$column] = valuesFromSet($info[$column], $def);
+				}
         $this->attributes[$column] = $info[$column];
         $returnVal = TRUE;
 				$this->status[$column] = "dirty";

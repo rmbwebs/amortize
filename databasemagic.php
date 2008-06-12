@@ -287,11 +287,60 @@ function sqlMagicYank($customDefs, $params) {
 	else       return FALSE;
 }
 
+function sqlDataPrep($data, $columnDefs) {
+	foreach ($data as $colname => $value) {
+		if (is_array($value)) { // We likely have a SET column here
+			$value = array_keys($value, true);
+			$value = implode(',', $value);
+			$data[$colname] = $value;
+		}
+	}
+	return $data;
+}
+
+function sqlDataDePrep($data, $columnDefs) {
+	foreach ($columnDefs as $colname => $def) {
+		$def = (is_array($def)) ? $def[0] : $def;
+		dbm_debug("info", strtoupper(substr($def, 0, 3))." for $colname");
+		if ((strtoupper(substr($def, 0, 3)) == "SET") && array_key_exists($colname, $data)) {
+			$values = explode(',', $data[$colname]);
+			$data[$colname] = valuesFromSet($values, $def);
+		}
+	}
+	return $data;
+}
+
+function valuesFromSet($truevalues, $def) {
+	/* $truevalues can be in either of two formats, OPTION=>true,OPTION2=>false or 0=>OPTION,1=>OPTION2
+	 * This is to accomodate one of the goals of this software, which is to always allow setAttribs($_POST)
+	 */
+	 // Check format of $truevalues
+	if ((count(array_keys($truevalues, true, true)) + count(array_keys($truevalues, false, true))) == count($truevalues)) {
+		// Truevalues is an array composed entirely of true and false values. Convert!
+		$truevalues = array_keys($truevalues, true, true);
+		// Why not simply return $truevalues here?  Because we want to ensure that we include all the possibles in the return
+	}
+	$returnMe = array();
+	preg_match("/\((.*)\)/", $def, $match); // Strip the list of possibles from the column def
+	preg_match_all("/[\"']([^'\"]+)[\"'],*/", $match[1], $possibles); // Split the possibles into an array
+	$possibles = (isset($possibles[1])) ? $possibles[1] : array();  // The array we want is stored in position 1
+	foreach ($possibles as $possible) {
+		$returnMe[$possible] = false; // set default values
+	}
+	foreach ($truevalues as $truevalue) {
+		if (isset($returnMe[$truevalue])) { // Filter junk from $truevalues
+			$returnMe[$truevalue] = true; // set true for the values we want
+		}
+	}
+	return $returnMe;
+}
+
 function sqlMagicPut($customDefs, $data) {
 	$tableNames = array_keys($customDefs);
 	$tableName = $tableNames[0];
 
   $data = sqlFilter($data);
+  $data = sqlDataPrep($data, $customDefs[$tableName]);
   $key = findTableKey($customDefs);
   if ( ($key) && (isset($data[$key])) && (((is_numeric($data[$key]))&&($data[$key] == 0))  || ($data[$key] == NULL)) ) {
     $query = "INSERT ";
@@ -302,10 +351,6 @@ function sqlMagicPut($customDefs, $data) {
   $valueList  = "(";
   $comma      = "";
   foreach ($data as $column => $value) {
-		// handle the table column type "set"
-		if (is_array($value)) {
-			$value = implode(',', $value);
-		}
     $columnList .= $comma."`".$column."`";
     $valueList  .= $comma.'"'.$value.'"';
     $comma = ", ";
@@ -314,23 +359,6 @@ function sqlMagicPut($customDefs, $data) {
   $valueList  .= ")";
   $query .= "INTO ".SQL_TABLE_PREFIX.$tableName."\n  ".$columnList."\n  VALUES\n  ".$valueList;
   return makeQueryHappen($customDefs, $query);
-}
-
-function sqlMagicSet($customDefs, $set, $where) {
-	$tableNames = array_keys($customDefs);
-	$tableName = $tableNames[0];
-
-	$whereClause =buildWhereClause($where);
-	
-	$setClause = " ";
-	$setClauseLinker = "SET ";
-	foreach ($set as $key => $value) {
-		$setClause .= $setClauseLinker.$key.'="'.$value.'"';
-		$setClauseLinker = " , ";
-	}
-	$query = "UPDATE ".SQL_TABLE_PREFIX.$tableName.$setClause.$whereClause;
-	$result = makeQueryHappen($customDefs, $query);
-	return $result;
 }
 
 function sqlMagicGet($customDefs, $params) {
@@ -349,6 +377,23 @@ function sqlMagicGet($customDefs, $params) {
 		// we didn't get valid data.
 		return null;
 	}
+}
+
+function sqlMagicSet($customDefs, $set, $where) {
+	$tableNames = array_keys($customDefs);
+	$tableName = $tableNames[0];
+
+	$whereClause =buildWhereClause($where);
+	
+	$setClause = " ";
+	$setClauseLinker = "SET ";
+	foreach ($set as $key => $value) {
+		$setClause .= $setClauseLinker.$key.'="'.$value.'"';
+		$setClauseLinker = " , ";
+	}
+	$query = "UPDATE ".SQL_TABLE_PREFIX.$tableName.$setClause.$whereClause;
+	$result = makeQueryHappen($customDefs, $query);
+	return $result;
 }
 
 function makeQueryHappen($customDefs, $query) {
@@ -384,7 +429,7 @@ function makeQueryHappen($customDefs, $query) {
   case 'SELECT':
     $returnVal = array();
     while ($row = mysql_fetch_assoc($result)) {
-      $returnVal[] = $row;
+      $returnVal[] = sqlDataDePrep($row, $customDefs[$tableName]);
     }
     return $returnVal;
     break;
