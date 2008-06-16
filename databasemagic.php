@@ -119,6 +119,8 @@ function sqlFilter($data) {
 function getSQLConnection() {
   $sql   = mysql_connect(SQL_HOST, SQL_USER, SQL_PASS)  OR die(SQL_CANNOT_CONNECT);
            mysql_select_db(SQL_DBASE, $sql)             OR die(SQL_CANNOT_CONNECT);
+	// Prep connection for strict error handling.
+	mysql_query("set sql_mode=strict_all_Tables", $sql);
   return $sql;
 }
 
@@ -248,12 +250,14 @@ function updateTable($customDefs) {
     if (! isset($actualdef[$name]) ) {
       $query  = "ALTER TABLE ".SQL_TABLE_PREFIX.$tableName."\n";
       $query .= "  ADD COLUMN " . $creationDef . " " . $location;
+      dbm_debug("server query", $query);
       if (! mysql_query($query, $sqlConnection) ) return FALSE;
-}
+    }
     // Find a column that needs modifying
     else if ($wanteddef[$name] != $actualdef[$name]) {
       $query  = "ALTER TABLE ".SQL_TABLE_PREFIX.$tableName."\n";
       $query .= "  MODIFY COLUMN " . $creationDef . " " . $location;
+      dbm_debug("server query", $query);
       if (! mysql_query($query, $sqlConnection) ) return FALSE;
 
     }
@@ -265,11 +269,12 @@ function updateTable($customDefs) {
   // Run through the actual definition for what needs dropping
   foreach($actualdef as $name => $options) {
     // Find a column that needs deleting
-    if (! isset($wanteddef[$name]) ) {
+    if (!isset($wanteddef[$name]) && DBM_AUTODROP ) {
       $query  = "ALTER TABLE ".SQL_TABLE_PREFIX.$tableName."\n";
       $query .= "  DROP COLUMN " . $name;
+      dbm_debug("server query", $query);
       if (! mysql_query($query, $sqlConnection) ) return FALSE;
-}
+    }
   }
 
   return TRUE;
@@ -557,8 +562,8 @@ function getMapDefs($parentDefs, $childDefs) {
 	return array(
 		'parentID' => $parentTableKeyDef,
 		'childID'  => $childTableKeyDef,
-		'relation' => array("varchar(20)", "YES", "PRI"),
-		'ordering' => array("int(11) unsigned",    "NO", "",    "",  "")
+		'relation' => array("varchar(20)",         "YES", "PRI"),
+		'ordering' => array("int(11) unsigned",    "NO",  "",    "0",  "")
 	);
 }
 
@@ -601,7 +606,7 @@ function getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $para
            "  WHERE ".SQL_TABLE_PREFIX.$tableName.".".$parentMapName."='".$parentID."'".$extendedWhere."\n".
            "  ORDER BY ".SQL_TABLE_PREFIX.$tableName.".ordering";
 
-  $data = makeQueryHappen(array($tableName => null), $query);
+  $data = makeQueryHappen($childTableDefs, $query);
   if ($data) {
     $returnVal = array();
     foreach ($data as $row) {
@@ -650,7 +655,7 @@ function getInitial($columnDef) {
 		$columnDef = $columnDef[0];
 	}
 	if (strtoupper(substr($columnDef, 0, 3)) == "SET") {
-		return array();
+		return valuesFromSet(array(), $columnDef);
 	} else {
 	return "";
 	}

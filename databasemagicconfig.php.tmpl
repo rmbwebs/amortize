@@ -5,7 +5,8 @@
   $sqlPass     = "";     // SQL password
   $sqlDatabase = "";     // Database name on SQL server
   $sqlPrefix   = "";     // A prefix to use on all table names, optional but it help you sort your tables
-  $dbmDebug    = false;   // Set to true if you want to enable debugging output
+  $dbmDebug    = false;  // Set to true if you want to enable debugging output
+  $dbmAutoDrop = false;  // Set to true if you want DBM to automatically drop columns that you remove from your table_defs (SCARY)
 
 
   //SQL options
@@ -17,4 +18,5 @@
 
 	//General Options
 	define('DBM_DEBUG',        $dbmDebug);
+	define('DBM_AUTODROP',     $dbmAutoDrop);
 ?>
