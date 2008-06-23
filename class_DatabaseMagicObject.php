@@ -44,17 +44,24 @@ class DatabaseMagicObject {
 
 
 
-	/// Calls initialize() and calls load($id) if $id != null.
+	/// Calls initialize() and calls load($id) if $id != null
+	/// Also marks the object for saving in the event of an unloadable $id
   function __construct($id = NULL) {
-    $this->initialize($id);
+    $this->initialize();
     if ($id != NULL) {
-      $this->load($id);
+      $loadResult = $this->load($id);
+      if (!$loadResult) {
+        // The load failed. . . a never-before-seen primary ID is being explicitly set by the constructor.
+        // Mark it dirty so we are sure that it saves.
+        dbm_debug("failedload", "load failed");
+        $this->setAttribs(array(findTableKey($this->getTableDefs()) => $id), true);
+      }
     }
   }
 
 	/// Sets all the attributes to blank and the table key to null.
 	/// used for initializing new blank objects.
-	function initialize($id=NULL) {
+	function initialize() {
 		if ((!is_array($this->table_defs)) && (is_string($this->table_defs))) {
 			$tablename = $this->table_defs;
 			$this->table_defs = array($tablename => getActualTableDefs($tablename));
@@ -66,46 +73,53 @@ class DatabaseMagicObject {
 				$this->attributes[$col] = getInitial($coldef);
 				$this->status[$col] = "clean";
 			}
-			$key = findTableKey($defs);
-			$this->attributes[$key] = $id;
-			$this->status[$key] = "dirty";
 		}
 	}
 
-	/// Loads an object from the database.
-	/// This function loads the attributes for itself from the database, where the table primary key = $id
-	/// This function has the ability to totally transform an object into a different instance of the same object.
-	/// What I mean is, this function will set ALL attributes, including the ID.
+	/** Loads an object from the database.
+	 *  This function loads the attributes for itself from the database, where the table primary key = $id
+	 *  Normally called from the constructor, it *could* also be used to change the row that an existing object
+	 *  is working on, but just making a new object is probably preferable, unless you really know what you are doing.
+	 */
 	function load($id) {
 		$key = findTableKey($this->getTableDefs());
 		$query = array($key => $id);
 		$info = sqlMagicGet($this->getTableDefs(), $query);
-		if ($info) {
-			$this->setAttribs($info[0]); // $info[0] because sqlMagicget always returns an array, even with one result.
+		if ($info && is_array($info) && count($info) > 0) {
+			$this->setAttribs($info[0], true); // $info[0] because sqlMagicget always returns an array, even with one result.
 			foreach ($info[0] as $col => $value) {
 				$this->status[$col] = "clean";
 			}
+			return true;
+		} else {
+			return false;
 		}
 	}
 
 	/// Saves the object data to the database.
 	/// This function records the attributes of the object into a row in the database.
-	function save($force = FALSE) {
+	function save($force = false) {
 		$defs = $this->getTableDefs();
 		$columns = getTableColumns($defs);
 		$allclean = array();
 		$savedata = array();
 		$key = findTableKey($defs);
 		$a = $this->getAttribs();
-		if (!isset($a[$key])) {
+		if (!isset($a[$key]) || ($a[$key] == null)) {
 			// This object has never been saved, force save regardless of status
 			// It's very probable that this object is being linked to or is linking another object and needs an ID
 			$force = true;
+			// Exclude the ID in the sql query.  This will trigger an auto_increment ID to be generated
+			$excludeID = true;
 			dbm_debug("info", "This ".get_class($this)." is new, and we are saving all attributes regardless of status");
+		} else {
+			// Object has been saved before, OR a new ID was specified by the constructor parameters.
+			// either way, we need to include the ID in the SQL statement so that the proper row gets set,
+			// or the proper ID is used in the new row
+			$excludeID = false;
 		}
 
 		foreach ($columns as $col) {
-			$allclean[$col] = "clean";  // conveniently loop to build this array
 			if (($this->status[$col] != "clean") || $force ){
 				if (isset($a[$col])) {
 					$savedata[$col] = $a[$col];
@@ -114,17 +128,21 @@ class DatabaseMagicObject {
 		}
 
 		if ( count($savedata) >= 1 ) {
-			$savedata[$key] = $this->getPrimary();
+			if (!$excludeID) {
+				$savedata[$key] = $a[$key];
+			}
 			$id = sqlMagicPut($defs, $savedata);
 
 			if ($id) {
 				// Successful auto_increment Save
 				$this->attributes[$key] = $id;
-				$this->status = $allclean;
+				// Set all statuses to clean.
+				$this->status = array_fill_keys(array_keys($this->status), "clean");
 				return TRUE;
 			} else if ($id !== false) {
 				// We are not working with an auto_increment ID
-				$this->status = $allclean;
+				// Set all statuses to clean.
+				$this->status = array_fill_keys(array_keys($this->status), "clean");
 				return TRUE;
 			} else {
 				// ID === false, there was an error
@@ -149,10 +167,17 @@ class DatabaseMagicObject {
     return $returnMe;
   }
 
-  /// Sets attribute data for this object.
-  function setAttribs($info) {
-    $columns = $this->getTableDefs();
-    $columns = $columns[getTableName($columns)];
+  /// Sets attribute (row) data for this object.
+  /// $clobberID is a bool that must be true to allow you to overwrite a primary key
+  function setAttribs($info, $clobberID = false) {
+		dbm_debug("setattribs", $info);
+    $defs = $this->getTableDefs();
+    $columns = $defs[getTableName($defs)];
+    $key = $this->getPrimaryKey();
+    if ((!$clobberID) && isset($info[$key])) {
+			dbm_debug("clobber", "clobber protected!");
+			unset($info[$key]);
+    }
     $returnVal = FALSE;
     foreach ($columns as $column => $def) {
 			$def = (is_array($def)) ? $def[0] : $def;
@@ -167,6 +192,15 @@ class DatabaseMagicObject {
     }
     return $returnVal;
   }
+
+	function __get($name) {
+		$a = $this->getAttribs();
+		return (isset($a[$name])) ? $a[$name] : null;
+	}
+
+	function __set($name, $value) {
+		$this->setAttribs(array($name => $value));
+	}
 
 	/**
 	 * Creates a link to another instance or extension of DatabaseMagicObject.

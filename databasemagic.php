@@ -657,7 +657,7 @@ function getInitial($columnDef) {
 	if (strtoupper(substr($columnDef, 0, 3)) == "SET") {
 		return valuesFromSet(array(), $columnDef);
 	} else {
-	return "";
+		return null;
 	}
 }
 
