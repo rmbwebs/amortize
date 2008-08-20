@@ -82,6 +82,7 @@ class DatabaseMagicObject {
 	 *  is working on, but just making a new object is probably preferable, unless you really know what you are doing.
 	 */
 	function load($id) {
+		dbm_debug("load", "Loading a " . get_class($this) . " with ID = " . $id);
 		$key = findTableKey($this->getTableDefs());
 		$query = array($key => $id);
 		$info = sqlMagicGet($this->getTableDefs(), $query);
@@ -313,7 +314,7 @@ class DatabaseMagicObject {
 		if (is_array($list)) {
 			foreach($list as $childid => $attribs) {
 				$temp = clone $prototype;
-				$temp->setAttribs($attribs);
+				$temp->setAttribs($attribs, true);
 				$children[] = $temp;
 			}
 		}
@@ -365,7 +366,7 @@ class DatabaseMagicObject {
 			foreach ($list as $data) {
 // 				print_r($data);
 				$temp = clone $this;
-				$temp->setAttribs($data);
+				$temp->setAttribs($data, true);
 				$returnMe[$data[$key]] = $temp;
 			}
 		}
