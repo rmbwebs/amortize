@@ -120,8 +120,10 @@ class DatabaseMagicObject {
 			$excludeID = false;
 		}
 
+		$magicput_needs_rewrite = true;
+
 		foreach ($columns as $col) {
-			if (($this->status[$col] != "clean") || $force ){
+			if (($this->status[$col] != "clean") || $force || $magicput_needs_rewrite){
 				if (isset($a[$col])) {
 					$savedata[$col] = $a[$col];
 				}
@@ -270,7 +272,7 @@ class DatabaseMagicObject {
 	 * $fam = new Family("Smith"); \n
 	 * $bob = new Person("Bob"); \n
 	 * $fam->link($bob); \n
-	 * $fam->link($fido); \n 
+	 * $fam->link($fido); \n
 	 * $fam->getLinks("Dog");  // Returns an Array that contains Fido and any other Dogs linked in to the Smith Family \n
 	 * $fam->getLinks("Person");  // Returns an Array that contains Bob and any other Persons linked in to the Smith Family \n
 	 */
