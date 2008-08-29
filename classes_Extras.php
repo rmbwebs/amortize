@@ -303,17 +303,19 @@ FORMCLOSE;
 
 
 	function inputField($field) {
-		$classname = get_class($this);
-		$primary   = $this->getPrimary();
-		$attribs   = $this->getAttribs();
-		$value     = (isset($attribs[$field])) ? $attribs[$field] : NULL;
+		$classname    = get_class($this);
+		$primary      = $this->getPrimary();
+		$attribs      = $this->getAttribs();
+		$value        = (isset($attribs[$field])) ? $attribs[$field] : NULL;
+		$restrictions = (isset($this->input_restrictions[$field])) ? $this->input_restrictions[$field] : "input";
+		$label        = (isset($this->friendly_label[$field])) ? $this->friendly_label[$field] : $field;
+
 		// FIXME Need to eventually customize this per the data type
 		echo <<<start
 	<div id="{$classname}_{$field}_input_container" class="{$classname}_input_container">
-		<span class="{$classname}_{$field}_label" id="{$classname}_{$primary}_{$field}_label">{$field}</span>\n
+		<span class="{$classname}_{$field}_label" id="{$classname}_{$primary}_{$field}_label">{$label}</span>\n
 start;
 
-		$restrictions = (isset($this->input_restrictions[$field])) ? $this->input_restrictions[$field] : "input";
 		if (is_array($restrictions)) {
 			// Dropdown box
 			$size = (count($restrictions) <= 4) ? " size=\"".count($restrictions)."\"" : "";
