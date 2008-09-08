@@ -35,8 +35,9 @@ function dbm_debug($class, $message) {
 	}
 }
 
-set_error_handler ("do_backtrace");
-function do_backtrace ($one, $two) {
+if (DBM_DEBUG) { set_error_handler ("dbm_do_backtrace"); }
+
+function dbm_do_backtrace ($one, $two) {
 	echo "<pre>\nError {$one}, {$two}\n";
 	debug_print_backtrace();
 	echo "</pre>\n\n";
@@ -389,7 +390,7 @@ function sqlMagicSet($customDefs, $set, $where) {
 	$tableName = $tableNames[0];
 
 	$whereClause =buildWhereClause($where);
-	
+
 	$setClause = " ";
 	$setClauseLinker = "SET ";
 	foreach ($set as $key => $value) {
