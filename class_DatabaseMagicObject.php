@@ -26,7 +26,7 @@
  * into and load themselves from an SQL database.  Objects are defined by setting a large array which
  * describes the way the data is stored in the database
  */
-class DatabaseMagicObject {
+class DatabaseMagicObject extends DatabaseMagicHelper {
 
   /// An array that determines how the data for this object will be stored in the database
   /// Format is array(tablename => array(collumn1name => array(type, NULL, key, default, extras), column2name => array(...), etc.))
