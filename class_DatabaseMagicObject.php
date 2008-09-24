@@ -20,13 +20,14 @@
 *******************************************/
 
 
+require_once dirname(__FILE__) . "/databasemagic.php";
 
 /**
  * This object makes it easy for a developer to create abstract objects which can save themselves
  * into and load themselves from an SQL database.  Objects are defined by setting a large array which
  * describes the way the data is stored in the database
  */
-class DatabaseMagicObject extends DatabaseMagicHelper {
+class DatabaseMagicObject extends DatabaseMagicPreparation {
 
   /// An array that determines how the data for this object will be stored in the database
   /// Format is array(tablename => array(collumn1name => array(type, NULL, key, default, extras), column2name => array(...), etc.))
@@ -54,7 +55,7 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
         // The load failed. . . a never-before-seen primary ID is being explicitly set by the constructor.
         // Mark it dirty so we are sure that it saves.
         dbm_debug("failedload", "load failed");
-        $this->setAttribs(array(findTableKey($this->getTableDefs()) => $id), true);
+        $this->setAttribs(array($this->findTableKey($this->getTableDefs()) => $id), true);
       }
     }
   }
@@ -64,13 +65,13 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
 	function initialize() {
 		if ((!is_array($this->table_defs)) && (is_string($this->table_defs))) {
 			$tablename = $this->table_defs;
-			$this->table_defs = array($tablename => getActualTableDefs($tablename));
+			$this->table_defs = array($tablename => $this->getActualTableDefs($tablename));
 		}
 		$defs = $this->getTableDefs();
 		if (is_array($defs)) {
-			$cols = getTableColumnDefs($defs);
+			$cols = $this->getTableColumnDefs($defs);
 			foreach ($cols as $col => $coldef) {
-				$this->attributes[$col] = getInitial($coldef);
+				$this->attributes[$col] = $this->getInitial($coldef);
 				$this->status[$col] = "clean";
 			}
 		}
@@ -83,9 +84,9 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
 	 */
 	function load($id) {
 		dbm_debug("load", "Loading a " . get_class($this) . " with ID = " . $id);
-		$key = findTableKey($this->getTableDefs());
+		$key = $this->findTableKey($this->getTableDefs());
 		$query = array($key => $id);
-		$info = sqlMagicGet($this->getTableDefs(), $query);
+		$info = $this->sqlMagicGet($this->getTableDefs(), $query);
 		if ($info && is_array($info) && count($info) > 0) {
 			$this->setAttribs($info[0], true); // $info[0] because sqlMagicget always returns an array, even with one result.
 			foreach ($info[0] as $col => $value) {
@@ -101,10 +102,10 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
 	/// This function records the attributes of the object into a row in the database.
 	function save($force = false) {
 		$defs = $this->getTableDefs();
-		$columns = getTableColumns($defs);
+		$columns = $this->getTableColumns($defs);
 		$allclean = array();
 		$savedata = array();
-		$key = findTableKey($defs);
+		$key = $this->findTableKey($defs);
 		$a = $this->getAttribs();
 		if (!isset($a[$key]) || ($a[$key] == null)) {
 			// This object has never been saved, force save regardless of status
@@ -134,7 +135,7 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
 			if (!$excludeID) {
 				$savedata[$key] = $a[$key];
 			}
-			$id = sqlMagicPut($defs, $savedata);
+			$id = $this->sqlMagicPut($defs, $savedata);
 
 			if ($id) {
 				// Successful auto_increment Save
@@ -161,7 +162,7 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
   function getAttribs() {
 		$returnMe = $this->attributes;
 
-		$key = findTableKey($this->getTableDefs());
+		$key = $this->findTableKey($this->getTableDefs());
 		if ($returnMe[$key] == NULL) {
 			// Unsaved Object, don't return the key attribute with the results
 			unset($returnMe[$key]);
@@ -175,7 +176,7 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
   function setAttribs($info, $clobberID = false) {
 		dbm_debug("setattribs", $info);
     $defs = $this->getTableDefs();
-    $columns = $defs[getTableName($defs)];
+    $columns = $defs[$this->getTableName($defs)];
     $key = $this->getPrimaryKey();
     if ((!$clobberID) && isset($info[$key])) {
 			dbm_debug("clobber", "clobber protected!");
@@ -186,7 +187,7 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
 			$def = (is_array($def)) ? $def[0] : $def;
       if (isset($info[$column])) {
 				if (is_array($info[$column])) { // Filter HTML type arrays to support setAttribs($_POST);
-					$info[$column] = valuesFromSet($info[$column], $def);
+					$info[$column] = $this->valuesFromSet($info[$column], $def);
 				}
         $this->attributes[$column] = $info[$column];
         $returnVal = TRUE;
@@ -228,7 +229,7 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
 		$parentTableDefs = $this->getTableDefs();
 		$parentID        = $this->getID();
 
-		return doAdoption($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
+		return $this->doAdoption($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
 	}
 
 	/** Breaks a link previously created by link()
@@ -240,7 +241,7 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
 		$parentTableDefs = $this->getTableDefs();
 		$parentID    = $this->getID();
 
-		return doEmancipation($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
+		return $this->doEmancipation($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
 	}
 
 	/** Breaks links to all previously linked $example.
@@ -257,7 +258,7 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
 		$parentTableDefs = $this->getTableDefs();
 		$parentID    = $this->getID();
 
-		return doEmancipation($parentTableDefs, $parentID, $subjectTableDefs, NULL, $relation);
+		return $this->doEmancipation($parentTableDefs, $parentID, $subjectTableDefs, NULL, $relation);
 	}
 
 	/**
@@ -307,9 +308,9 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
 		$childTableDefs  = $prototype->getTableDefs();
 
 		if ($backLinks) {
-			$list =  getParentsList($parentTableDefs, $parentID, $childTableDefs, $parameters, $relation);
+			$list =  $this->getParentsList($parentTableDefs, $parentID, $childTableDefs, $parameters, $relation);
 		} else {
-			$list = getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters, $relation);
+			$list = $this->getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters, $relation);
 		}
 
 		$children = array();
@@ -329,13 +330,13 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
 		$parentTableDefs = $this->getTableDefs();
 		$parentID    = $this->getID();
 
-		reorderChildren($parentTableDefs, $parentID, $childTableDefs, $ordering);
+		$this->reorderChildren($parentTableDefs, $parentID, $childTableDefs, $ordering);
 	}
 
 
 	/// Tells you the column name that holds the primary
 	function getPrimaryKey() {
-    return findTableKey($this->getTableDefs());
+    return $this->findTableKey($this->getTableDefs());
 	}
 
 	/** Returns the value of this object's primary key.
@@ -353,15 +354,15 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
 	/// Retrieve an array of all the known IDs for all saved instances of this class
 	/// If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
 	function getAllPrimaries($limit=NULL, $offset=NULL, $params=NULL) {
-		$list = getAllIDs($this->getTableDefs(), $limit, $offset, $params);
+		$list = $this->getAllIDs($this->getTableDefs(), $limit, $offset, $params);
 		return $list;
 	}
 
 	/// Retrieve an array of pre-loaded objects
 	function getAllLikeMe($limit=NULL, $offset=NULL, $params=NULL) {
 		$myDefs = $this->getTableDefs();
-		$list = getAllSomething($myDefs, "*", $limit, $offset, $params);
-		$key = findTableKey($myDefs);
+		$list = $this->getAllSomething($myDefs, "*", $limit, $offset, $params);
+		$key = $this->findTableKey($myDefs);
 		$returnMe = array();
 
 		if (is_array($list)) {
@@ -395,11 +396,11 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
 				if (!is_array($extensionTableDefs)) { return $this->table_defs; }
 			$extensionTableName = $extension->getMyTableName();
 			$extensionDefs      = $extensionTableDefs[$extensionTableName];
-			$extensionPrimary   = findKey($extensionDefs);
+			$extensionPrimary   = $this->findKey($extensionDefs);
 			$myTableDefs = $this->table_defs;
 			$myTableName = $this->getMyTableName();
 			$myDefs      = $myTableDefs[$myTableName];
-			$myPrimary   = findKey($myDefs);
+			$myPrimary   = $this->findKey($myDefs);
 
 			// Build the merged table
 			$mergedDefs = array();
@@ -426,7 +427,7 @@ class DatabaseMagicObject extends DatabaseMagicHelper {
   /// Returns the name of the table that this object saves and loads under.
   /// Pretty easy function really.
   function getMyTableName() {
-		return getTableName($this->table_defs);
+		return $this->getTableName($this->table_defs);
   }
 
   /// An alias for the getPrimary() method.  \deprecated
