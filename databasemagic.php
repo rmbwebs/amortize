@@ -51,6 +51,10 @@ There is an error in your DatabaseMagic configuration.
 
 class DatabaseMagicExecution {
 
+  /// An array that determines how the data for this object will be stored in the database
+  /// Format is array(tablename => array(collumn1name => array(type, NULL, key, default, extras), column2name => array(...), etc.))
+  protected $table_defs = NULL;
+
 	/**
 	* function getCreationDefinition()
 	* Returns the creation definition for a table column, used in add column, modify column, and create table

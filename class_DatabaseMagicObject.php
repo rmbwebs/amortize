@@ -22,16 +22,9 @@
 
 require_once dirname(__FILE__) . "/databasemagic.php";
 
-/**
- * This object makes it easy for a developer to create abstract objects which can save themselves
- * into and load themselves from an SQL database.  Objects are defined by setting a large array which
- * describes the way the data is stored in the database
- */
-class DatabaseMagicObject extends DatabaseMagicPreparation {
 
-  /// An array that determines how the data for this object will be stored in the database
-  /// Format is array(tablename => array(collumn1name => array(type, NULL, key, default, extras), column2name => array(...), etc.))
-  protected $table_defs = NULL;
+/// Backend for the DatabaseMagicObject
+class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 
   /// Object status.
   /// Possible statuses are "needs saving", etc.
@@ -98,66 +91,6 @@ class DatabaseMagicObject extends DatabaseMagicPreparation {
 		}
 	}
 
-	/// Saves the object data to the database.
-	/// This function records the attributes of the object into a row in the database.
-	function save($force = false) {
-		$defs = $this->getTableDefs();
-		$columns = $this->getTableColumns($defs);
-		$allclean = array();
-		$savedata = array();
-		$key = $this->findTableKey($defs);
-		$a = $this->getAttribs();
-		if (!isset($a[$key]) || ($a[$key] == null)) {
-			// This object has never been saved, force save regardless of status
-			// It's very probable that this object is being linked to or is linking another object and needs an ID
-			$force = true;
-			// Exclude the ID in the sql query.  This will trigger an auto_increment ID to be generated
-			$excludeID = true;
-			dbm_debug("info", "This ".get_class($this)." is new, and we are saving all attributes regardless of status");
-		} else {
-			// Object has been saved before, OR a new ID was specified by the constructor parameters.
-			// either way, we need to include the ID in the SQL statement so that the proper row gets set,
-			// or the proper ID is used in the new row
-			$excludeID = false;
-		}
-
-		$magicput_needs_rewrite = true;
-
-		foreach ($columns as $col) {
-			if (($this->status[$col] != "clean") || $force || $magicput_needs_rewrite){
-				if (isset($a[$col])) {
-					$savedata[$col] = $a[$col];
-				}
-			}
-		}
-
-		if ( count($savedata) >= 1 ) {
-			if (!$excludeID) {
-				$savedata[$key] = $a[$key];
-			}
-			$id = $this->sqlMagicPut($defs, $savedata);
-
-			if ($id) {
-				// Successful auto_increment Save
-				$this->attributes[$key] = $id;
-				// Set all statuses to clean.
-				$this->status = array_fill_keys(array_keys($this->status), "clean");
-				return TRUE;
-			} else if ($id !== false) {
-				// We are not working with an auto_increment ID
-				// Set all statuses to clean.
-				$this->status = array_fill_keys(array_keys($this->status), "clean");
-				return TRUE;
-			} else {
-				// ID === false, there was an error
-				die("Save Failed!\n".mysql_error());
-				return FALSE;
-			}
-
-		}
-
-	}
-
   /// Returns the array of attributes for the object.
   function getAttribs() {
 		$returnMe = $this->attributes;
@@ -204,6 +137,180 @@ class DatabaseMagicObject extends DatabaseMagicPreparation {
 
 	function __set($name, $value) {
 		$this->setAttribs(array($name => $value));
+	}
+
+	/**
+	 * Does the actual work for getLinks and getBackLinks
+	 */
+	function doGetLinks($example, $parameters = NULL, $relation = NULL, $backLinks=false) {
+		if (is_object($example)) {
+			$prototype = clone $example;
+			$prototype->initialize();
+		} else if (is_string($example) && class_exists($example)) {
+			$prototype = new $example;
+		} else {
+			return NULL;
+		}
+
+		$parentTableDefs = $this->getTableDefs();
+		$parentID        = $this->getPrimary();
+		$childTableDefs  = $prototype->getTableDefs();
+
+		if ($backLinks) {
+			$list =  $this->getParentsList($parentTableDefs, $parentID, $childTableDefs, $parameters, $relation);
+		} else {
+			$list = $this->getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters, $relation);
+		}
+
+		$children = array();
+		if (is_array($list)) {
+			foreach($list as $childid => $attribs) {
+				$temp = clone $prototype;
+				$temp->setAttribs($attribs, true);
+				$children[] = $temp;
+			}
+		}
+		return $children;
+	}
+
+	/// Tells you the column name that holds the primary
+	function getPrimaryKey() {
+    return $this->findTableKey($this->getTableDefs());
+	}
+
+	/** Returns the value of this object's primary key.
+	 * Primary key is the unique id for each object, used in the constructor and the load function
+	 * for example:
+	 *   $obj = new DatabaseMagicObject($key);
+	 *   $key2 = $obj->getPrimary();
+	 *   $key2 == $key
+	 */
+	function getPrimary() {
+    $key = $this->getPrimaryKey();
+    return $this->attributes[$key];
+	}
+
+	/// Retrieve an array of all the known IDs for all saved instances of this class
+	/// If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
+	function getAllPrimaries($limit=NULL, $offset=NULL, $params=NULL) {
+		$list = $this->getAllIDs($this->getTableDefs(), $limit, $offset, $params);
+		return $list;
+	}
+
+	/// Retrieve an array of pre-loaded objects
+	function getAllLikeMe($limit=NULL, $offset=NULL, $params=NULL) {
+		$myDefs = $this->getTableDefs();
+		$list = $this->getAllSomething($myDefs, "*", $limit, $offset, $params);
+		$key = $this->findTableKey($myDefs);
+		$returnMe = array();
+
+		if (is_array($list)) {
+			foreach ($list as $data) {
+// 				print_r($data);
+				$temp = clone $this;
+				$temp->setAttribs($data, true);
+				$returnMe[$data[$key]] = $temp;
+			}
+		}
+		return $returnMe;
+	}
+
+	protected $actual_table_defs = array();
+
+	/// Returns the table definitions for this object
+	/// Recursively merges in any table definitions from extended classes
+	function getTableDefs() {
+		if (get_class($this)==__CLASS__) {
+			// We are a DatabaseMagicObject
+			return $this->table_defs;
+		} else if (count($this->actual_table_defs) > 0) {
+			// We already calculated the actual table defs.  Use those (see bottom of this function).
+			return $this->actual_table_defs;
+		} else {
+			// We are something that extends DatabaseMagicObject, and don't know the actual table defs
+			$extensionClass = get_parent_class($this);
+			$extension = new $extensionClass;
+			$extensionTableDefs = $extension->getTableDefs();
+				// Bail out if we don't get an array for the extended class table def
+				if (!is_array($extensionTableDefs)) { return $this->table_defs; }
+			$extensionTableName = $extension->getMyTableName();
+			$extensionDefs      = $extensionTableDefs[$extensionTableName];
+			$extensionPrimary   = $this->findKey($extensionDefs);
+			$myTableDefs = $this->table_defs;
+			$myTableName = $this->getMyTableName();
+			$myDefs      = $myTableDefs[$myTableName];
+			$myPrimary   = $this->findKey($myDefs);
+
+			// Build the merged table
+			$mergedDefs = array();
+			// If we have two primary keys, drop the extension key
+			if ($myPrimary && $extensionPrimary) {
+				unset($extensionDefs[$extensionPrimary]);
+			}
+			// Do extensiondefs first so they are first in the list, and so myDefs can overwrite a collision
+			foreach ($extensionDefs as $key => $value) {
+					$mergedDefs[$key] = $value;
+			}
+			// Follow with myDefs
+			foreach ($myDefs as $key => $value) {
+				$mergedDefs[$key] = $value;
+			}
+
+			$returnMe = array($myTableName => $mergedDefs);
+			// Cache the result
+			$this->actual_table_defs = $returnMe;
+			return $returnMe;
+		}
+	}
+
+  /// Returns the name of the table that this object saves and loads under.
+  /// Pretty easy function really.
+  function getMyTableName() {
+		return $this->getTableName($this->table_defs);
+  }
+
+  /// An alias for the getPrimary() method.  \deprecated
+  function getID() {
+		return $this->getPrimary();
+  }
+
+	/// Dumps the contents of attribs via print_r()
+	/// Useful for debugging, but that's about it
+	function dumpview($pre=false) {
+		if ($pre) echo "<pre style=\"color: blue\">\n";
+		echo "Attributes for this ".get_class($this).":\n";;
+		print_r($this->attributes);
+		if ($pre) echo "</pre>\n";
+	}
+
+}
+
+
+/**
+ * This object makes it easy for a developer to create abstract objects which can save themselves
+ * into and load themselves from an SQL database.  Objects are defined by setting a large array which
+ * describes the way the data is stored in the database
+ */
+class DatabaseMagicObject extends DatabaseMagicFeatures {
+
+	/**
+	 * Used to set or get the info for this object.
+	 * Filters bad info or unknown data that won't go into our database table.
+	 */
+	function attribs($info=null) {
+		if (!is_null($info)) {
+			$this->setAttribs($info);
+		}
+		return $this->getAttribs();
+	}
+
+	/// Can be used to set the order that a call for links will return as.
+	function orderLinks($example, $ordering) {
+		$childTableDefs  = $example->getTableDefs();
+		$parentTableDefs = $this->getTableDefs();
+		$parentID    = $this->getID();
+
+		$this->reorderChildren($parentTableDefs, $parentID, $childTableDefs, $ordering);
 	}
 
 	/**
@@ -290,179 +397,66 @@ class DatabaseMagicObject extends DatabaseMagicPreparation {
 		return $this->doGetLinks($example, $parameters, $relation, true);
 	}
 
-	/**
-	 * Does the actual work for getLinks and getBackLinks
-	 */
-	function doGetLinks($example, $parameters = NULL, $relation = NULL, $backLinks=false) {
-		if (is_object($example)) {
-			$prototype = clone $example;
-			$prototype->initialize();
-		} else if (is_string($example) && class_exists($example)) {
-			$prototype = new $example;
+	/// Saves the object data to the database.
+	/// This function records the attributes of the object into a row in the database.
+	function save($force = false) {
+		$defs = $this->getTableDefs();
+		$columns = $this->getTableColumns($defs);
+		$allclean = array();
+		$savedata = array();
+		$key = $this->findTableKey($defs);
+		$a = $this->getAttribs();
+		if (!isset($a[$key]) || ($a[$key] == null)) {
+			// This object has never been saved, force save regardless of status
+			// It's very probable that this object is being linked to or is linking another object and needs an ID
+			$force = true;
+			// Exclude the ID in the sql query.  This will trigger an auto_increment ID to be generated
+			$excludeID = true;
+			dbm_debug("info", "This ".get_class($this)." is new, and we are saving all attributes regardless of status");
 		} else {
-			return NULL;
+			// Object has been saved before, OR a new ID was specified by the constructor parameters.
+			// either way, we need to include the ID in the SQL statement so that the proper row gets set,
+			// or the proper ID is used in the new row
+			$excludeID = false;
 		}
 
-		$parentTableDefs = $this->getTableDefs();
-		$parentID        = $this->getPrimary();
-		$childTableDefs  = $prototype->getTableDefs();
+		$magicput_needs_rewrite = true;
 
-		if ($backLinks) {
-			$list =  $this->getParentsList($parentTableDefs, $parentID, $childTableDefs, $parameters, $relation);
-		} else {
-			$list = $this->getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters, $relation);
-		}
-
-		$children = array();
-		if (is_array($list)) {
-			foreach($list as $childid => $attribs) {
-				$temp = clone $prototype;
-				$temp->setAttribs($attribs, true);
-				$children[] = $temp;
+		foreach ($columns as $col) {
+			if (($this->status[$col] != "clean") || $force || $magicput_needs_rewrite){
+				if (isset($a[$col])) {
+					$savedata[$col] = $a[$col];
+				}
 			}
 		}
-		return $children;
-	}
 
-	/// Can be used to set the order that a call for links will return as.
-	function orderLinks($example, $ordering) {
-		$childTableDefs  = $example->getTableDefs();
-		$parentTableDefs = $this->getTableDefs();
-		$parentID    = $this->getID();
-
-		$this->reorderChildren($parentTableDefs, $parentID, $childTableDefs, $ordering);
-	}
-
-
-	/// Tells you the column name that holds the primary
-	function getPrimaryKey() {
-    return $this->findTableKey($this->getTableDefs());
-	}
-
-	/** Returns the value of this object's primary key.
-	 * Primary key is the unique id for each object, used in the constructor and the load function
-	 * for example:
-	 *   $obj = new DatabaseMagicObject($key);
-	 *   $key2 = $obj->getPrimary();
-	 *   $key2 == $key
-	 */
-	function getPrimary() {
-    $key = $this->getPrimaryKey();
-    return $this->attributes[$key];
-	}
-
-	/// Retrieve an array of all the known IDs for all saved instances of this class
-	/// If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
-	function getAllPrimaries($limit=NULL, $offset=NULL, $params=NULL) {
-		$list = $this->getAllIDs($this->getTableDefs(), $limit, $offset, $params);
-		return $list;
-	}
-
-	/// Retrieve an array of pre-loaded objects
-	function getAllLikeMe($limit=NULL, $offset=NULL, $params=NULL) {
-		$myDefs = $this->getTableDefs();
-		$list = $this->getAllSomething($myDefs, "*", $limit, $offset, $params);
-		$key = $this->findTableKey($myDefs);
-		$returnMe = array();
-
-		if (is_array($list)) {
-			foreach ($list as $data) {
-// 				print_r($data);
-				$temp = clone $this;
-				$temp->setAttribs($data, true);
-				$returnMe[$data[$key]] = $temp;
+		if ( count($savedata) >= 1 ) {
+			if (!$excludeID) {
+				$savedata[$key] = $a[$key];
 			}
+			$id = $this->sqlMagicPut($defs, $savedata);
+
+			if ($id) {
+				// Successful auto_increment Save
+				$this->attributes[$key] = $id;
+				// Set all statuses to clean.
+				$this->status = array_fill_keys(array_keys($this->status), "clean");
+				return TRUE;
+			} else if ($id !== false) {
+				// We are not working with an auto_increment ID
+				// Set all statuses to clean.
+				$this->status = array_fill_keys(array_keys($this->status), "clean");
+				return TRUE;
+			} else {
+				// ID === false, there was an error
+				die("Save Failed!\n".mysql_error());
+				return FALSE;
+			}
+
 		}
-		return $returnMe;
+
 	}
 
-	protected $actual_table_defs = array();
-
-	/// Returns the table definitions for this object
-	/// Recursively merges in any table definitions from extended classes
-	function getTableDefs() {
-		if (get_class($this)==__CLASS__) {
-			// We are a DatabaseMagicObject
-			return $this->table_defs;
-		} else if (count($this->actual_table_defs) > 0) {
-			// We already calculated the actual table defs.  Use those.
-			return $this->actual_table_defs;
-		} else {
-			// We are something that extends DatabaseMagicObject, and don't know the actual table defs
-			$extensionClass = get_parent_class($this);
-			$extension = new $extensionClass;
-			$extensionTableDefs = $extension->getTableDefs();
-				// Bail out if we don't get an array for the extended class table def
-				if (!is_array($extensionTableDefs)) { return $this->table_defs; }
-			$extensionTableName = $extension->getMyTableName();
-			$extensionDefs      = $extensionTableDefs[$extensionTableName];
-			$extensionPrimary   = $this->findKey($extensionDefs);
-			$myTableDefs = $this->table_defs;
-			$myTableName = $this->getMyTableName();
-			$myDefs      = $myTableDefs[$myTableName];
-			$myPrimary   = $this->findKey($myDefs);
-
-			// Build the merged table
-			$mergedDefs = array();
-			// If we have two primary keys, drop the extension key
-			if ($myPrimary && $extensionPrimary) {
-				unset($extensionDefs[$extensionPrimary]);
-			}
-			// Do extensiondefs first so they are first in the list, and so myDefs can overwrite a collision
-			foreach ($extensionDefs as $key => $value) {
-					$mergedDefs[$key] = $value;
-			}
-			// Follow with myDefs
-			foreach ($myDefs as $key => $value) {
-				$mergedDefs[$key] = $value;
-			}
-
-			$returnMe = array($myTableName => $mergedDefs);
-			// Cache the result
-			$this->actual_table_defs = $returnMe;
-			return $returnMe;
-		}
-	}
-
-  /// Returns the name of the table that this object saves and loads under.
-  /// Pretty easy function really.
-  function getMyTableName() {
-		return $this->getTableName($this->table_defs);
-  }
-
-  /// An alias for the getPrimary() method.  \deprecated
-  function getID() {
-		return $this->getPrimary();
-  }
-
-	/// Dumps the contents of attribs via print_r()
-	/// Useful for debugging, but that's about it
-	function dumpview($pre=false) {
-		if ($pre) echo "<pre style=\"color: blue\">\n";
-		echo "Attributes for this ".get_class($this).":\n";;
-		print_r($this->attributes);
-		if ($pre) echo "</pre>\n";
-	}
-
-	/// An alias for the link() method.  \deprecated.
-	function adopt($child) {
-		return $this->link($child);
-	}
-
-	/// Alias for the deLink() method. \deprecated.
-	function emancipate($child) {
-		return $this->deLink($child);
-	}
-
-	/// Alias for the orderLinks() method.  \deprecated.
-	function orderChildren($example, $ordering) {
-		return $this->orderLinks($example, $ordering);
-	}
-
-	/// Alias for the getLinks() method.  \deprecated.
-	function getChildren($example, $parameters = NULL) {
-		return $this->getLinks($example, NULL, $parameters);
-	}
 
 }
 
