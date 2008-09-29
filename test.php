@@ -2,7 +2,7 @@
 
 header("Content-type: text/html");
 
-include_once 'databasemagic.php';
+include_once 'classes_Extras.php';
 
 ?>
 <html>
@@ -27,7 +27,9 @@ class Collection extends PrimaryDatabaseMagicObject {
 		)
 	);
 }
-
+?>
+<!-- Collection Defined -->
+<?php
 class Book extends PrimaryDatabaseMagicObject {
 	protected $table_defs = array(
 		'myBooks' => array(
@@ -38,7 +40,9 @@ class Book extends PrimaryDatabaseMagicObject {
 		)
 	);
 }
-
+?>
+<!-- Book Defined -->
+<?php
 class Review extends PrimaryDatabaseMagicObject {
 	protected $table_defs = array(
 		'bookReviews' => array(
@@ -48,11 +52,25 @@ class Review extends PrimaryDatabaseMagicObject {
 		)
 	);
 }
-
+?>
+<!-- Review Defined -->
+<?php
 dbm_debug("heading", "Testing object creation, saving and loading. . .");
-
+?>
+<!-- Debug Called -->
+<?php
 dbm_debug("info", "Creating the Book \"Monster Hunter International\"");
+?>
+<!-- Debug Called -->
+<?php
 $aBook = new Book();
+?>
+<!-- New Book -->
+<?php
+
+dbm_debug("data", "Book Table Defs");
+dbm_debug("data", $aBook->getTableDefs());
+
 $aBook->setAttribs(
 	array(
 		'isbn'   => "0-7414-4456-9",
@@ -61,6 +79,9 @@ $aBook->setAttribs(
 		'pubyear' => "2007"
 	)
 );
+?>
+<!-- setAttribs Returned -->
+<?php
 $aBook->dumpview(true);
 dbm_debug("info", "Saving book . . . ");
 $aBook->save();

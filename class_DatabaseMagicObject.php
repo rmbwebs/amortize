@@ -20,10 +20,29 @@
 *******************************************/
 
 
-require_once dirname(__FILE__) . "/databasemagic.php";
+require_once dirname(__FILE__).'/class_DatabaseMagicInterface.php';
 
-
-
+/**
+ * Provides a compatibility layer for projects that used DbM before the multi-class re-write:
+ * Please use DatabaseMagicInterface for new projects.
+ * \deprecated
+ */
+class DatabaseMagicObject extends DatabaseMagicInterface {
+  protected $table_defs;
+  protected $actual_table_defs;
+	function __construct ($data=null) {
+		$this->table_def_extensions = $this->table_defs;
+		$this->setTableDefs($this->actual_table_defs);
+		$this->actual_table_defs = null;
+		return parent::__construct($data);
+	}
+	public function setAttribs($info, $clobber=false) {
+		return $this->attribs($info, $clobber);
+	}
+	public function getAttribs() {
+		return $this->attribs();
+	}
+}
 
 /***************************************************************************************************************/
 

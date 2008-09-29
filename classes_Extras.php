@@ -20,7 +20,7 @@
 *******************************************/
 
 
-	include_once 'databasemagic.php';
+	include_once 'class_DatabaseMagicObject.php';
 
 /**
  * This is an extension of DatabaseMagicObject that provides form processing through a DOMDocument
