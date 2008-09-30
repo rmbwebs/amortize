@@ -33,9 +33,9 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	 * Used to set or get the info for this object.
 	 * Filters bad info or unknown data that won't go into our database table.
 	 */
-	function attribs($info=null) {
+	function attribs($info=null, $clobber=false) {
 		if (!is_null($info)) {
-			parent::setAttribs($info);
+			parent::setAttribs($info, $clobber);
 		}
 		return parent::getAttribs();
 	}

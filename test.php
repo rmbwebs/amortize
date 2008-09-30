@@ -2,8 +2,8 @@
 
 header("Content-type: text/html");
 
+define('DBM_DEBUG', true);
 define('SQL_TABLE_PREFIX', "rewrite_test_");
-
 include_once 'classes_Extras.php';
 
 ?>
@@ -92,7 +92,7 @@ $aBook->dumpview(true);
 $id = $aBook->getPrimary();
 dbm_debug("info", "Upon saving, the database gave this book a key value of {$id}.  We will load Book({$id}) for comparison to the original. . .");
 $newBook = new Book($id);
-dbm_debug("info", "Comparing the two:");
+dbm_debug("info", "Comparing the two, what we saved followed by what we loaded:");
 $aBook->dumpview(true);
 $newBook->dumpview(true);
 if ($aBook->getAttribs() == $newBook->getAttribs()) {
