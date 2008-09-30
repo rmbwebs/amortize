@@ -2,6 +2,8 @@
 
 header("Content-type: text/html");
 
+define('SQL_TABLE_PREFIX', "rewrite_test_");
+
 include_once 'classes_Extras.php';
 
 ?>

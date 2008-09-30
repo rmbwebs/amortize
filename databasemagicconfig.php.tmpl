@@ -8,15 +8,31 @@
   $dbmDebug    = false;  // Set to true if you want to enable debugging output
   $dbmAutoDrop = false;  // Set to true if you want DBM to automatically drop columns that you remove from your table_defs (SCARY)
 
+	$dbmAllowConfOverrides = true; // Allow config consts defined before this file. See test.php for example.  Possible security risk.
 
-  //SQL options
-  define('SQL_HOST',         $sqlHost);
-  define('SQL_USER',         $sqlUser);
-  define('SQL_PASS',         $sqlPass);
-  define('SQL_DBASE',        $sqlDatabase);
-  define('SQL_TABLE_PREFIX', $sqlPrefix);
 
-	//General Options
-	define('DBM_DEBUG',        $dbmDebug);
-	define('DBM_AUTODROP',     $dbmAutoDrop);
+	/***************************************   Non-user-servicable parts below   ********************************************/
+  // SQL options
+  if (!defined('SQL_HOST'))         { define('SQL_HOST',         $sqlHost); }
+		else if (!$dbmAllowConfOverrides)  { die('SQL_HOST was previously defined as "'.SQL_HOST.'" and that is not allowed per '.__FILE__); }
+
+	if (!defined('SQL_USER'))         { define('SQL_USER',         $sqlUser); }
+		else if (!$dbmAllowConfOverrides)  { die('SQL_USER was previously defined as "'.SQL_HOST.'" and that is not allowed per '.__FILE__); }
+
+	if (!defined('SQL_PASS'))         { define('SQL_PASS',         $sqlPass); }
+		else if (!$dbmAllowConfOverrides)  { die('SQL_PASS was previously defined as "'.SQL_HOST.'" and that is not allowed per '.__FILE__); }
+
+	if (!defined('SQL_DBASE'))        { define('SQL_DBASE',        $sqlDatabase); }
+		else if (!$dbmAllowConfOverrides)  { die('SQL_DBASE was previously defined as "'.SQL_HOST.'" and that is not allowed per '.__FILE__); }
+
+	if (!defined('SQL_TABLE_PREFIX')) { define('SQL_TABLE_PREFIX', $sqlPrefix); }
+		else if (!$dbmAllowConfOverrides)  { die('SQL_TABLE_PREFIX was previously defined as "'.SQL_HOST.'" and that is not allowed per '.__FILE__); }
+
+	// General Options
+	if (!defined('DBM_DEBUG'))        { define('DBM_DEBUG',        $dbmDebug); }
+		else if (!$dbmAllowConfOverrides)  { die('DBM_DEBUG was previously defined as "'.SQL_HOST.'" and that is not allowed per '.__FILE__); }
+
+	if (!defined('DBM_AUTODROP'))     { define('DBM_AUTODROP',     $dbmAutoDrop); }
+		else if (!$dbmAllowConfOverrides)  { die('DBM_AUTODROP was previously defined as "'.SQL_HOST.'" and that is not allowed per '.__FILE__); }
+
 ?>
