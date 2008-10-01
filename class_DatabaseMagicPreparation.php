@@ -364,11 +364,6 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 	}
 
 
-	protected function getTableName($defs) {
-		$tableNames = array_keys($defs);
-		return $tableNames[0];
-	}
-
 	protected function getInitial($columnDef) {
 		if (is_array($columnDef)) {
 			$columnDef = $columnDef[0];

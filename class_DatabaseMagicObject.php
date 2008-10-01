@@ -1,4 +1,5 @@
 <?php
+
 /*******************************************
 	Copyright Rich Bellamy, RMB Webs, 2008
 	Contact: rich@rmbwebs.com

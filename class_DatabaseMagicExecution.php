@@ -85,16 +85,25 @@ class DatabaseMagicExecution {
    */
   private $table_defs = null;
 
-	private $sql_pass  = SQL_PASS;
-	private $sql_user  = SQL_USER;
-	private $sql_host  = SQL_HOST;
-	private $sql_dbase = SQL_DBASE;
-	private $sql_prfx  = SQL_TABLE_PREFIX;
+	protected $sql_pass  = SQL_PASS;
+	protected $sql_user  = SQL_USER;
+	protected $sql_host  = SQL_HOST;
+	protected $sql_dbase = SQL_DBASE;
+	protected $sql_prfx  = SQL_TABLE_PREFIX;
 
+	function __construct() {
+		if (is_string($this->table_defs)) {
+			$this->setTableDefs($this->table_defs);
+		}
+	}
 
 	/// Sets the table definitions for this object
 	protected function setTableDefs($defs) {
-		$this->table_defs = $defs;
+		if (is_string($defs)) {
+			$this->table_defs = $this->getActualTableDefs($defs);
+		} else {
+			$this->table_defs = $defs;
+		}
 	}
 
 	/// Returns the table definitions for this object
@@ -103,9 +112,9 @@ class DatabaseMagicExecution {
 	}
 
 	/**
-	* returns the name of the primary key for a particular table definition
-	*/
-	protected function findKey($def) {
+	 * returns the name of the primary key for a particular row list
+	 */
+	protected function findKey($def = null) {
 		$def = (is_array($def)) ? $def : array();
 		foreach ($def as $field => $details) {
 			if ($details[2] == "PRI")
@@ -115,11 +124,22 @@ class DatabaseMagicExecution {
 	}
 
 	/**
-	* takes a table definition and returns the primary key for that table
-	*/
+	 * Returns the primary key row definitn for this object's table
+	 * Optionally takes a table definition as an argument to use instead of this objects table def
+	 */
 	protected function findTableKey($defs = null) {
 		$defs = (is_null($defs)) ? $this->table_defs : $defs;
 		return $this->findKey(first_val($defs));
+	}
+
+
+	/**
+	 * Returns the name that this object saves under
+	 * Optionally takes a table definition as an argument to use instead of this objects table def
+	 */
+	protected function getTableName($defs = null) {
+		$defs = (is_null($defs)) ? $this->table_defs : $defs;
+		return first_key($defs);
 	}
 
 	/**
@@ -199,11 +219,13 @@ class DatabaseMagicExecution {
 		}
 		$definition = array();
 		while ($row = mysql_fetch_assoc($results)) {
-			$definition[$row['Field']] = array ($row['Type'],
-																					$row['Null'],
-																					$row['Key'],
-																					$row['Default'],
-																					$row['Extra']);
+			$definition[$row['Field']] = array (
+				$row['Type'],
+				$row['Null'],
+				$row['Key'],
+				$row['Default'],
+				$row['Extra']
+			);
 		}
 		return $definition;
 	}
@@ -240,7 +262,6 @@ class DatabaseMagicExecution {
 	}
 
 	/**
-	* updateTable()
 	* Bring the table up to the current definition
 	*/
 	protected function updateTable($customDefs) {

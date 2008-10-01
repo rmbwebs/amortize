@@ -1,4 +1,5 @@
 <?php
+
 /*******************************************
 	Copyright Rich Bellamy, RMB Webs, 2008
 	Contact: rich@rmbwebs.com
@@ -20,7 +21,7 @@
 *******************************************/
 
 
-	include_once 'class_DatabaseMagicObject.php';
+	require_once 'class_DatabaseMagicObject.php';
 
 /**
  * This is an extension of DatabaseMagicObject that provides form processing through a DOMDocument
