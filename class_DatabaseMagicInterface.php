@@ -72,11 +72,15 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		$parentTableDefs = $this->getTableDefs();
 		$parentID        = $this->getID();
 
-		return $this->doAdoption($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
+		$link = new DatabaseMagicLink($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
+		return $link->createLink();
+
 	}
 
 	/** Breaks a link previously created by link()
 	 * B will no longer be returned as part of A->getLinks() after A->deLink(B) is called.
+	 * If $relation is provided, only matched relational links will be delinked
+	 * Without $relation, all links between the two objects will be delinked.
 	 */
 	function deLink($subject, $relation=NULL) {
 		$subjectTableDefs  = $subject->getTableDefs();
@@ -84,11 +88,13 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		$parentTableDefs = $this->getTableDefs();
 		$parentID    = $this->getID();
 
-		return $this->doEmancipation($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
+		$link = new DatabaseMagicLink($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
+		return $link->breakLink();
 	}
 
 	/** Breaks links to all previously linked $example.
 	 * $example can be either a string of the classname, or an instance of the class itself
+	 * If $relation is provided, only matched relations will be delinked
 	 */
 	function deLinkAll($example, $relation=NULL) {
 		if (is_string($example)) {
@@ -101,7 +107,8 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		$parentTableDefs = $this->getTableDefs();
 		$parentID    = $this->getID();
 
-		return $this->doEmancipation($parentTableDefs, $parentID, $subjectTableDefs, NULL, $relation);
+		$link = new DatabaseMagicLink($parentTableDefs, $parentID, $subjectTableDefs, NULL, $relation);
+		return $link->breakLink();
 	}
 
 	/**
@@ -111,14 +118,16 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	 * $example can be the name of the class you want to retrieve, or an example object of the same type as those
 	 * children you want to retrieve.
 	 *
-	 * Example: \n
-	 * $fido = new Dog("Fido"); \n
-	 * $fam = new Family("Smith"); \n
-	 * $bob = new Person("Bob"); \n
-	 * $fam->link($bob); \n
-	 * $fam->link($fido); \n
-	 * $fam->getLinks("Dog");  // Returns an Array that contains Fido and any other Dogs linked in to the Smith Family \n
-	 * $fam->getLinks("Person");  // Returns an Array that contains Bob and any other Persons linked in to the Smith Family \n
+	 * Example:\n
+	 * \code
+	 * $fido = new Dog("Fido");
+	 * $fam = new Family("Smith");
+	 * $bob = new Person("Bob");
+	 * $fam->link($bob);
+	 * $fam->link($fido);
+	 * $fam->getLinks("Dog");  // Returns an Array that contains Fido and any other Dogs linked in to the Smith Family
+	 * $fam->getLinks("Person");  // Returns an Array that contains Bob and any other Persons linked in to the Smith Family
+	 * \endcode
 	 */
 	function getLinks($example, $parameters = NULL, $relation=NULL) {
 		return $this->doGetLinks($example, $parameters, $relation, false);

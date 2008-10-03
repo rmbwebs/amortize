@@ -11,12 +11,13 @@ include_once 'classes_Extras.php';
 	<head>
 		<title>DatabaseMagic Testing Script</title>
 		<style>
-			pre.info    {font-size: 1.2em; color: green;}
-			pre.query   {border: 2px solid;}
-			pre.regular {border-color: blue; margin-left: 1em;}
-			pre.system  {border-color: red;  margin-left: 2em;}
-			pre.error   {font-weight: bold; color: red;}
-			pre.heading {font-size: 2em; color: orange;}
+			pre.info     {font-size: 1.2em; color: green;}
+			pre.query    {border: 2px solid;}
+			pre.regular  {border-color: blue; margin-left: 1em;}
+			pre.system   {border-color: red;  margin-left: 2em;}
+			pre.error    {font-weight: bold; color: red;}
+			pre.heading  {font-size: 2em; color: orange;}
+			pre.tabledef {font-size: 0.8em; border: 2px solid yellow; margin-left: 3em; width: 30em;}
 		</style>
 	</head>
 	<body>

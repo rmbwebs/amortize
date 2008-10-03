@@ -133,12 +133,12 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 			$setClause .= $setClauseLinker.$key.'="'.$value.'"';
 			$setClauseLinker = " , ";
 		}
-		$query = "UPDATE ".$this->sql_prfx.$tableName.$setClause.$whereClause;
+		$query = "UPDATE ".$this->sql_prfx.$tableName.$setClause." ".$whereClause;
 		$result = $this->makeQueryHappen($customDefs, $query);
 		return $result;
 	}
 
-	protected function buildWhereClause($params=null) {
+	private function buildConditionalClause($params=null) {
 		if (is_string($params)) {
 			return $params;
 		} else if (is_array($params)) {
@@ -151,20 +151,23 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 			return "";
 		}
 
-		$whereClause = "WHERE ";
+		$clause = array();
 		foreach ($params as $field => $target) {
 			foreach ($target as $comparator => $value) {
-				$whereClause .= "`{$field}` {$comparator} '{$value}' AND ";
+				$clause[] = "`{$field}` {$comparator} '{$value}'";
 			}
 		}
-		// Pull the final " AND" from the whereclause
-		$whereClause = substr($whereClause, 0, -4);
-		// check that we had at least ONE results
-		if (strlen($whereClause) < 9) {
-			return "";
-		} else {
-			return $whereClause;
-		}
+		return implode(" AND ", $clause);
+	}
+
+	protected function buildWhereClause($params=null) {
+		$clause = $this->buildConditionalClause($params);
+		return (strlen($clause) > 0) ? "WHERE {$clause}" : "";
+	}
+
+	protected function buildOnClause($params=null) {
+		$clause = $this->buildConditionalClause($params);
+		return (strlen($clause) > 0) ? "ON {$clause}" : "";
 	}
 
 	protected function getAllSomething($customDefs, $column, $limit=NULL, $offset=NULL, $params=NULL) {
@@ -244,6 +247,32 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 
 	protected function getParentsList($parentTableDefs, $parentID, $childTableDefs, $params=NULL, $relation=NULL) {
 		return $this->getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params, true, $relation);
+	}
+
+	protected function getInnerJoin($otherTableFullName, $on, $thisWhere, $thatWhere) {
+		$myTableFullName = $this->getFullTableName();
+
+		foreach($on as $param => $value) {$onTranslated[$myTableFullName.'.'.$param] = $otherTableFullName.'.'.$value; }
+		foreach($thisWhere as $param => $value) { $where[$myTableFullName.'.'.$param] = $value; }
+		foreach($thatWhere as $param => $value) { $where[$otherTableFullName.'.'.$param] = $value; }
+
+		$query =
+			"SELECT DISTINCT {$otherTableFullName}.*\n".
+			"  FROM {$otherTableFullName} INNER JOIN {$myTableFullName}\n".
+			"    ".$this->buildOnClause($onTranslated)."\n".
+			"  ".$this->buildWhereClause($where)."\n".
+			"  ORDER BY {$myFullTableName}.ordering";
+		
+		$data = $this->makeQueryHappen($this->getTableDefs(), $query);
+		if ($data) {
+			$returnVal = array();
+			foreach ($data as $row) {
+				$returnVal[] = $row;
+			}
+			return $returnVal;
+		} else {
+			return NULL;
+		}
 	}
 
 	protected function getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params=NULL, $reverse=false, $relation=NULL) {

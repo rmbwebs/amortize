@@ -25,31 +25,66 @@ require_once dirname(__FILE__).'/class_DatabaseMagicPreparation.php';
 /// Linking object to join two DBM Objects.
 class DatabaseMagicLink extends DatabaseMagicPreparation {
 
-	private $from = null;
-	private $to   = null;
+	private $from    = null;
+	private $to      = null;
+	private $params  = null;
 
-	function __construct($from, $to) {
+	function __construct($fromDef, $fromID, $toDef, $toID=null, $relation=null) {
+		$parentClass = get_parent_class($this);
+		$from = new $parentClass;
+		$to   = new $parentClass;
+		$from->setTableDefs($fromDef);
+		$to->setTableDefs($toDef);
 		$this->from = $from;
 		$this->to   = $to;
+		$this->params = array('parentID' => $fromID);
+		if (!is_null($toID))     { $this->params['childID']  = $toID;  }
+		if (!is_null($relation)) { $this->params['relation'] = $relation; }
 		$this->setLinkDefs();
 	}
 
+	public function createLink() {
+		return $this->sqlMagicPut($this->getTableDefs(), $this->params);
+	}
+
+	public function breakLink() {
+		return $this->sqlMagicYank($this->getTableDefs(), $this->params);
+	}
+
+	// A hook for the table creation routine in DatabaseMagicExecution
+	protected function createTable($foo=null) {
+		// Take care of our functionality obligations
+		parent::createTable($foo);
+		// This function will be called once the first time that a link is created between two object types
+		// Note to self:
+		// If you want to create database table delete hooks to avoid hanging links references, this is where you can do it.
+	}
+
+
+	public function getLinksFromID($id, $params=null, $relation=null) {
+		$otherTableFullName = $this->to->getFullTableName();
+		$myFullName = $this->getFullTableName();
+		$on = array($myFullName.'.childID' => $otherTableFullName.'.'.$this->to->findTableKey());
+		$thisWhere = array('parentID' => $id);
+		if (!is_null($relation)) { $thisWhere['relation'] = $relation; };
+		return $this->getInnerJoin($otherTableFullName, $on, $thisWhere, $params);
+	}
+
 	private function setLinkDefs() {
-		$mapDefs = $this->getMapDefs($this->from, $this->to);
-		$mapName = $this->getMapName($this->from, $this->to);
+		$mapDefs = $this->createMapDefs($this->from, $this->to);
+		$mapName = $this->createMapName($this->from, $this->to);
 		$this->setTableDefs(array($mapName => $mapDefs));
 	}
 
-	private function getMapName($parent, $child) {
+	private function createMapName($parent, $child) {
 		$parentTableName = $parent->getTableName();
 		$childTableName  = $child->getTableName();
 		return "map_{$parentTableName}_to_{$childTableName}";
 	}
 
-	private function getMapDefs($parent, $child) {
-		$parentTableKeyDef = $parent->findTableKey();
-		$childTableKeyDef  = $child->findTableKey();
-
+	private function createMapDefs($parent, $child) {
+		$parentTableKeyDef = $parent->findTableKeyDef();
+		$childTableKeyDef  = $child->findTableKeyDef();
 		// We really only need the data type
 		$parentTableKeyDef = array($parentTableKeyDef[0], "NO", "PRI");
 		$childTableKeyDef = array($childTableKeyDef[0], "NO", "PRI");

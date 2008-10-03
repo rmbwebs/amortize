@@ -21,6 +21,7 @@
 *******************************************/
 
 require_once dirname(__FILE__).'/class_DatabaseMagicPreparation.php';
+require_once dirname(__FILE__).'/class_DatabaseMagicLink.php';
 
 /// Backend for the DatabaseMagicObject
 class DatabaseMagicFeatures extends DatabaseMagicPreparation {

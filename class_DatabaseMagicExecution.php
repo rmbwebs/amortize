@@ -124,7 +124,19 @@ class DatabaseMagicExecution {
 	}
 
 	/**
-	 * Returns the primary key row definitn for this object's table
+	 * returns the definition of the primary key for a particular row list
+	 */
+	protected function findKeyDef($def = null) {
+		$def = (is_array($def)) ? $def : array();
+		foreach ($def as $field => $details) {
+			if ($details[2] == "PRI")
+				return $details;
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the primary key name for this object's table
 	 * Optionally takes a table definition as an argument to use instead of this objects table def
 	 */
 	protected function findTableKey($defs = null) {
@@ -132,6 +144,14 @@ class DatabaseMagicExecution {
 		return $this->findKey(first_val($defs));
 	}
 
+	/**
+	 * Returns the primary key definition for this object's table
+	 * Optionally takes a table definition as an argument to use instead of this objects table def
+	 */
+	protected function findTableKeyDef($defs = null) {
+		$defs = (is_null($defs)) ? $this->table_defs : $defs;
+		return $this->findKeyDef(first_val($defs));
+	}
 
 	/**
 	 * Returns the name that this object saves under
@@ -140,6 +160,10 @@ class DatabaseMagicExecution {
 	protected function getTableName($defs = null) {
 		$defs = (is_null($defs)) ? $this->table_defs : $defs;
 		return first_key($defs);
+	}
+
+	public function getFUllTableName() {
+		return $this->sql_prfx.$this->getTableName();
 	}
 
 	/**
@@ -167,15 +191,16 @@ class DatabaseMagicExecution {
 	* getTableCreateQuery()
 	* returns the query string that can be used to create a table based on it's definition
 	*/
-	protected function getTableCreateQuery() {
-		$tableNames = array_keys($this->table_defs);
+	protected function getTableCreateQuery($defs=null) {
+		$defs = (is_null($defs)) ? $this->table_defs : $defs;
+		$tableNames = array_keys($defs);
 		$tableName = $tableNames[0];
 
-		if (! isset($this->table_defs[$tableName])) {
+		if (! isset($defs[$tableName])) {
 			return NULL;
 		}
 
-		$table_def = $this->table_defs[$tableName];
+		$table_def = $defs[$tableName];
 
 		$columns = array();
 		$pri = array();
