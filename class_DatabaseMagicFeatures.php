@@ -140,6 +140,27 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 		$this->setAttribs(array($name => $value));
 	}
 
+
+	protected function getLinkedObjects($example, $parameter=null, $relation=null, $backLinks=false) {
+		if (is_object($example)) {
+			$protoClass = get_class($example);
+			$prototype = new $protoClass;
+		} else if (is_string($example) && class_exists($example)) {
+			$prototype = new $example;
+		}
+
+		if ($backLinks) {
+			$linkObject = new DatabaseMagicLink($prototype, $this);
+		} else {
+			$linkObject = new DatabaseMagicLink($this, $prototype);
+		}
+
+		$id = $this->getPrimary();
+
+
+
+	}
+
 	/**
 	 * Does the actual work for getLinks and getBackLinks
 	 */

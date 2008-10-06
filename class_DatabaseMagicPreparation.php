@@ -249,25 +249,27 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		return $this->getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params, true, $relation);
 	}
 
-	protected function getInnerJoin($otherTableFullName, $on, $thisWhere, $thatWhere) {
-		$myTableFullName = $this->getFullTableName();
+	// A new method for running an inner join.
+	protected function getInnerJoin($that, $on, $thisWhere, $thatWhere) {
+		$thatTableFullName = $that->getFullTableName();
+		$thisTableFullName = $this->getFullTableName();
 
-		foreach($on as $param => $value) {$onTranslated[$myTableFullName.'.'.$param] = $otherTableFullName.'.'.$value; }
-		foreach($thisWhere as $param => $value) { $where[$myTableFullName.'.'.$param] = $value; }
-		foreach($thatWhere as $param => $value) { $where[$otherTableFullName.'.'.$param] = $value; }
+		foreach($on as $param => $value) {$onTranslated[$thisTableFullName.'.'.$param] = $thatTableFullName.'.'.$value; }
+		foreach($thisWhere as $param => $value) { $where[$thisTableFullName.'.'.$param] = $value; }
+		foreach($thatWhere as $param => $value) { $where[$thatTableFullName.'.'.$param] = $value; }
 
 		$query =
-			"SELECT DISTINCT {$otherTableFullName}.*\n".
-			"  FROM {$otherTableFullName} INNER JOIN {$myTableFullName}\n".
+			"SELECT DISTINCT {$thatTableFullName}.*\n".
+			"  FROM {$thatTableFullName} INNER JOIN {$thisTableFullName}\n".
 			"    ".$this->buildOnClause($onTranslated)."\n".
 			"  ".$this->buildWhereClause($where)."\n".
 			"  ORDER BY {$myFullTableName}.ordering";
-		
+
 		$data = $this->makeQueryHappen($this->getTableDefs(), $query);
 		if ($data) {
 			$returnVal = array();
 			foreach ($data as $row) {
-				$returnVal[] = $row;
+				$returnVal[] = $row;   // This makes no sense.
 			}
 			return $returnVal;
 		} else {

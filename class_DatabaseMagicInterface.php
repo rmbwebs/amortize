@@ -67,13 +67,8 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		$this->save();
 		$subject->save();
 
-		$subjectTableDefs  = $subject->getTableDefs();
-		$subjectID         = $subject->getID();
-		$parentTableDefs = $this->getTableDefs();
-		$parentID        = $this->getID();
-
-		$link = new DatabaseMagicLink($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
-		return $link->createLink();
+		$link = new DatabaseMagicLink($this, $subject);
+		return $link->createLink($this->getID(), $subject->getID(),  $relation);
 
 	}
 
@@ -83,13 +78,8 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	 * Without $relation, all links between the two objects will be delinked.
 	 */
 	function deLink($subject, $relation=NULL) {
-		$subjectTableDefs  = $subject->getTableDefs();
-		$subjectID     = $subject->getID();
-		$parentTableDefs = $this->getTableDefs();
-		$parentID    = $this->getID();
-
-		$link = new DatabaseMagicLink($parentTableDefs, $parentID, $subjectTableDefs, $subjectID, $relation);
-		return $link->breakLink();
+		$link = new DatabaseMagicLink($this, $subject);
+		return $link->breakLink($this->getID(), $subject->getID(),  $relation);
 	}
 
 	/** Breaks links to all previously linked $example.
@@ -102,13 +92,8 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		} else {
 			$subject = $example;
 		}
-		$subjectTableDefs  = $subject->getTableDefs();
-		$subjectID     = $subject->getID();
-		$parentTableDefs = $this->getTableDefs();
-		$parentID    = $this->getID();
-
-		$link = new DatabaseMagicLink($parentTableDefs, $parentID, $subjectTableDefs, NULL, $relation);
-		return $link->breakLink();
+		$link = new DatabaseMagicLink($this, $subject);
+		return $link->breakLink($this->getID(), null,  $relation);
 	}
 
 	/**

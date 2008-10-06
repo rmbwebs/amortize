@@ -27,48 +27,73 @@ class DatabaseMagicLink extends DatabaseMagicPreparation {
 
 	private $from    = null;
 	private $to      = null;
-	private $params  = null;
 
-	function __construct($fromDef, $fromID, $toDef, $toID=null, $relation=null) {
+	function __construct($fromDef, $toDef) {
 		$parentClass = get_parent_class($this);
 		$from = new $parentClass;
 		$to   = new $parentClass;
-		$from->setTableDefs($fromDef);
-		$to->setTableDefs($toDef);
+
+		if (is_object($fromDef)) {
+			$from->setTableDefs($fromDef->getTableDefs());
+		} else {
+			$from->setTableDefs($fromDef);
+		}
+		if (is_object($toDef)) {
+			$to->setTableDefs($toDef->getTableDefs());
+		} else {
+			$to->setTableDefs($toDef);
+		}
+
 		$this->from = $from;
 		$this->to   = $to;
-		$this->params = array('parentID' => $fromID);
-		if (!is_null($toID))     { $this->params['childID']  = $toID;  }
-		if (!is_null($relation)) { $this->params['relation'] = $relation; }
+
 		$this->setLinkDefs();
 	}
 
-	public function createLink() {
-		return $this->sqlMagicPut($this->getTableDefs(), $this->params);
+	public function createLink($fromID, $toID, $relation=null) {
+		$params = array(
+			'parentID' => $fromID,
+			'childID'  => $toID
+		);
+		if (!is_null($relation)) { $params['relation'] = $relation; }
+		return $this->sqlMagicPut($this->getTableDefs(), $params);
 	}
 
-	public function breakLink() {
-		return $this->sqlMagicYank($this->getTableDefs(), $this->params);
+	public function breakLink($fromID, $toID=null, $relation=null) {
+		$params = array('parentID' => $fromID);
+		if (!is_null($toID))     { $params['childID']  = $toID; }
+		if (!is_null($relation)) { $params['relation'] = $relation; }
+		return $this->sqlMagicYank($this->getTableDefs(), $params);
 	}
+
+	public function getLinksFromID($id, $params=null, $relation=null) {
+		$joinOn = array('childID' => $this->to->findTableKey());
+		$thisWhere = array('parentID' => $id);
+		if (!is_null($relation)) { $thisWhere['relation'] = $relation; };
+		return $this->getInnerJoin($this->to, $joinOn, $thisWhere, $params);
+	}
+
+	public function getBackLinksFromID($id, $params=null, $relation=null) {
+		$joinOn = array('parentID' => $this->from->findTableKey());
+		$thisWhere = array('childID' => $id);
+		if (!is_null($relation)) { $thisWhere['relation'] = $relation; };
+		return $this->getInnerJoin($this->from, $joinOn, $thisWhere, $params);
+	}
+
+
+
+	/*********************** Protected Support Functions below **************************/
 
 	// A hook for the table creation routine in DatabaseMagicExecution
 	protected function createTable($foo=null) {
-		// Take care of our functionality obligations
+		// First: take care of the obligations to this function call.
 		parent::createTable($foo);
 		// This function will be called once the first time that a link is created between two object types
 		// Note to self:
 		// If you want to create database table delete hooks to avoid hanging links references, this is where you can do it.
 	}
 
-
-	public function getLinksFromID($id, $params=null, $relation=null) {
-		$otherTableFullName = $this->to->getFullTableName();
-		$myFullName = $this->getFullTableName();
-		$on = array($myFullName.'.childID' => $otherTableFullName.'.'.$this->to->findTableKey());
-		$thisWhere = array('parentID' => $id);
-		if (!is_null($relation)) { $thisWhere['relation'] = $relation; };
-		return $this->getInnerJoin($otherTableFullName, $on, $thisWhere, $params);
-	}
+	/*********************** Private Support Functions below **************************/
 
 	private function setLinkDefs() {
 		$mapDefs = $this->createMapDefs($this->from, $this->to);
