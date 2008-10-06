@@ -141,63 +141,36 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 	}
 
 
-	protected function getLinkedObjects($example, $parameter=null, $relation=null, $backLinks=false) {
-		if (is_object($example)) {
-			$protoClass = get_class($example);
-			$prototype = new $protoClass;
-		} else if (is_string($example) && class_exists($example)) {
-			$prototype = new $example;
-		}
-
-		if ($backLinks) {
-			$linkObject = new DatabaseMagicLink($prototype, $this);
-		} else {
-			$linkObject = new DatabaseMagicLink($this, $prototype);
-		}
+	protected function getLinkedObjects($example, $params=null, $relation=null, $backLinks=false) {
+		$example = (is_object($example)) ? get_class($example) : $example;
+		$prototype = new $example;
 
 		$id = $this->getPrimary();
 
-
-
-	}
-
-	/**
-	 * Does the actual work for getLinks and getBackLinks
-	 */
-	function doGetLinks($example, $parameters = NULL, $relation = NULL, $backLinks=false) {
-		if (is_object($example)) {
-			$prototype = clone $example;
-			$prototype->initialize();
-		} else if (is_string($example) && class_exists($example)) {
-			$prototype = new $example;
+		if (!$backLinks) {
+			$linkObject = new DatabaseMagicLink($this, $prototype);
+			$data = $linkObject->getLinksFromID($id, $params, $relation);
 		} else {
-			return NULL;
+			$linkObject = new DatabaseMagicLink($prototype, $this);
+			$data = $linkObject->getBackLinksFromID($id, $params, $relation);
 		}
 
-		$parentTableDefs = $this->getTableDefs();
-		$parentID        = $this->getPrimary();
-		$childTableDefs  = $prototype->getTableDefs();
+		$data = (is_array($data)) ? $data : array();
 
-		if ($backLinks) {
-			$list =  $this->getParentsList($parentTableDefs, $parentID, $childTableDefs, $parameters, $relation);
-		} else {
-			$list = $this->getChildrenList($parentTableDefs, $parentID, $childTableDefs, $parameters, $relation);
+		$results = array();
+		foreach ($data as $fields) {
+			$temp = clone($prototype);
+			$temp->setAttribs($fields, true);
+			$results[] = $temp;
 		}
 
-		$children = array();
-		if (is_array($list)) {
-			foreach($list as $childid => $attribs) {
-				$temp = clone $prototype;
-				$temp->setAttribs($attribs, true);
-				$children[] = $temp;
-			}
-		}
-		return $children;
+		return $results;
+
 	}
 
 	/// Tells you the column name that holds the primary
 	function getPrimaryKey() {
-    return $this->findTableKey($this->getTableDefs());
+    return $this->findTableKey();
 	}
 
 	/** Returns the value of this object's primary key.
@@ -281,13 +254,9 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
   /// Returns the name of the table that this object saves and loads under.
   /// Pretty easy function really.
   function getMyTableName() {
-		return $this->getTableName($this->table_defs);
+		return $this->getTableName();
   }
 
-  /// An alias for the getPrimary() method.  \deprecated
-  function getID() {
-		return $this->getPrimary();
-  }
 
 	/// Dumps the contents of attribs via print_r()
 	/// Useful for debugging, but that's about it

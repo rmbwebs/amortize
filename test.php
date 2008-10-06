@@ -3,7 +3,7 @@
 header("Content-type: text/html");
 
 define('DBM_DEBUG', true);
-define('SQL_TABLE_PREFIX', "rewrite_test_");
+define('SQL_TABLE_PREFIX', "rw_");
 include_once 'classes_Extras.php';
 
 ?>
@@ -238,13 +238,13 @@ foreach ($books as $book) {
 }
 
 dbm_debug("info", "Attempting to find all blank-linked books (should just be The Revolution)");
-$books = $collection->getLinks("Book");
+$books = $collection->getLinks("Book", "");
 foreach ($books as $book) {
 	$book->dumpview(true);
 }
 
 dbm_debug("info", "Attempting to find all linked books (should be all three books with no repeats)");
-$books = $collection->getLinks("Book", true);
+$books = $collection->getLinks("Book");
 foreach ($books as $book) {
 	$book->dumpview(true);
 }

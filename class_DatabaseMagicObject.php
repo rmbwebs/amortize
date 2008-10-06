@@ -43,6 +43,12 @@ class DatabaseMagicObject extends DatabaseMagicInterface {
 	public function getAttribs() {
 		return $this->attribs();
 	}
+
+  /// An alias for the getPrimary() method.  \deprecated
+  function getID() {
+		return $this->getPrimary();
+  }
+
 }
 
 /***************************************************************************************************************/

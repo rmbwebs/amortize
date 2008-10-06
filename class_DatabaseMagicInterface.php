@@ -31,11 +31,13 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 
 	/**
 	 * Used to set or get the info for this object.
-	 * Filters bad info or unknown data that won't go into our database table.
+	 * Filters out bad info or unknown data that won't go into our database table.
+	 * \param $info Optional array of data to set our attribs to
+	 * \param $clobber Optional boolean: set to true if you need to overwrite the primary key(s) of this object (default: false)
 	 */
 	function attribs($info=null, $clobber=false) {
 		if (!is_null($info)) {
-			parent::setAttribs($info, $clobber);
+			DatabaseMagicFeatures::setAttribs($info, $clobber);
 		}
 		return parent::getAttribs();
 	}
@@ -114,8 +116,14 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	 * $fam->getLinks("Person");  // Returns an Array that contains Bob and any other Persons linked in to the Smith Family
 	 * \endcode
 	 */
-	function getLinks($example, $parameters = NULL, $relation=NULL) {
-		return $this->doGetLinks($example, $parameters, $relation, false);
+	function getLinks($example) {
+		$parameters = null;
+		$relation = null;
+		foreach (array_slice(func_get_args(),1) as $arg) {
+			if (is_array($arg))  { $parameters = $arg; }
+			if (is_string($arg)) { $relation   = $arg; }
+		}
+		return $this->getLinkedObjects($example, $parameters, $relation, false);
 	}
 	/**
 	 * Works in reverse to getLinks().
@@ -123,8 +131,14 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	 * C = B->getBackLinks("classname of A"); \n
 	 * C is an array that contains A \n
 	 */
-	function getBackLinks($example, $parameters=NULL, $relation=NULL) {
-		return $this->doGetLinks($example, $parameters, $relation, true);
+	function getBackLinks($example) {
+		$parameters = null;
+		$relation = null;
+		foreach (array_slice(func_get_args(),1) as $arg) {
+			if (is_array($arg))  { $parameters = $arg; }
+			if (is_string($arg)) { $relation   = $arg; }
+		}
+		return $this->getLinkedObjects($example, $parameters, $relation, true);
 	}
 
 	/// Saves the object data to the database.

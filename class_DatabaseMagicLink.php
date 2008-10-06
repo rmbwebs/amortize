@@ -85,10 +85,10 @@ class DatabaseMagicLink extends DatabaseMagicPreparation {
 	/*********************** Protected Support Functions below **************************/
 
 	// A hook for the table creation routine in DatabaseMagicExecution
+	// This function will be called once the first time that a link is created between two object types
 	protected function createTable($foo=null) {
 		// First: take care of the obligations to this function call.
 		parent::createTable($foo);
-		// This function will be called once the first time that a link is created between two object types
 		// Note to self:
 		// If you want to create database table delete hooks to avoid hanging links references, this is where you can do it.
 	}

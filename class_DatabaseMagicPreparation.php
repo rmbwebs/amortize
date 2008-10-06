@@ -138,7 +138,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		return $result;
 	}
 
-	private function buildConditionalClause($params=null) {
+	private function buildConditionalClause($params=null, $q=true) {
 		if (is_string($params)) {
 			return $params;
 		} else if (is_array($params)) {
@@ -154,7 +154,8 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		$clause = array();
 		foreach ($params as $field => $target) {
 			foreach ($target as $comparator => $value) {
-				$clause[] = "`{$field}` {$comparator} '{$value}'";
+				$value = ($q) ? "'{$value}'" : $value;
+				$clause[] = "{$field} {$comparator} {$value}";
 			}
 		}
 		return implode(" AND ", $clause);
@@ -166,7 +167,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 	}
 
 	protected function buildOnClause($params=null) {
-		$clause = $this->buildConditionalClause($params);
+		$clause = $this->buildConditionalClause($params, false);
 		return (strlen($clause) > 0) ? "ON {$clause}" : "";
 	}
 
@@ -250,9 +251,12 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 	}
 
 	// A new method for running an inner join.
-	protected function getInnerJoin($that, $on, $thisWhere, $thatWhere) {
+	protected function getInnerJoin($that, $on, $thisWhere=null, $thatWhere=null) {
 		$thatTableFullName = $that->getFullTableName();
 		$thisTableFullName = $this->getFullTableName();
+		$on = (is_array($on)) ? $on : array();
+		$thisWhere = (is_array($thisWhere)) ? $thisWhere : array();
+		$thatWhere = (is_array($thatWhere)) ? $thatWhere : array();
 
 		foreach($on as $param => $value) {$onTranslated[$thisTableFullName.'.'.$param] = $thatTableFullName.'.'.$value; }
 		foreach($thisWhere as $param => $value) { $where[$thisTableFullName.'.'.$param] = $value; }
@@ -263,7 +267,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 			"  FROM {$thatTableFullName} INNER JOIN {$thisTableFullName}\n".
 			"    ".$this->buildOnClause($onTranslated)."\n".
 			"  ".$this->buildWhereClause($where)."\n".
-			"  ORDER BY {$myFullTableName}.ordering";
+			"  ORDER BY {$thisTableFullName}.ordering";
 
 		$data = $this->makeQueryHappen($this->getTableDefs(), $query);
 		if ($data) {
@@ -296,7 +300,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		if ($relation !== true) {  // True means match all, so exclude this test
 			$extendedWhere .= "\n    AND ".$this->sql_prfx.$tableName.".relation='".mysql_real_escape_string($relation)."'";
 		}
-		if ($params != NULL) {
+		if (is_array($params)) {
 			foreach($params as $key => $value) {
 				$extendedWhere .= "\n    AND ".$this->sql_prfx.$childTableName.".".$key."='".mysql_real_escape_string($value)."'";
 			}

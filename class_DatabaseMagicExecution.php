@@ -77,11 +77,15 @@ There is an error in your DatabaseMagic configuration.
  */
 class DatabaseMagicExecution {
 
-  /// An array that determines how the data for this object will be stored in the database, alternatively, a string of an existing table name
+  /// An array that determines how the data for this object will be stored in the database or a string of an existing table name
   /**
    * Possible formats for the array are:
-   * array('tablename' => array('collumn1name' => array('type', NULL, key, default, extras), column2name => array(...), ...))
-   * array('tablename' => array('column1name' => 'type', column2name => 'type', ...)
+   *   array('tablename' => array('collumn1name' => array('type', NULL, key, default, extras), column2name => array(...), ...))
+   *   array('tablename' => array('column1name' => 'type', column2name => 'type', ...)
+   *   "tablename"
+   * If only a string with tablename is used, the object will use the "DESCRIBE tablename;" query to learn table_defs from an
+   * existing table.  This will slow your program but is a very fast way to setup connecting to an existing database table that
+   * you don't plan on modifying.
    */
   private $table_defs = null;
 
@@ -92,13 +96,12 @@ class DatabaseMagicExecution {
 	protected $sql_prfx  = SQL_TABLE_PREFIX;
 
 	function __construct() {
-		if (is_string($this->table_defs)) {
-			$this->setTableDefs($this->table_defs);
-		}
+		// Nothing to do here, really.
 	}
 
 	/// Sets the table definitions for this object
-	protected function setTableDefs($defs) {
+	protected function setTableDefs($defs=null) {
+		$defs = (is_null($defs)) ? $this->table_defs : $defs;
 		if (is_string($defs)) {
 			$this->table_defs = $this->getActualTableDefs($defs);
 		} else {
@@ -108,6 +111,9 @@ class DatabaseMagicExecution {
 
 	/// Returns the table definitions for this object
 	function getTableDefs() {
+		if (is_string($this->table_defs)) {
+			$this->setTableDefs();
+		}
 		return $this->table_defs;
 	}
 
@@ -140,7 +146,7 @@ class DatabaseMagicExecution {
 	 * Optionally takes a table definition as an argument to use instead of this objects table def
 	 */
 	protected function findTableKey($defs = null) {
-		$defs = (is_null($defs)) ? $this->table_defs : $defs;
+		$defs = (is_null($defs)) ? $this->getTableDefs() : $defs;
 		return $this->findKey(first_val($defs));
 	}
 
@@ -149,7 +155,7 @@ class DatabaseMagicExecution {
 	 * Optionally takes a table definition as an argument to use instead of this objects table def
 	 */
 	protected function findTableKeyDef($defs = null) {
-		$defs = (is_null($defs)) ? $this->table_defs : $defs;
+		$defs = (is_null($defs)) ? $this->getTableDefs() : $defs;
 		return $this->findKeyDef(first_val($defs));
 	}
 
@@ -158,7 +164,7 @@ class DatabaseMagicExecution {
 	 * Optionally takes a table definition as an argument to use instead of this objects table def
 	 */
 	protected function getTableName($defs = null) {
-		$defs = (is_null($defs)) ? $this->table_defs : $defs;
+		$defs = (is_null($defs)) ? $this->getTableDefs() : $defs;
 		return first_key($defs);
 	}
 
@@ -192,7 +198,7 @@ class DatabaseMagicExecution {
 	* returns the query string that can be used to create a table based on it's definition
 	*/
 	protected function getTableCreateQuery($defs=null) {
-		$defs = (is_null($defs)) ? $this->table_defs : $defs;
+		$defs = (is_null($defs)) ? $this->getTableDefs() : $defs;
 		$tableNames = array_keys($defs);
 		$tableName = $tableNames[0];
 
@@ -366,6 +372,7 @@ class DatabaseMagicExecution {
 		$result = mysql_query($query, $sql);
 		if (! $result) {
 			// We have a problem here
+			dbm_debug("system error", mysql_error());
 			if (! $this->table_exists($tableName)) {
 				dbm_debug("error", "Query Failed . . . table $tableName doesn't exist.");
 				$this->createTable($customDefs);
