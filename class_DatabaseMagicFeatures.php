@@ -58,10 +58,6 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 	/// Sets all the attributes to blank and the table key to null.
 	/// used for initializing new blank objects.
 	function initialize() {
-		if ((!is_array($this->table_def_extensions)) && (is_string($this->table_def_extensions))) {
-			$tablename = $this->table_def_extensions;
-			$this->table_def_extensions = array($tablename => $this->getActualTableDefs($tablename));
-		}
 		$defs = $this->getTableDefs();
 		if (is_array($defs)) {
 			$cols = $this->getTableColumnDefs($defs);
@@ -109,7 +105,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
   /// Sets attribute (row) data for this object.
   /// $clobberID is a bool that must be true to allow you to overwrite a primary key
   function setAttribs($info, $clobberID = false) {
-		dbm_debug("setattribs", $info);
+		dbm_debug("setattribs data", $info);
     $defs = $this->getTableDefs();
     $columns = $defs[$this->getTableName($defs)];
     $key = $this->getPrimaryKey();

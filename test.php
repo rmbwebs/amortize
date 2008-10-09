@@ -1,27 +1,8 @@
 <?php
 
-header("Content-type: text/html");
-
 define('DBM_DEBUG', true);
 define('SQL_TABLE_PREFIX', "dbmrw_test_");
 include_once 'classes_Extras.php';
-
-?>
-<html>
-	<head>
-		<title>DatabaseMagic Testing Script</title>
-		<style>
-			pre.info     {font-size: 1.2em; color: green;}
-			pre.query    {border: 2px solid;}
-			pre.regular  {border-color: blue; margin-left: 1em;}
-			pre.system   {border-color: red;  margin-left: 2em;}
-			pre.error    {font-weight: bold; color: red;}
-			pre.heading  {font-size: 2em; color: orange;}
-			pre.tabledef {font-size: 0.8em; border: 2px solid yellow; margin-left: 3em; width: 30em;}
-		</style>
-	</head>
-	<body>
-<?php
 
 class Collection extends PrimaryDatabaseMagicObject {
 	protected $table_defs = array(
@@ -30,9 +11,6 @@ class Collection extends PrimaryDatabaseMagicObject {
 		)
 	);
 }
-?>
-<!-- Collection Defined -->
-<?php
 class Book extends PrimaryDatabaseMagicObject {
 	protected $table_defs = array(
 		'myBooks' => array(
@@ -43,9 +21,6 @@ class Book extends PrimaryDatabaseMagicObject {
 		)
 	);
 }
-?>
-<!-- Book Defined -->
-<?php
 class Review extends PrimaryDatabaseMagicObject {
 	protected $table_defs = array(
 		'bookReviews' => array(
@@ -55,25 +30,29 @@ class Review extends PrimaryDatabaseMagicObject {
 		)
 	);
 }
-?>
-<!-- Review Defined -->
-<?php
-dbm_debug("heading", "Testing object creation, saving and loading. . .");
-?>
-<!-- Debug Called -->
-<?php
-dbm_debug("info", "Creating the Book \"Monster Hunter International\"");
-?>
-<!-- Debug Called -->
-<?php
-$aBook = new Book();
-?>
-<!-- New Book -->
-<?php
 
-dbm_debug("data", "Book Table Defs");
+dbm_debug("heading", "Dropping testing tables");
+$classes = array(
+	new Collection,
+	new Book,
+	new Review,
+	new DataBaseMagicLink(new Collection, new Book),
+	new DataBaseMagicLink(new Book, new Review)
+);
+foreach ($classes as $dbmclass) {
+	$dbmclass->dropTable();
+}
+
+
+dbm_debug("heading", "Testing object creation, saving and loading. . .");
+
+dbm_debug("info", 'Creating the Book "Monster Hunter International"');
+$aBook = new Book();
+
+dbm_debug("info", "Table Definitions for \$aBook:");
 dbm_debug("data", $aBook->getTableDefs());
 
+dbm_debug("info", "Giving \$aBook some attributes:");
 $aBook->setAttribs(
 	array(
 		'isbn'   => "0-7414-4456-9",
@@ -82,20 +61,25 @@ $aBook->setAttribs(
 		'pubyear' => "2007"
 	)
 );
-?>
-<!-- setAttribs Returned -->
-<?php
+
+dbm_debug("info", "\$aBook now has these attributes:");
 $aBook->dumpview(true);
+
 dbm_debug("info", "Saving book . . . ");
-$aBook->save();
-dbm_debug("info", "done.  ");
+$aBook->save();  // This will likely generate a lot of output
+dbm_debug("info", "done saving book.  ");
+
+dbm_debug("info", "Notice the a slight change after the save:");
 $aBook->dumpview(true);
+
 $id = $aBook->getPrimary();
 dbm_debug("info", "Upon saving, the database gave this book a key value of {$id}.  We will load Book({$id}) for comparison to the original. . .");
 $newBook = new Book($id);
+
 dbm_debug("info", "Comparing the two, what we saved followed by what we loaded:");
 $aBook->dumpview(true);
 $newBook->dumpview(true);
+
 if ($aBook->getAttribs() == $newBook->getAttribs()) {
 	dbm_debug("info", "Loaded data matches saved data.");
 } else {
@@ -249,8 +233,4 @@ foreach ($books as $book) {
 	$book->dumpview(true);
 }
 
-
-
 ?>
-	</body>
-</html>

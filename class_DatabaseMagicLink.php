@@ -32,6 +32,7 @@ class DatabaseMagicLink extends DatabaseMagicPreparation {
 	private $to      = null;
 
 	function __construct($fromDef, $toDef) {
+		parent::__construct();
 		$parentClass = get_parent_class($this);
 		$from = new $parentClass;
 		$to   = new $parentClass;
@@ -66,7 +67,7 @@ class DatabaseMagicLink extends DatabaseMagicPreparation {
 		$params = array(MAP_FROM_COL => $fromID);
 		if (!is_null($toID))     { $params[MAP_TO_COL]  = $toID; }
 		if (!is_null($relation)) { $params['relation'] = $relation; }
-		return $this->sqlMagicYank($this->getTableDefs(), $params);
+		return $this->sqlMagicYank($params);
 	}
 
 	public function getLinksFromID($id, $params=null, $relation=null) {

@@ -53,8 +53,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 	}
 
 	/**
-	* function getTableColumns(table definition) {
-	* takes a table name and returns an array of table column names
+	* returns an array of table column names
 	*/
 	protected function getTableColumns() {
 		return array_keys($this->getTableColumnDefs());
@@ -285,7 +284,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 	 * $truevalues can also be in the same format as the output, an array with indeces from the SET definition and true or false values.
 	 * In that case, indeces from the set are preserved, missing indeces are filled in as false, and indeces not part of the set are removed
 	 * \param $truevalues the values to be used as indeces with true values in the output array: one of two formats listed above
-	 * \param $def the SET definition, in SET('option1','option2[,. . .]) format
+	 * \param $def the SET definition, in actual MySQL format SET('option1','option2[,. . .])
 	 */
 	protected function valuesFromSet($truevalues, $def) {
 		// Check format of $truevalues

@@ -74,7 +74,7 @@ class DatabaseMagicExecution {
 	protected function setTableDefs($defs=null) {
 		$defs = (is_null($defs)) ? $this->table_defs : $defs;
 		if (is_string($defs)) { // Allow use of existing tables
-			$this->table_defs = $this->getActualTableDefs($defs);
+			$this->table_defs = $this->getActualTableDefs();
 		} else if (is_array($defs)) {  // Purify table definition
 			foreach ($defs as $tableName => $tableDef) {
 				foreach ($tableDef as $colName => $colDef) {
@@ -194,7 +194,7 @@ class DatabaseMagicExecution {
 			") ENGINE=MyISAM DEFAULT CHARSET=latin1\n";
 	}
 
-	/**
+	/** @cond UTILITIES
 	* Returns a valid SQL connection identifier
 	*/
 	protected function getSQLConnection() {
@@ -204,13 +204,15 @@ class DatabaseMagicExecution {
 		mysql_query("set sql_mode=strict_all_Tables", $sql);
 		return $sql;
 	}
+	/// @endcond
 
 	/**
 	* Uses the "DESCRIBE" SQL keyword to get the actual definition of a table as it is in the MYSQL database
 	*/
-	protected function getActualTableDefs($tableName) {
-		$query = "DESCRIBE ".$this->sql_prfx.$tableName;
-		if (! $results = mysql_query($query, $this->sql) ) {
+	protected function getActualTableDefs() {
+		$sqlConnection = $this->getSQLConnection();
+		$query = "DESCRIBE ".$this->sql_prfx.$this->table_name;
+		if (! $results = mysql_query($query, $sqlConnection) ) {
 			return FALSE;
 		}
 		$definition = array();
@@ -230,9 +232,6 @@ class DatabaseMagicExecution {
 		switch ($name) {
 			case 'table_name':
 				return $this->getTableName();
-			case 'sql':
-				echo "<h1>looking for SQL</h1>";
-				return $this->getSQLConnection();
 			default:
 				trigger_error("Unknown property {$name} in Class ".__CLASS__);
 		}
@@ -242,7 +241,8 @@ class DatabaseMagicExecution {
 	* returns true if the table exists in the current database, false otherwise.
 	*/
 	protected function table_exists() {
-		$result = mysql_query("SHOW TABLES", $this->sql);
+		$sql = $this->getSQLConnection();
+		$result = mysql_query("SHOW TABLES", $sql);
 		while ($row = mysql_fetch_row($result)) {
 			if ($row[0] == $this->sql_prfx.$this->table_name)
 				return TRUE;
@@ -255,7 +255,8 @@ class DatabaseMagicExecution {
 		if ($query == NULL) return FALSE;
 		dbm_debug("info", "Creating table");
 		dbm_debug("system query", $query);
-		$result = mysql_query($query, $this->sql) OR die($query . "\n\n" . mysql_error());
+		$sql = $this->getSQLConnection();
+		$result = mysql_query($query, $sql) OR die($query . "\n\n" . mysql_error());
 		if ($result) {
 			dbm_debug("info", "Success creating table");
 			return TRUE;
@@ -277,9 +278,9 @@ class DatabaseMagicExecution {
 		}
 
 		$wanteddef = $customDefs[$tableName];
-		$actualdef = $this->getActualTableDefs($tableName);
+		$actualdef = $this->getActualTableDefs();
 
-		$sqlConnection = $this->sql;
+		$sqlConnection = $this->getSQLConnection();
 
 		// Set the primary keys
 		$wantedKey = $this->findKey($wanteddef);
@@ -342,11 +343,11 @@ class DatabaseMagicExecution {
 	 * This function will attempt the query and react by modifying the database to match your definitions if the query fails
 	 */
 	protected function makeQueryHappen($query) {
-		$customDefs = $this->table_defs;
-		$tableNames = array_keys($customDefs);
-		$tableName = $tableNames[0];
+		$tableDefs = $this->table_defs;
+		$tableName  = $this->table_name;
 		dbm_debug("regular query", $query);
-		$result = mysql_query($query, $this->sql);
+		$sql = $this->getSQLConnection();
+		$result = mysql_query($query, $sql);
 		if (! $result) {
 			// We have a problem here
 			dbm_debug("system error", mysql_error());
@@ -354,13 +355,13 @@ class DatabaseMagicExecution {
 				dbm_debug("error", "Query Failed . . . table $tableName doesn't exist.");
 				$this->createTable();
 			} else {
-				if ($customDefs[$tableName] != $this->getActualTableDefs($tableName)) {
+				if ($tableDefs[$tableName] != $this->getActualTableDefs()) {
 					dbm_debug("error", "Query Failed . . . table $tableName needs updating.");
-					$this->updateTable($customDefs);
+					$this->updateTable($tableDefs);
 				}
 			}
 			dbm_debug("regular query", $query);
-			$result = mysql_query($query, $this->sql);
+			$result = mysql_query($query, $sql);
 			if (! $result) {
 				// We tried :(
 				dbm_debug("error", "Query Retry Failed . . . table $tableName could not be fixed.");
@@ -368,9 +369,7 @@ class DatabaseMagicExecution {
 			}
 		}
 		// If we got to here, that means we have got a valid result!
-		$queryArray = split(' ', $query);
-		$command = strtoupper($queryArray[0]);
-		switch ($command) {
+		switch (strtoupper(first_val(split(' ', $query)))) {
 		case 'SELECT':
 			$returnVal = array();
 			while ($row = mysql_fetch_assoc($result)) {
@@ -383,6 +382,11 @@ class DatabaseMagicExecution {
 			return mysql_insert_id($sql);
 			break;
 		}
+	}
+
+	public function dropTable() {
+		$table = $this->getFullTableName();
+		$this->makeQueryHappen("DROP TABLE {$table}");
 	}
 
 }
