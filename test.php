@@ -3,7 +3,7 @@
 header("Content-type: text/html");
 
 define('DBM_DEBUG', true);
-define('SQL_TABLE_PREFIX', "rw_");
+define('SQL_TABLE_PREFIX', "dbmrw_test_");
 include_once 'classes_Extras.php';
 
 ?>

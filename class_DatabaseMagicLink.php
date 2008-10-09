@@ -22,6 +22,9 @@
 
 require_once dirname(__FILE__).'/class_DatabaseMagicPreparation.php';
 
+define('MAP_FROM_COL', "parentID");
+define('MAP_TO_COL',   "childID");
+
 /// Linking object to join two DBM Objects.
 class DatabaseMagicLink extends DatabaseMagicPreparation {
 
@@ -52,30 +55,30 @@ class DatabaseMagicLink extends DatabaseMagicPreparation {
 
 	public function createLink($fromID, $toID, $relation=null) {
 		$params = array(
-			'parentID' => $fromID,
-			'childID'  => $toID
+			MAP_FROM_COL => $fromID,
+			MAP_TO_COL   => $toID
 		);
 		if (!is_null($relation)) { $params['relation'] = $relation; }
 		return $this->sqlMagicPut($this->getTableDefs(), $params);
 	}
 
 	public function breakLink($fromID, $toID=null, $relation=null) {
-		$params = array('parentID' => $fromID);
-		if (!is_null($toID))     { $params['childID']  = $toID; }
+		$params = array(MAP_FROM_COL => $fromID);
+		if (!is_null($toID))     { $params[MAP_TO_COL]  = $toID; }
 		if (!is_null($relation)) { $params['relation'] = $relation; }
 		return $this->sqlMagicYank($this->getTableDefs(), $params);
 	}
 
 	public function getLinksFromID($id, $params=null, $relation=null) {
-		$joinOn = array('childID' => $this->to->findTableKey());
-		$thisWhere = array('parentID' => $id);
+		$joinOn = array(MAP_TO_COL => $this->to->findTableKey());
+		$thisWhere = array(MAP_FROM_COL => $id);
 		if (!is_null($relation)) { $thisWhere['relation'] = $relation; };
 		return $this->getInnerJoin($this->to, $joinOn, $thisWhere, $params);
 	}
 
 	public function getBackLinksFromID($id, $params=null, $relation=null) {
-		$joinOn = array('parentID' => $this->from->findTableKey());
-		$thisWhere = array('childID' => $id);
+		$joinOn = array(MAP_FROM_COL => $this->from->findTableKey());
+		$thisWhere = array(MAP_TO_COL => $id);
 		if (!is_null($relation)) { $thisWhere['relation'] = $relation; };
 		return $this->getInnerJoin($this->from, $joinOn, $thisWhere, $params);
 	}
@@ -84,13 +87,38 @@ class DatabaseMagicLink extends DatabaseMagicPreparation {
 
 	/*********************** Protected Support Functions below **************************/
 
+	private $createTriggers = false;
+	
 	// A hook for the table creation routine in DatabaseMagicExecution
 	// This function will be called once the first time that a link is created between two object types
 	protected function createTable($foo=null) {
 		// First: take care of the obligations to this function call.
 		parent::createTable($foo);
-		// Note to self:
-		// If you want to create database table delete hooks to avoid hanging links references, this is where you can do it.
+		// Next: attempt to make a delete trigger if our configuration allows it.
+		if ($this->createTriggers) {
+			$mapName = $this->getFullTableName();
+			$fromTableName = $this->from->getFullTableName();
+			$fromPrimary = $this->from->findTableKey();
+			$toTableName = $this->to->getFullTableName();
+			$toPrimary = $this->to->findTableKey();
+			$sql = $this->getSQLConnection();
+
+			$fromQuery =
+				"CREATE TRIGGER {$mapName}_FromDeleteTrigger\n".
+				"  AFTER DELETE ON {$fromTableName}\n".
+				"  FOR EACH ROW\n".
+				"    DELETE FROM {$mapName} WHERE ".MAP_FROM_COL."=OLD.{$fromPrimary};\n".
+			$toQuery =
+				"CREATE TRIGGER {$mapName}_ToDeleteTrigger\n".
+				"  AFTER DELETE ON {$toTableName}\n".
+				"  FOR EACH ROW\n".
+				"    DELETE FROM {$mapName} WHERE ".MAP_TO_COL."=OLD.{$toPrimary};\n".
+
+			dbm_debug("system query", $fromQuery);
+			mysql_query($fromQuery, $sql) OR die($fromQuery . "\n\n" . mysql_error());
+			dbm_debug("system query", $toQuery);
+			mysql_query($toQuery, $sql) OR die($toQuery . "\n\n" . mysql_error());
+		}
 	}
 
 	/*********************** Private Support Functions below **************************/
@@ -115,10 +143,10 @@ class DatabaseMagicLink extends DatabaseMagicPreparation {
 		$childTableKeyDef = array($childTableKeyDef[0], "NO", "PRI");
 
 		return array(
-			'parentID' => $parentTableKeyDef,
-			'childID'  => $childTableKeyDef,
-			'relation' => array("varchar(20)",         "YES", "PRI"),
-			'ordering' => array("int(11) unsigned",    "NO",  "",    "0",  "")
+			MAP_FROM_COL => $parentTableKeyDef,
+			MAP_TO_COL   => $childTableKeyDef,
+			'relation'   => array("varchar(20)",         "YES", "PRI"),
+			'ordering'   => array("int(11) unsigned",    "NO",  "",    "0",  "")
 		);
 	}
 

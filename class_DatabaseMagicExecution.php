@@ -21,51 +21,7 @@
 *******************************************/
 
 require_once dirname(__FILE__) . '/../databasemagicconfig.php';
-
-function first_val($arr = array()) {
-	if (is_array($arr) && count($arr) > 0) {
-		$vals = array_values($arr);
-		return $vals[0];
-	} else {
-		return null;
-	}
-}
-
-function first_key($arr = array()) {
-	if (is_array($arr) && count($arr) > 0) {
-		$keys = array_keys($arr);
-		return $keys[0];
-	} else {
-		return null;
-	}
-}
-
-function dbm_debug($class, $message) {
-	if (DBM_DEBUG) {
-		echo "<pre class=\"$class\">\n";
-		if (is_string($message)) {
-			echo $message;
-		} else {
-			print_r($message);
-		}
-		echo "\n</pre>\n";
-	}
-}
-
-if (DBM_DEBUG) { set_error_handler ("dbm_do_backtrace"); }
-
-function dbm_do_backtrace ($one, $two) {
-	echo "<pre>\nError {$one}, {$two}\n";
-	debug_print_backtrace();
-	echo "</pre>\n\n";
-}
-
-define('E_SQL_CANNOT_CONNECT', "
-<h2>Cannot connect to SQL Server</h2>
-There is an error in your DatabaseMagic configuration.
-");
-
-
+require_once dirname(__FILE__) . '/databasemagicutils.php';
 
 /// A class for doing SQL operations automatically on a particular table
 /**
@@ -95,27 +51,44 @@ class DatabaseMagicExecution {
 	protected $sql_dbase = SQL_DBASE;
 	protected $sql_prfx  = SQL_TABLE_PREFIX;
 
-	function __construct() {
-		// Nothing to do here, really.
+	/**
+	 * Constructor for this class
+	 */
+	public function __construct() {
+		$this->setTableDefs();
+	}
+
+	/// Returns the table definitions for this object
+	public function getTableDefs() {
+		return $this->table_defs;
+	}
+
+	/**
+		* Returns the Full Table Name (prefix + table name)
+		*/
+	public function getFullTableName() {
+		return $this->sql_prfx.$this->getTableName();
 	}
 
 	/// Sets the table definitions for this object
 	protected function setTableDefs($defs=null) {
 		$defs = (is_null($defs)) ? $this->table_defs : $defs;
-		if (is_string($defs)) {
+		if (is_string($defs)) { // Allow use of existing tables
 			$this->table_defs = $this->getActualTableDefs($defs);
-		} else {
+		} else if (is_array($defs)) {  // Purify table definition
+			foreach ($defs as $tableName => $tableDef) {
+				foreach ($tableDef as $colName => $colDef) {
+					$tableDef[$colName] = (is_array($colDef)) ? $colDef : array($colDef, "YES", "", "", "");
+				}
+				$defs[$tableName] = $tableDef;
+			}
 			$this->table_defs = $defs;
+		} else {
+			// Nothing
 		}
 	}
 
-	/// Returns the table definitions for this object
-	function getTableDefs() {
-		if (is_string($this->table_defs)) {
-			$this->setTableDefs();
-		}
-		return $this->table_defs;
-	}
+	/************************  Protected Member Function Below  **************************/
 
 	/**
 	 * returns the name of the primary key for a particular row list
@@ -146,7 +119,7 @@ class DatabaseMagicExecution {
 	 * Optionally takes a table definition as an argument to use instead of this objects table def
 	 */
 	protected function findTableKey($defs = null) {
-		$defs = (is_null($defs)) ? $this->getTableDefs() : $defs;
+		$defs = (is_null($defs)) ? $this->table_defs : $defs;
 		return $this->findKey(first_val($defs));
 	}
 
@@ -155,7 +128,7 @@ class DatabaseMagicExecution {
 	 * Optionally takes a table definition as an argument to use instead of this objects table def
 	 */
 	protected function findTableKeyDef($defs = null) {
-		$defs = (is_null($defs)) ? $this->getTableDefs() : $defs;
+		$defs = (is_null($defs)) ? $this->table_defs : $defs;
 		return $this->findKeyDef(first_val($defs));
 	}
 
@@ -164,12 +137,8 @@ class DatabaseMagicExecution {
 	 * Optionally takes a table definition as an argument to use instead of this objects table def
 	 */
 	protected function getTableName($defs = null) {
-		$defs = (is_null($defs)) ? $this->getTableDefs() : $defs;
+		$defs = (is_null($defs)) ? $this->table_defs : $defs;
 		return first_key($defs);
-	}
-
-	public function getFUllTableName() {
-		return $this->sql_prfx.$this->getTableName();
 	}
 
 	/**
@@ -197,10 +166,9 @@ class DatabaseMagicExecution {
 	* getTableCreateQuery()
 	* returns the query string that can be used to create a table based on it's definition
 	*/
-	protected function getTableCreateQuery($defs=null) {
-		$defs = (is_null($defs)) ? $this->getTableDefs() : $defs;
-		$tableNames = array_keys($defs);
-		$tableName = $tableNames[0];
+	protected function getTableCreateQuery() {
+		$defs = $this->table_defs;
+		$tableName = first_key($defs);
 
 		if (! isset($defs[$tableName])) {
 			return NULL;
@@ -227,8 +195,7 @@ class DatabaseMagicExecution {
 	}
 
 	/**
-	* function getSQLConnection()
-	* Returns a valid SQL connection identifier based on the $SQLInfo setting above
+	* Returns a valid SQL connection identifier
 	*/
 	protected function getSQLConnection() {
 		$sql   = mysql_connect($this->sql_host, $this->sql_user, $this->sql_pass) OR die(SQL_CANNOT_CONNECT);
@@ -239,13 +206,11 @@ class DatabaseMagicExecution {
 	}
 
 	/**
-	* function getActualTableDefs()
 	* Uses the "DESCRIBE" SQL keyword to get the actual definition of a table as it is in the MYSQL database
 	*/
 	protected function getActualTableDefs($tableName) {
-		$sqlConnection = $this->getSQLConnection();
 		$query = "DESCRIBE ".$this->sql_prfx.$tableName;
-		if (! $results = mysql_query($query, $sqlConnection) ) {
+		if (! $results = mysql_query($query, $this->sql) ) {
 			return FALSE;
 		}
 		$definition = array();
@@ -261,33 +226,41 @@ class DatabaseMagicExecution {
 		return $definition;
 	}
 
+	protected function __get($name) {
+		switch ($name) {
+			case 'table_name':
+				return $this->getTableName();
+			case 'sql':
+				echo "<h1>looking for SQL</h1>";
+				return $this->getSQLConnection();
+			default:
+				trigger_error("Unknown property {$name} in Class ".__CLASS__);
+		}
+	}
+
 	/**
 	* returns true if the table exists in the current database, false otherwise.
 	*/
-	protected function table_exists($tableName) {
-		$sql = $this->getSQLConnection();
-		$result = mysql_query("SHOW TABLES", $sql);
+	protected function table_exists() {
+		$result = mysql_query("SHOW TABLES", $this->sql);
 		while ($row = mysql_fetch_row($result)) {
-			if ($row[0] == $this->sql_prfx.$tableName)
+			if ($row[0] == $this->sql_prfx.$this->table_name)
 				return TRUE;
 		}
 		return FALSE;
 	}
 
-	protected function createTable($customDefs) {
-		$tableNames = array_keys($customDefs);
-		$tableName = $tableNames[0];
-		$query = $this->getTableCreateQuery($customDefs);
+	protected function createTable() {
+		$query = $this->getTableCreateQuery();
 		if ($query == NULL) return FALSE;
-		dbm_debug("info", "Creating table $tableName");
+		dbm_debug("info", "Creating table");
 		dbm_debug("system query", $query);
-		$sql = $this->getSQLConnection();
-		$result = mysql_query($query, $sql) OR die($query . "\n\n" . mysql_error());
+		$result = mysql_query($query, $this->sql) OR die($query . "\n\n" . mysql_error());
 		if ($result) {
-			dbm_debug("info", "Success creating table $tableName");
+			dbm_debug("info", "Success creating table");
 			return TRUE;
 		} else {
-			dbm_debug("info", "Failed creating table $tableName");
+			dbm_debug("info", "Failed creating table");
 			return FALSE;
 		}
 	}
@@ -295,10 +268,10 @@ class DatabaseMagicExecution {
 	/**
 	* Bring the table up to the current definition
 	*/
-	protected function updateTable($customDefs) {
-		$tableNames = array_keys($customDefs);
-		$tableName = $tableNames[0];
-
+	protected function updateTable() {
+		$customDefs = $this->table_defs;
+		$tableName = first_key($customDefs);
+		
 		if (! isset($customDefs[$tableName])) {
 			return FALSE;
 		}
@@ -306,7 +279,7 @@ class DatabaseMagicExecution {
 		$wanteddef = $customDefs[$tableName];
 		$actualdef = $this->getActualTableDefs($tableName);
 
-		$sqlConnection = $this->getSQLConnection();
+		$sqlConnection = $this->sql;
 
 		// Set the primary keys
 		$wantedKey = $this->findKey($wanteddef);
@@ -364,18 +337,22 @@ class DatabaseMagicExecution {
 		return TRUE;
 	}
 
-	protected function makeQueryHappen($customDefs, $query) {
+	/**
+	 * Makes every attempt to succeed at doing the query you ask it to do.
+	 * This function will attempt the query and react by modifying the database to match your definitions if the query fails
+	 */
+	protected function makeQueryHappen($query) {
+		$customDefs = $this->table_defs;
 		$tableNames = array_keys($customDefs);
 		$tableName = $tableNames[0];
 		dbm_debug("regular query", $query);
-		$sql = $this->getSQLConnection();
-		$result = mysql_query($query, $sql);
+		$result = mysql_query($query, $this->sql);
 		if (! $result) {
 			// We have a problem here
 			dbm_debug("system error", mysql_error());
-			if (! $this->table_exists($tableName)) {
+			if (! $this->table_exists()) {
 				dbm_debug("error", "Query Failed . . . table $tableName doesn't exist.");
-				$this->createTable($customDefs);
+				$this->createTable();
 			} else {
 				if ($customDefs[$tableName] != $this->getActualTableDefs($tableName)) {
 					dbm_debug("error", "Query Failed . . . table $tableName needs updating.");
@@ -383,7 +360,7 @@ class DatabaseMagicExecution {
 				}
 			}
 			dbm_debug("regular query", $query);
-			$result = mysql_query($query, $sql);
+			$result = mysql_query($query, $this->sql);
 			if (! $result) {
 				// We tried :(
 				dbm_debug("error", "Query Retry Failed . . . table $tableName could not be fixed.");

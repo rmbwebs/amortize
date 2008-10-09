@@ -39,16 +39,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		if (!is_null($info)) {
 			DatabaseMagicFeatures::setAttribs($info, $clobber);
 		}
-		return parent::getAttribs();
-	}
-
-	/// Can be used to set the order that a call for links will return as.
-	function orderLinks($example, $ordering) {
-		$childTableDefs  = $example->getTableDefs();
-		$parentTableDefs = $this->getTableDefs();
-		$parentID    = $this->getID();
-
-		$this->reorderChildren($parentTableDefs, $parentID, $childTableDefs, $ordering);
+		return DatabaseMagicFeatures::getAttribs();
 	}
 
 	/**
@@ -78,6 +69,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	 * B will no longer be returned as part of A->getLinks() after A->deLink(B) is called.
 	 * If $relation is provided, only matched relational links will be delinked
 	 * Without $relation, all links between the two objects will be delinked.
+	 * To break non-relational links and leave relational link intact, provide an empty string ("") as a relation here.
 	 */
 	function deLink($subject, $relation=NULL) {
 		$link = new DatabaseMagicLink($this, $subject);

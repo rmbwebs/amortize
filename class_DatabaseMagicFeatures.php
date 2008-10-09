@@ -41,6 +41,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 	/// Calls initialize() and calls load($id) if $id != null
 	/// Also marks the object for saving in the event of an unloadable $id
   function __construct($id = NULL) {
+		parent::__construct();
 		$this->extendTableDefs();
     $this->initialize();
     if ($id != NULL) {

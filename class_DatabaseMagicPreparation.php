@@ -48,17 +48,16 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		return $retVal;
 	}
 
-	protected function getTableColumnDefs($customDefs) {
-		$tableName = $this->getTableName($customDefs);
-		return (isset($customDefs[$tableName])) ? $customDefs[$tableName] : array();
+	protected function getTableColumnDefs() {
+		return first_val($this->getTableDefs());
 	}
 
 	/**
 	* function getTableColumns(table definition) {
 	* takes a table name and returns an array of table column names
 	*/
-	protected function getTableColumns($customDefs) {
-		return array_keys($this->getTableColumnDefs($customDefs));
+	protected function getTableColumns() {
+		return array_keys($this->getTableColumnDefs());
 	}
 
 	protected function sqlMagicYank($customDefs, $params) {
@@ -67,10 +66,9 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 
 		$whereClause = $this->buildWhereClause($params);
 		$query = "DELETE FROM ".$this->sql_prfx.$tableName." ".$whereClause;
-		$data = $this->makeQueryHappen($customDefs, $query);
+		$success = $this->makeQueryHappen($query);
 
-		if ($data) return TRUE;
-		else       return FALSE;
+		return ($success) ? true : false;
 	}
 
 	protected function sqlMagicPut($customDefs, $data) {
@@ -96,7 +94,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		$columnList .= ")";
 		$valueList  .= ")";
 		$query .= "INTO ".$this->sql_prfx.$tableName."\n  ".$columnList."\n  VALUES\n  ".$valueList;
-		return $this->makeQueryHappen($customDefs, $query);
+		return $this->makeQueryHappen($query);
 	}
 
 	protected function sqlMagicGet($customDefs, $params) {
@@ -106,7 +104,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		$whereClause = $this->buildWhereClause($params);
 
 		$query = "SELECT * FROM ".$this->sql_prfx.$tableName." ".$whereClause;
-		$data = $this->makeQueryHappen($customDefs, $query);
+		$data = $this->makeQueryHappen($query);
 
 		if ($data) {
 			// We have a successful Query!
@@ -134,7 +132,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 			$setClauseLinker = " , ";
 		}
 		$query = "UPDATE ".$this->sql_prfx.$tableName.$setClause." ".$whereClause;
-		$result = $this->makeQueryHappen($customDefs, $query);
+		$result = $this->makeQueryHappen($query);
 		return $result;
 	}
 
@@ -188,7 +186,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 			$query .= " OFFSET {$offset}";
 		}
 
-		$data = $this->makeQueryHappen($customDefs, $query);
+		$data = $this->makeQueryHappen($query);
 		if ($data) {
 			// We have a successful Query!
 			$return = array();
@@ -205,6 +203,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		$key = $this->findTableKey($customDefs);
 		$data = $this->getAllSomething($customDefs, $key, $limit, $offset, $params);
 		if ($data) {
+			// Convert to an array of arrays to an array of values
 			$returnVal = array();
 			foreach ($data as $row) {
 				$returnVal[] = $row[$key];
@@ -213,41 +212,6 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		} else {
 			return null;
 		}
-	}
-
-	protected function getMapName($table1, $table2) {
-		return "map_{$table1}_to_{$table2}";
-	}
-
-	protected function getMapDefs($parentDefs, $childDefs) {
-		$parentTableName   = $this->getTableName($parentDefs);
-		$parentTableDefs   = $parentDefs[$parentTableName];
-		$parentTableKey    = $this->findKey($parentTableDefs);
-		$parentTableKeyDef = $parentTableDefs[$parentTableKey];
-
-		$childTableName   = $this->getTableName($childDefs);
-		$childTableDefs   = $childDefs[$childTableName];
-		$childTableKey    = $this->findKey($childTableDefs);
-		$childTableKeyDef = $childTableDefs[$childTableKey];
-
-		// We really only need the data type
-		$parentTableKeyDef = array($parentTableKeyDef[0], "NO", "PRI");
-		$childTableKeyDef = array($childTableKeyDef[0], "NO", "PRI");
-
-		return array(
-			'parentID' => $parentTableKeyDef,
-			'childID'  => $childTableKeyDef,
-			'relation' => array("varchar(20)",         "YES", "PRI"),
-			'ordering' => array("int(11) unsigned",    "NO",  "",    "0",  "")
-		);
-	}
-
-	protected function getChildrenList($parentTableDefs, $parentID, $childTableDefs, $params=NULL, $relation=NULL) {
-		return $this->getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params, false, $relation);
-	}
-
-	protected function getParentsList($parentTableDefs, $parentID, $childTableDefs, $params=NULL, $relation=NULL) {
-		return $this->getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params, true, $relation);
 	}
 
 	// A new method for running an inner join.
@@ -269,7 +233,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 			"  ".$this->buildWhereClause($where)."\n".
 			"  ORDER BY {$thisTableFullName}.ordering";
 
-		$data = $this->makeQueryHappen($this->getTableDefs(), $query);
+		$data = $this->makeQueryHappen($query);
 		if ($data) {
 			$returnVal = array();
 			foreach ($data as $row) {
@@ -281,64 +245,29 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		}
 	}
 
-	protected function getMappedInnerJoin ($parentTableDefs, $parentID, $childTableDefs, $params=NULL, $reverse=false, $relation=NULL) {
-		$parentTableName = $this->getTableName($parentTableDefs);
-		$childTableName  = $this->getTableName($childTableDefs);
-		$childTableKey   = $this->findKey($childTableDefs[$childTableName]);
-
-		if ($reverse) {
-			$tableName = $this->getMapName($childTableName, $parentTableName);
-			$childMapName = "parentID";
-			$parentMapName = "childID";
-		} else {
-			$tableName = $this->getMapName($parentTableName, $childTableName);
-			$childMapName = "childID";
-			$parentMapName = "parentID";
-		}
-
-		$extendedWhere = "";
-		if ($relation !== true) {  // True means match all, so exclude this test
-			$extendedWhere .= "\n    AND ".$this->sql_prfx.$tableName.".relation='".mysql_real_escape_string($relation)."'";
-		}
-		if (is_array($params)) {
-			foreach($params as $key => $value) {
-				$extendedWhere .= "\n    AND ".$this->sql_prfx.$childTableName.".".$key."='".mysql_real_escape_string($value)."'";
-			}
-		}
-		$query = "SELECT DISTINCT ".$this->sql_prfx.$childTableName.".*\n".
-						"  FROM ".$this->sql_prfx.$childTableName."\n".
-						"  INNER JOIN ".$this->sql_prfx.$tableName."\n".
-						"    ON ".$this->sql_prfx.$childTableName.".".$childTableKey."=".$this->sql_prfx.$tableName.".".$childMapName."\n".
-						"  WHERE ".$this->sql_prfx.$tableName.".".$parentMapName."='".$parentID."'".$extendedWhere."\n".
-						"  ORDER BY ".$this->sql_prfx.$tableName.".ordering";
-
-		$data = $this->makeQueryHappen($childTableDefs, $query);
-		if ($data) {
-			$returnVal = array();
-			foreach ($data as $row) {
-				$returnVal[] = $row;
-			}
-			return $returnVal;
-		} else {
-			return NULL;
-		}
-	}
-
-	protected function sqlDataPrep($data, $columnDefs) {
+	/// Preps data for insertion into the database.  As of right now it only converts true valued arrays into csv strings
+	protected function sqlDataPrep($data) {
 		foreach ($data as $colname => $value) {
 			if (is_array($value)) { // We likely have a SET column here
+				// Collect all the array keys whose value is true
 				$value = array_keys($value, true);
+				// Convert to text-based representation
 				$value = implode(',', $value);
+				// Replace old with new
 				$data[$colname] = $value;
 			}
 		}
 		return $data;
 	}
 
-	protected function sqlDataDePrep($data, $columnDefs) {
-		foreach ($columnDefs as $colname => $def) {
+	/**
+	 * Translates data from database format to easily useable arrays of data.
+	 * Currently it is used to check for SET data csv strings and convert it to true valued arrays
+	 */
+	protected function sqlDataDePrep($data) {
+		// Walk through the column definitions searching for "SET" Columns
+		foreach ($this->getTableColumnDefs() as $colname => $def) {
 			$def = (is_array($def)) ? $def[0] : $def;
-// 			dbm_debug("info", strtoupper(substr($def, 0, 3))." for $colname");
 			if ((strtoupper(substr($def, 0, 3)) == "SET") && array_key_exists($colname, $data)) {
 				$values = explode(',', $data[$colname]);
 				$data[$colname] = $this->valuesFromSet($values, $def);
@@ -347,10 +276,18 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		return $data;
 	}
 
+	/**
+	 * Takes an array of values that represent data taken from a SET column in a database and converts it to a specific format.
+	 * Explanation for this function is best done through examples:
+	 * Here is an example database column definition: "SET('foo','bar','boo','baz')" that might be passed into this function as $def
+	 * Possible Input: $truevalues = array('foo','boo', 'zoo')
+	 * Output:  array('foo' => true, 'bar' => false, 'boo' => true, 'baz' => false);   <-- 'zoo' is not in $def, so is ommitted;
+	 * $truevalues can also be in the same format as the output, an array with indeces from the SET definition and true or false values.
+	 * In that case, indeces from the set are preserved, missing indeces are filled in as false, and indeces not part of the set are removed
+	 * \param $truevalues the values to be used as indeces with true values in the output array: one of two formats listed above
+	 * \param $def the SET definition, in SET('option1','option2[,. . .]) format
+	 */
 	protected function valuesFromSet($truevalues, $def) {
-		/* $truevalues can be in either of two formats, OPTION=>true,OPTION2=>false or 0=>OPTION,1=>OPTION2
-		* This is to accomodate one of the goals of this software, which is to always allow setAttribs($_POST)
-		*/
 		// Check format of $truevalues
 		if ((count(array_keys($truevalues, true, true)) + count(array_keys($truevalues, false, true))) == count($truevalues)) {
 			// Truevalues is an array composed entirely of true and false values. Convert!
@@ -371,33 +308,6 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		}
 		return $returnMe;
 	}
-
-	protected function reorderChildren ($parentTableDefs, $parentID, $childTableDefs, $childOrdering) {
-		$mapName = $this->getMapName($this->getTableName($parentTableDefs), $this->getTableName($childTableDefs));
-		$mapDefs  = $this->getMapDefs($parentTableDefs, $childTableDefs);
-		foreach ($childOrdering as $child => $order) {
-			$this->sqlMagicSet(array($mapName => $mapDefs), array('ordering' => $order), array('parentID' => $parentID, 'childID' => $child));
-		}
-		// That should do it
-	}
-
-	protected function doAdoption($parentTableDefs, $parentID, $childTableDefs, $childID, $relation=NULL) {
-		$mapName = $this->getMapName($this->getTableName($parentTableDefs), $this->getTableName($childTableDefs));
-		$mapDefs = $this->getMapDefs($parentTableDefs, $childTableDefs);
-		$values = array('parentID' => $parentID, 'childID' => $childID);
-		if ($relation != NULL) { $values['relation'] = $relation; }
-		return $this->sqlMagicPut(array($mapName => $mapDefs), $values);
-	}
-
-	protected function doEmancipation($parentTableDefs, $parentID, $childTableDefs, $childID=NULL, $relation=NULL) {
-		$mapName = $this->getMapName($this->getTableName($parentTableDefs), $this->getTableName($childTableDefs));
-		$mapDefs = $this->getMapDefs($parentTableDefs, $childTableDefs);
-		$values = array('parentID' => $parentID);
-		if (!is_null($childID))  { $values['childID']  = $childID;  }
-		if (!is_null($relation)) { $values['relation'] = $relation; }
-		return $this->sqlMagicYank(array($mapName => $mapDefs), $values);
-	}
-
 
 	protected function getInitial($columnDef) {
 		if (is_array($columnDef)) {
