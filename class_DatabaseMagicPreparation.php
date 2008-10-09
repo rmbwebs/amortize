@@ -89,20 +89,18 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		return $this->makeQueryHappen($query);
 	}
 
-	protected function sqlMagicGet($customDefs, $params) {
-		$tableNames = array_keys($customDefs);
-		$tableName = $tableNames[0];
+	protected function sqlMagicGet($params) {
 
 		$whereClause = $this->buildWhereClause($params);
 
-		$query = "SELECT * FROM ".$this->sql_prfx.$tableName." ".$whereClause;
+		$query = "SELECT * FROM ".$this->sql_prfx.$this->getTableName()." ".$whereClause;
 		$data = $this->makeQueryHappen($query);
 
 		if ($data) {
 			// We have a successful Query!
 			$return = array();
 			foreach($data as $row) {
-				$return[] = $this->sqlDataDePrep($row, $customDefs[$tableName]);
+				$return[] = $this->sqlDataDePrep($row);
 			}
 			return $return;
 		} else {
