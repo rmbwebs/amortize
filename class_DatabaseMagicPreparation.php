@@ -37,6 +37,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 	protected function sqlMagicYank($params, $yankAll=false) {
 
 		$whereClause = $this->buildWhereClause($params);
+		if ($whereClause == null && $yankAll == false) { return false; } // yankAll protection
 		$query = "DELETE FROM ".$this->sql_prfx.$this->getTableName()." ".$whereClause;
 		$success = $this->makeQueryHappen($query);
 
