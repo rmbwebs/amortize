@@ -91,21 +91,20 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		}
 	}
 
-	protected function sqlMagicSet($customDefs, $set, $where) {
-		$tableNames = array_keys($customDefs);
-		$tableName = $tableNames[0];
-
+	/**
+	 * Can be used as an interface to the SQL SET command.
+	 * @param $set An array of which columns to set with their values
+	 * @param $where A whereClause-like array that dictates WHERE the updating will take place
+	 * @param $setAll (optional, defaults to false) A safety that prevents you from setting all rows if your $where value doesn't generate a proper where clause. Pass a true to this parameter to override the safety.
+	 */
+	protected function sqlMagicSet($set, $where, $setAll=false) {
 		$whereClause = $this->buildWhereClause($where);
-
-		$setClause = " ";
-		$setClauseLinker = "SET ";
-		foreach ($set as $key => $value) {
-			$setClause .= $setClauseLinker.$key.'="'.$value.'"';
-			$setClauseLinker = " , ";
-		}
-		$query = "UPDATE ".$this->sql_prfx.$tableName.$setClause." ".$whereClause;
-		$result = $this->makeQueryHappen($query);
-		return $result;
+		$setClause = $this->buildSetClause($set);
+		// setAll protection
+		if ($whereClause == null && $setAll == false) { return false; }
+		// generate query
+		$query = "UPDATE ".$this->sql_prfx.$this->getTableName." ".$setClause." ".$whereClause;
+		return $this->makeQueryHappen($query);
 	}
 
 	protected function getAllSomething($customDefs, $column, $limit=NULL, $offset=NULL, $params=NULL) {
@@ -197,7 +196,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		return array_keys($this->getTableColumnDefs());
 	}
 
-	private function buildConditionalClause($params=null, $q=true) {
+	private function buildConditionalClause($params=null, $q=true, $and="AND") {
 		if (is_string($params)) {
 			return $params;
 		} else if (is_array($params)) {
@@ -217,7 +216,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 				$clause[] = "{$field} {$comparator} {$value}";
 			}
 		}
-		return implode(" AND ", $clause);
+		return implode(" {$and} ", $clause);
 	}
 
 	protected function buildWhereClause($params=null) {
@@ -228,6 +227,11 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 	protected function buildOnClause($params=null) {
 		$clause = $this->buildConditionalClause($params, false);
 		return (strlen($clause) > 0) ? "ON {$clause}" : "";
+	}
+
+	protected function buildSetClause($params=null) {
+		$clause = $this->buildConditionalClause($params, true, ',');
+		return (strlen($clause) > 0) ? "SET {$clause}" : "";
 	}
 	/// @endcond
 
