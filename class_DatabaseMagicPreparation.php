@@ -24,40 +24,17 @@ require_once dirname(__FILE__) . '/class_DatabaseMagicExecution.php';
 
 /**
  * Helper for DatabaseMagicFeatures
+ * A translation layer for database data and DBMFeatures data
  */
 class DatabaseMagicPreparation extends DatabaseMagicExecution {
 
 	/**
-	* Takes an array of data and returns the same array only all the data has been
-	* cleaned up to prevent SQL Injection Attacks
-	*/
-	protected function sqlFilter($data) {
-		$sql = $this->getSQLConnection();
-		$retVal = array();
-		if (is_array($data)) {
-			foreach ($data as $key => $value) {
-				if (is_array($value)) {
-					$retVal[$key] = $this->sqlFilter($value);  // OMG Scary Recursion! :)
-				} else {
-					$retVal[$key] = mysql_real_escape_string($value, $sql);
-				}
-			}
-		}
-		return $retVal;
-	}
-
-	protected function getTableColumnDefs() {
-		return first_val($this->getTableDefs());
-	}
-
-	/**
-	* returns an array of table column names
-	*/
-	protected function getTableColumns() {
-		return array_keys($this->getTableColumnDefs());
-	}
-
-	protected function sqlMagicYank($params) {
+	 * Pulls one or more rows out of a table.
+	 * Potentially pulls all rows out a table of you pass $params = null
+	 * @param $params a whereClause-like array of data to determine what rows we are going to yank
+	 * @param $yankAll (optional, default=false) must be set to true to enable yanking all rows (protection against you passing a value in $params that doesn't generate a valid WHERE clause)
+	 */
+	protected function sqlMagicYank($params, $yankAll=false) {
 
 		$whereClause = $this->buildWhereClause($params);
 		$query = "DELETE FROM ".$this->sql_prfx.$this->getTableName()." ".$whereClause;
@@ -66,6 +43,10 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		return ($success) ? true : false;
 	}
 
+	/**
+	 * Inserts or replaces data into a row in the table
+	 * @param $data the data to insert, in associative array form, column names as indeces and data as values
+	 */
 	protected function sqlMagicPut($data) {
 		$data = $this->sqlFilter($data);
 		$data = $this->sqlDataPrep($data);
@@ -89,20 +70,20 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		return $this->makeQueryHappen($query);
 	}
 
-	protected function sqlMagicGet($params) {
+	/**
+	 * Returns the data from one and only one row.
+	 * Most common use is the load function.  In the future this should be rewritten to use the getallsomething function
+	 */
+	protected function sqlMagicGetOne($params) {
 
 		$whereClause = $this->buildWhereClause($params);
 
-		$query = "SELECT * FROM ".$this->sql_prfx.$this->getTableName()." ".$whereClause;
+		$query = "SELECT * FROM ".$this->sql_prfx.$this->getTableName()." ".$whereClause." LIMIT 1";
 		$data = $this->makeQueryHappen($query);
 
 		if ($data) {
-			// We have a successful Query!
-			$return = array();
-			foreach($data as $row) {
-				$return[] = $this->sqlDataDePrep($row);
-			}
-			return $return;
+			// Successful Query
+			return $this->sqlDataDePrep($data[0]);
 		} else {
 			// we didn't get valid data.
 			return null;
@@ -124,39 +105,6 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		$query = "UPDATE ".$this->sql_prfx.$tableName.$setClause." ".$whereClause;
 		$result = $this->makeQueryHappen($query);
 		return $result;
-	}
-
-	private function buildConditionalClause($params=null, $q=true) {
-		if (is_string($params)) {
-			return $params;
-		} else if (is_array($params)) {
-			foreach ($params as $field => $target) {
-				if (!is_array($target)) {
-					$params[$field] = array('=' => $target);
-				}
-			}
-		} else {
-			return "";
-		}
-
-		$clause = array();
-		foreach ($params as $field => $target) {
-			foreach ($target as $comparator => $value) {
-				$value = ($q) ? "'{$value}'" : $value;
-				$clause[] = "{$field} {$comparator} {$value}";
-			}
-		}
-		return implode(" AND ", $clause);
-	}
-
-	protected function buildWhereClause($params=null) {
-		$clause = $this->buildConditionalClause($params);
-		return (strlen($clause) > 0) ? "WHERE {$clause}" : "";
-	}
-
-	protected function buildOnClause($params=null) {
-		$clause = $this->buildConditionalClause($params, false);
-		return (strlen($clause) > 0) ? "ON {$clause}" : "";
 	}
 
 	protected function getAllSomething($customDefs, $column, $limit=NULL, $offset=NULL, $params=NULL) {
@@ -233,6 +181,72 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		} else {
 			return NULL;
 		}
+	}
+
+
+  /// @cond UTILITIES
+	protected function getTableColumnDefs() {
+		return first_val($this->getTableDefs());
+	}
+
+	/**
+	* returns an array of table column names
+	*/
+	protected function getTableColumns() {
+		return array_keys($this->getTableColumnDefs());
+	}
+
+	private function buildConditionalClause($params=null, $q=true) {
+		if (is_string($params)) {
+			return $params;
+		} else if (is_array($params)) {
+			foreach ($params as $field => $target) {
+				if (!is_array($target)) {
+					$params[$field] = array('=' => $target);
+				}
+			}
+		} else {
+			return "";
+		}
+
+		$clause = array();
+		foreach ($params as $field => $target) {
+			foreach ($target as $comparator => $value) {
+				$value = ($q) ? "'{$value}'" : $value;
+				$clause[] = "{$field} {$comparator} {$value}";
+			}
+		}
+		return implode(" AND ", $clause);
+	}
+
+	protected function buildWhereClause($params=null) {
+		$clause = $this->buildConditionalClause($params);
+		return (strlen($clause) > 0) ? "WHERE {$clause}" : "";
+	}
+
+	protected function buildOnClause($params=null) {
+		$clause = $this->buildConditionalClause($params, false);
+		return (strlen($clause) > 0) ? "ON {$clause}" : "";
+	}
+	/// @endcond
+
+	/**
+	* Takes an array of data and returns the same array only all the data has been
+	* cleaned up to prevent SQL Injection Attacks
+	*/
+	protected function sqlFilter($data) {
+		$sql = $this->getSQLConnection();
+		$retVal = array();
+		if (is_array($data)) {
+			foreach ($data as $key => $value) {
+				if (is_array($value)) {
+					$retVal[$key] = $this->sqlFilter($value);  // OMG Scary Recursion! :)
+				} else {
+					$retVal[$key] = mysql_real_escape_string($value, $sql);
+				}
+			}
+		}
+		return $retVal;
 	}
 
 	/// Preps data for insertion into the database.  As of right now it only converts true valued arrays into csv strings

@@ -77,10 +77,10 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 		dbm_debug("load", "Loading a " . get_class($this) . " with ID = " . $id);
 		$key = $this->findTableKey();
 		$query = array($key => $id);
-		$info = $this->sqlMagicGet($query);
-		if ($info && is_array($info) && count($info) > 0) {
-			$this->setAttribs($info[0], true); // $info[0] because sqlMagicget always returns an array, even with one result.
-			foreach ($info[0] as $col => $value) {
+		$info = $this->sqlMagicGetOne($query);
+		if ($info && is_array($info)) {
+			$this->setAttribs($info, true);
+			foreach (array_keys($info) as $col) {
 				$this->status[$col] = "clean";
 			}
 			return true;
