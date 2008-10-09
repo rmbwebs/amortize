@@ -170,7 +170,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 			if (!$excludeID) {
 				$savedata[$key] = $a[$key];
 			}
-			$id = $this->sqlMagicPut($defs, $savedata);
+			$id = $this->sqlMagicPut($savedata);
 
 			if ($id) {
 				// Successful auto_increment Save

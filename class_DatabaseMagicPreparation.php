@@ -28,12 +28,10 @@ require_once dirname(__FILE__) . '/class_DatabaseMagicExecution.php';
 class DatabaseMagicPreparation extends DatabaseMagicExecution {
 
 	/**
-	* function sqlFilter()
 	* Takes an array of data and returns the same array only all the data has been
 	* cleaned up to prevent SQL Injection Attacks
 	*/
 	protected function sqlFilter($data) {
-		// FIXME - This function needs to be written!
 		$sql = $this->getSQLConnection();
 		$retVal = array();
 		if (is_array($data)) {
@@ -59,24 +57,19 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		return array_keys($this->getTableColumnDefs());
 	}
 
-	protected function sqlMagicYank($customDefs, $params) {
-		$tableNames = array_keys($customDefs);
-		$tableName = $tableNames[0];
+	protected function sqlMagicYank($params) {
 
 		$whereClause = $this->buildWhereClause($params);
-		$query = "DELETE FROM ".$this->sql_prfx.$tableName." ".$whereClause;
+		$query = "DELETE FROM ".$this->sql_prfx.$this->getTableName()." ".$whereClause;
 		$success = $this->makeQueryHappen($query);
 
 		return ($success) ? true : false;
 	}
 
-	protected function sqlMagicPut($customDefs, $data) {
-		$tableNames = array_keys($customDefs);
-		$tableName = $tableNames[0];
-
+	protected function sqlMagicPut($data) {
 		$data = $this->sqlFilter($data);
-		$data = $this->sqlDataPrep($data, $customDefs[$tableName]);
-		$key = $this->findTableKey($customDefs);
+		$data = $this->sqlDataPrep($data);
+		$key = $this->findTableKey();
 		if ( ($key) && (isset($data[$key])) && (((is_numeric($data[$key]))&&($data[$key] == 0))  || ($data[$key] == NULL)) ) {
 			$query = "INSERT ";
 		} else {
@@ -92,7 +85,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		}
 		$columnList .= ")";
 		$valueList  .= ")";
-		$query .= "INTO ".$this->sql_prfx.$tableName."\n  ".$columnList."\n  VALUES\n  ".$valueList;
+		$query .= "INTO ".$this->sql_prfx.$this->getTableName()."\n  ".$columnList."\n  VALUES\n  ".$valueList;
 		return $this->makeQueryHappen($query);
 	}
 

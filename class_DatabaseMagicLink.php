@@ -60,7 +60,7 @@ class DatabaseMagicLink extends DatabaseMagicPreparation {
 			MAP_TO_COL   => $toID
 		);
 		if (!is_null($relation)) { $params['relation'] = $relation; }
-		return $this->sqlMagicPut($this->getTableDefs(), $params);
+		return $this->sqlMagicPut($params);
 	}
 
 	public function breakLink($fromID, $toID=null, $relation=null) {
