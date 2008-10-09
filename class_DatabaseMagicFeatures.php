@@ -50,7 +50,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
         // The load failed. . . a never-before-seen primary ID is being explicitly set by the constructor.
         // Mark it dirty so we are sure that it saves.
         dbm_debug("failedload", "load failed");
-        $this->setAttribs(array($this->findTableKey($this->getTableDefs()) => $id), true);
+        $this->setAttribs(array($this->findTableKey() => $id), true);
       }
     }
   }
@@ -93,7 +93,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
   function getAttribs() {
 		$returnMe = $this->attributes;
 
-		$key = $this->findTableKey($this->getTableDefs());
+		$key = $this->findTableKey();
 		if ($returnMe[$key] == NULL) {
 			// Unsaved Object, don't return the key attribute with the results
 			unset($returnMe[$key]);
@@ -193,7 +193,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 	function getAllLikeMe($limit=NULL, $offset=NULL, $params=NULL) {
 		$myDefs = $this->getTableDefs();
 		$list = $this->getAllSomething($myDefs, "*", $limit, $offset, $params);
-		$key = $this->findTableKey($myDefs);
+		$key = $this->findTableKey();
 		$returnMe = array();
 
 		if (is_array($list)) {

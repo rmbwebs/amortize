@@ -140,7 +140,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		$columns = $this->getTableColumns($defs);
 		$allclean = array();
 		$savedata = array();
-		$key = $this->findTableKey($defs);
+		$key = $this->findTableKey();
 		$a = $this->getAttribs();
 		if (!isset($a[$key]) || ($a[$key] == null)) {
 			// This object has never been saved, force save regardless of status

@@ -162,7 +162,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 	protected function getAllSomething($customDefs, $column, $limit=NULL, $offset=NULL, $params=NULL) {
 		$tableNames = array_keys($customDefs);
 		$tableName = $tableNames[0];
-		$key = $this->findTableKey($customDefs);
+		$key = $this->findTableKey();
 		$column = (is_string($column)) ? $column : "*";
 
 		$whereClause = $this->buildWhereClause($params);
@@ -190,7 +190,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 	}
 
 	protected function getAllIDs($customDefs, $limit=NULL, $offset=NULL, $params=NULL) {
-		$key = $this->findTableKey($customDefs);
+		$key = $this->findTableKey();
 		$data = $this->getAllSomething($customDefs, $key, $limit, $offset, $params);
 		if ($data) {
 			// Convert to an array of arrays to an array of values
