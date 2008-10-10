@@ -107,15 +107,21 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		return $this->makeQueryHappen($query);
 	}
 
-	protected function getAllSomething($customDefs, $column, $limit=NULL, $offset=NULL, $params=NULL) {
-		$tableNames = array_keys($customDefs);
-		$tableName = $tableNames[0];
+	/**
+	 * Gets specific (or all) columns from a table.
+	 * Optionally can match a param list, and also supports limit and offset.
+	 * @param $column A string equal to the column name you want, or "*"
+	 * @param $limit Optional limit value to put into the query
+	 * @param $offset Optional offset value for the query
+	 * @param $params Optional whereClause-like list of parameters to search for
+	 */
+	protected function getAllSomething($column, $limit=NULL, $offset=NULL, $params=NULL) {
 		$key = $this->findTableKey();
 		$column = (is_string($column)) ? $column : "*";
 
 		$whereClause = $this->buildWhereClause($params);
 
-		$query = "SELECT {$column} FROM ".$this->sql_prfx.$tableName." ".$whereClause." ORDER BY {$key}";
+		$query = "SELECT {$column} FROM ".$this->sql_prfx.$this->getTableName()." ".$whereClause." ORDER BY {$key}";
 
 		if ($limit && is_numeric($limit)) {
 			$query .= " LIMIT {$limit}";
@@ -129,7 +135,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 			// We have a successful Query!
 			$return = array();
 			foreach($data as $row) {
-				$return[] = $this->sqlDataDePrep($row, $customDefs[$tableName]);
+				$return[] = $this->sqlDataDePrep($row);
 			}
 			return $return;
 		} else {
@@ -137,11 +143,14 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		}
 	}
 
-	protected function getAllIDs($customDefs, $limit=NULL, $offset=NULL, $params=NULL) {
+	/** @deprecated This function will not scale well to multi-column tables and may be removed in the future.
+	 * Returns an array of all known primary keys from this table
+	 */
+	protected function getAllIDs($limit=NULL, $offset=NULL, $params=NULL) {
 		$key = $this->findTableKey();
-		$data = $this->getAllSomething($customDefs, $key, $limit, $offset, $params);
+		$data = $this->getAllSomething($key, $limit, $offset, $params);
 		if ($data) {
-			// Convert to an array of arrays to an array of values
+			// Convert from an array of arrays to an array of values
 			$returnVal = array();
 			foreach ($data as $row) {
 				$returnVal[] = $row[$key];

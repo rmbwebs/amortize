@@ -182,17 +182,18 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
     return $this->attributes[$key];
 	}
 
-	/// Retrieve an array of all the known IDs for all saved instances of this class
-	/// If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
+	/** @deprecated This function is not used at any point in this library, and isn't really usefull.  Further, it won't scale well for multi-column primary keys.
+	 * Retrieve an array of all the known IDs for all saved instances of this class
+	 * If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
+	 */
 	function getAllPrimaries($limit=NULL, $offset=NULL, $params=NULL) {
-		$list = $this->getAllIDs($this->getTableDefs(), $limit, $offset, $params);
+		$list = $this->getAllIDs($limit, $offset, $params);
 		return $list;
 	}
 
 	/// Retrieve an array of pre-loaded objects
 	function getAllLikeMe($limit=NULL, $offset=NULL, $params=NULL) {
-		$myDefs = $this->getTableDefs();
-		$list = $this->getAllSomething($myDefs, "*", $limit, $offset, $params);
+		$list = $this->getAllSomething("*", $limit, $offset, $params);
 		$key = $this->findTableKey();
 		$returnMe = array();
 
