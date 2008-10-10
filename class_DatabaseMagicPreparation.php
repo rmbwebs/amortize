@@ -114,6 +114,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 	 * @param $limit Optional limit value to put into the query
 	 * @param $offset Optional offset value for the query
 	 * @param $params Optional whereClause-like list of parameters to search for
+	 * @returns An DBM-formatted array of data or null on error
 	 */
 	protected function getAllSomething($column, $limit=NULL, $offset=NULL, $params=NULL) {
 		$key = $this->findTableKey();
@@ -161,7 +162,14 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		}
 	}
 
-	// A new method for running an inner join.
+	/**
+	 * Creates an inner join to another table.
+	 * Gets all values from the other table that match your inner join.
+	 * @param $that An instance of this class (or extension) that uses a different table
+	 * @param $on What we are going to join on: array(thisColumnName => thatColumnName [, . . .])
+	 * @param $thisWhere A whereClause-format array of optional search parameters for this table
+	 * @param $thatWhere A whereClause-format array of optional search parameters for the joining table
+	 */
 	protected function getInnerJoin($that, $on, $thisWhere=null, $thatWhere=null) {
 		$thatTableFullName = $that->getFullTableName();
 		$thisTableFullName = $this->getFullTableName();
@@ -184,7 +192,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 		if ($data) {
 			$returnVal = array();
 			foreach ($data as $row) {
-				$returnVal[] = $row;   // This makes no sense.
+				$returnVal[] = $that->sqlDataDePrep($row);
 			}
 			return $returnVal;
 		} else {
@@ -282,7 +290,7 @@ class DatabaseMagicPreparation extends DatabaseMagicExecution {
 	 * Translates data from database format to easily useable arrays of data.
 	 * Currently it is used to check for SET data csv strings and convert it to true valued arrays
 	 */
-	protected function sqlDataDePrep($data) {
+	public function sqlDataDePrep($data) {
 		// Walk through the column definitions searching for "SET" Columns
 		foreach ($this->getTableColumnDefs() as $colname => $def) {
 			$def = (is_array($def)) ? $def[0] : $def;
