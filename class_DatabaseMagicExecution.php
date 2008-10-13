@@ -415,15 +415,6 @@ class DatabaseMagicExecution {
 		}
 	}
 
-	public function dropTable() {
-		$table = $this->getFullTableName();
-		if ($this->can_drop_table) {
-			$this->makeQueryHappen("DROP TABLE {$table}");
-		} else {
-			trigger_error(__CLASS__."::dropTable() called but table dropping is disabled per local configuration");
-		}
-	}
-
 }
 
 
