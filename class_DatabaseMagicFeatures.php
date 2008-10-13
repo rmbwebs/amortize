@@ -31,11 +31,28 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
   protected $status = array();
 
   /// Object attributes are the data that is stored in the object and is saved to the database.
-  /// Every instance of a DatabaseMagicObject has an array of attributes.  Each attribute corresponds
-  /// to a column in the database table, and each Object corresponds to a row in the table.
+  /// Every instance of a DatabaseMagicFeatures has an array of attributes.  Each attribute corresponds
+  /// to a column in the database table, and each instance of this class corresponds to a row in the table.
   /// Through member functions, attributes can be read and set to and from an object.
-  protected $attributes = array();
+  private $attributes = array();
 
+	/**
+	 * Extensions to inherited table_defs.
+	 * When this variable is set and $table_defs is not set in a class declaration, then table_defs are
+	 * inherited from parent classes and extended by this variable.
+	 * This array is in the same format as DatabaseMagicExecution::table_defs
+	 * @code
+	 * class Place extends DatabaseMagicFeatures {
+	 *   private $table_defs = array('places' => array('name' => "tinytext", 'address' => "text"));
+	 * }
+	 * class Business extends Place {
+	 *   private $table_def_extensions = array('businesses' => array('owner' => "tinytext"));
+	 * }
+	 * $bus = new Business;
+	 * $bus->getTableDefs() == array('businesses' => array('owner' => "tinytext", 'name' => "tinytext", 'address' => "text"))
+	 * @endcode
+	 * 
+	 */
 	protected $table_def_extensions = null;
 
 	/// Calls initialize() and calls load($id) if $id != null
@@ -182,9 +199,10 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
     return $this->attributes[$key];
 	}
 
-	/** @deprecated This function is not used at any point in this library, and isn't really usefull.  Further, it won't scale well for multi-column primary keys.
+	/** 
 	 * Retrieve an array of all the known IDs for all saved instances of this class
 	 * If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
+	 * @deprecated This function is not used at any point in this library, and isn't really usefull.  Further, it won't scale well for multi-column primary keys.
 	 */
 	function getAllPrimaries($limit=NULL, $offset=NULL, $params=NULL) {
 		$list = $this->getAllIDs($limit, $offset, $params);
