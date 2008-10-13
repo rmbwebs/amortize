@@ -20,8 +20,38 @@
 	along with Database Magic.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************/
 
-require_once dirname(__FILE__) . '/../databasemagicconfig.php';
+$configFile = dirname(__FILE__) . '/../databasemagicconfig.php';
+require_once $configFile;
+
+	/***************************************   Non-user-servicable parts below   ********************************************/
+  // SQL options
+  if (!defined('SQL_HOST'))         { define('SQL_HOST',         $sqlHost); }
+		else if (!$dbmAllowConfOverrides)  { die('SQL_HOST was previously defined as "'.SQL_HOST.'" and that is not allowed per '.$configFile); }
+
+	if (!defined('SQL_USER'))         { define('SQL_USER',         $sqlUser); }
+		else if (!$dbmAllowConfOverrides)  { die('SQL_USER was previously defined as "'.SQL_USER.'" and that is not allowed per '.$configFile); }
+
+	if (!defined('SQL_PASS'))         { define('SQL_PASS',         $sqlPass); }
+		else if (!$dbmAllowConfOverrides)  { die('SQL_PASS was previously defined as "'.SQL_PASS.'" and that is not allowed per '.$configFile); }
+
+	if (!defined('SQL_DBASE'))        { define('SQL_DBASE',        $sqlDatabase); }
+		else if (!$dbmAllowConfOverrides)  { die('SQL_DBASE was previously defined as "'.SQL_DBASE.'" and that is not allowed per '.$configFile); }
+
+	if (!defined('SQL_TABLE_PREFIX')) { define('SQL_TABLE_PREFIX', $sqlPrefix); }
+		else if (!$dbmAllowConfOverrides)  { die('SQL_TABLE_PREFIX was previously defined as "'.SQL_TABLE_PREFIX.'" and that is not allowed per '.$configFile); }
+
+	// General Options
+	if (!defined('DBM_DEBUG'))        { define('DBM_DEBUG',        $dbmDebug); }
+		else if (!$dbmAllowConfOverrides)  { die('DBM_DEBUG was previously defined as "'.DBM_DEBUG.'" and that is not allowed per '.$configFile); }
+
+	if (!defined('DBM_AUTODROP'))     { define('DBM_AUTODROP',     $dbmAutoDrop); }
+		else if (!$dbmAllowConfOverrides)  { die('DBM_AUTODROP was previously defined as "'.DBM_AUTODROP.'" and that is not allowed per '.$configFile); }
+
+	if (!defined('DBM_DROP_TABLES'))     { define('DBM_DROP_TABLES',     $dbmTableDrop); }
+		else if (!$dbmAllowConfOverrides)  { die('DBM_DROP_TABLES was previously defined as "'.DBM_DROP_TABLES.'" and that is not allowed per '.$configFile); }
+
 require_once dirname(__FILE__) . '/databasemagicutils.php';
+
 
 /// A class for doing SQL operations automatically on a particular table
 /**
@@ -50,6 +80,7 @@ class DatabaseMagicExecution {
 	protected $sql_host  = SQL_HOST;
 	protected $sql_dbase = SQL_DBASE;
 	protected $sql_prfx  = SQL_TABLE_PREFIX;
+	protected $can_drop_table = DBM_DROP_TABLES;
 
 	/**
 	 * Constructor for this class
@@ -386,7 +417,11 @@ class DatabaseMagicExecution {
 
 	public function dropTable() {
 		$table = $this->getFullTableName();
-		$this->makeQueryHappen("DROP TABLE {$table}");
+		if ($this->can_drop_table) {
+			$this->makeQueryHappen("DROP TABLE {$table}");
+		} else {
+			trigger_error(__CLASS__."::dropTable() called but table dropping is disabled per local configuration");
+		}
 	}
 
 }

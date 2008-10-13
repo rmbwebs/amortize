@@ -1,6 +1,7 @@
 <?php
 
 define('DBM_DEBUG', true);
+define('DBM_DROP_TABLES', true);
 define('SQL_TABLE_PREFIX', "dbmrw_test_");
 include_once 'classes_Extras.php';
 
