@@ -41,7 +41,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 
 	/// Calls initialize() and calls load($id) if $id != null
 	/// Also marks the object for saving in the event of an unloadable $id
-  function __construct($id = NULL) {
+  public function __construct($id = NULL) {
 		parent::__construct();
 		$this->setTableDefs($this->table_defs);
     $this->initialize();
@@ -58,7 +58,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 
 	/// Sets all the attributes to blank and the table key to null.
 	/// used for initializing new blank objects.
-	function initialize() {
+	protected function initialize() {
 		$defs = $this->getTableDefs();
 		if (is_array($defs)) {
 			$cols = $this->getTableColumnDefs($defs);
@@ -74,7 +74,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 	 *  Normally called from the constructor, it *could* also be used to change the row that an existing object
 	 *  is working on, but just making a new object is probably preferable, unless you really know what you are doing.
 	 */
-	function load($id) {
+	protected function load($id) {
 		dbm_debug("load", "Loading a " . get_class($this) . " with ID = " . $id);
 		$key = $this->findTableKey();
 		$query = array($key => $id);
@@ -91,7 +91,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 	}
 
   /// Returns the array of attributes for the object.
-  function getAttribs() {
+  protected function getAttribs() {
 		$returnMe = $this->attributes;
 
 		$key = $this->findTableKey();
@@ -105,7 +105,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 
   /// Sets attribute (row) data for this object.
   /// $clobberID is a bool that must be true to allow you to overwrite a primary key
-  function setAttribs($info, $clobberID = false) {
+  protected function setAttribs($info, $clobberID = false) {
 		dbm_debug("setattribs data", $info);
     $defs = $this->getTableDefs();
     $columns = $defs[$this->getTableName($defs)];
@@ -129,12 +129,12 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
     return $returnVal;
   }
 
-	function __get($name) {
+	public function __get($name) {
 		$a = $this->getAttribs();
 		return (isset($a[$name])) ? $a[$name] : null;
 	}
 
-	function __set($name, $value) {
+	public function __set($name, $value) {
 		$this->setAttribs(array($name => $value));
 	}
 
@@ -167,7 +167,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 	}
 
 	/// Tells you the column name that holds the primary
-	function getPrimaryKey() {
+	public function getPrimaryKey() {
     return $this->findTableKey();
 	}
 
@@ -178,7 +178,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 	 *   $key2 = $obj->getPrimary();
 	 *   $key2 == $key
 	 */
-	function getPrimary() {
+	public function getPrimary() {
     $key = $this->getPrimaryKey();
     return $this->attributes[$key];
 	}
@@ -188,13 +188,13 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 	 * If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
 	 * @deprecated This function is not used at any point in this library, and isn't really usefull.  Further, it won't scale well for multi-column primary keys.
 	 */
-	function getAllPrimaries($limit=NULL, $offset=NULL, $params=NULL) {
+	public function getAllPrimaries($limit=NULL, $offset=NULL, $params=NULL) {
 		$list = $this->getAllIDs($limit, $offset, $params);
 		return $list;
 	}
 
 	/// Retrieve an array of pre-loaded objects
-	function getAllLikeMe($limit=NULL, $offset=NULL, $params=NULL) {
+	public function getAllLikeMe($limit=NULL, $offset=NULL, $params=NULL) {
 		$list = $this->getAllSomething("*", $limit, $offset, $params);
 		$key = $this->findTableKey();
 		$returnMe = array();
@@ -212,14 +212,14 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 
   /// Returns the name of the table that this object saves and loads under.
   /// Pretty easy function really.
-  function getMyTableName() {
+  public function getMyTableName() {
 		return $this->getTableName();
   }
 
 
 	/// Dumps the contents of attribs via print_r()
 	/// Useful for debugging, but that's about it
-	function dumpview($pre=false) {
+	public function dumpview($pre=false) {
 		if ($pre) echo "<pre style=\"color: blue\">\n";
 		echo "Attributes for this ".get_class($this).":\n";;
 		print_r($this->attributes);

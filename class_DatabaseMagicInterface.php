@@ -80,36 +80,21 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		parent::__construct($data);
 	}
 
-	/**
-	 * Merges the column definitions for ancestral objects into your object.
-	 * @code
-	 * class Book extends DatabaseMagicInterface {
-	 *   protected $table_name = "books";
-	 *   protected $table_columns = array('id' => "serial", 'isbn' => "varchar(20)");
-	 * }
-	 * class Novel extends Book {
-	 *   protected $table_name = "novels";
-	 *   protected $table_columns = array('author' => "tinytext");
-	 * }
-	 * $nov = new Novel;
-	 * $nov->getTableDefs() //returns this: array('novels' => array('id' => "serial", 'isbn' => "varchar(20)", 'author' => "tinytext"))
-	 * @endcode
-	 */
+	/// Merges the column definitions for ancestral objects into your object.
 	private function mergeColumns() {
-			if (
-				( get_class($this)        == __CLASS__        ) ||
-				( get_parent_class($this) == __CLASS__        ) ||
-				( $this->baseclass        == get_class($this) )
-			) { return true; }
-			else {
-				$par = get_parent_class($this);
-				$par = new $par;
-				$parcols = $par->getTableColumnDefs();
-				$this->table_columns = array_merge($parcols, $this->table_columns);
-				return true;
-			}
+		if (
+			( get_class($this)        == __CLASS__        ) ||
+			( get_parent_class($this) == __CLASS__        ) ||
+			( $this->baseclass        == get_class($this) )
+		) { return true; }
+		else {
+			$par = get_parent_class($this);
+			$par = new $par;
+			$parcols = $par->getTableColumnDefs();
+			$this->table_columns = array_merge($parcols, $this->table_columns);
+			return true;
 		}
-
+	}
 
 	/**
 	 * Used to set or get the info for this object.

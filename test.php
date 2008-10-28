@@ -54,7 +54,7 @@ dbm_debug("info", "Table Definitions for \$aBook:");
 dbm_debug("data", $aBook->getTableDefs());
 
 dbm_debug("info", "Giving \$aBook some attributes:");
-$aBook->setAttribs(
+$aBook->attribs(
 	array(
 		'isbn'   => "0-7414-4456-9",
 		'author' => "Larry Correia",
@@ -81,7 +81,7 @@ dbm_debug("info", "Comparing the two, what we saved followed by what we loaded:"
 $aBook->dumpview(true);
 $newBook->dumpview(true);
 
-if ($aBook->getAttribs() == $newBook->getAttribs()) {
+if ($aBook->attribs() == $newBook->attribs()) {
 	dbm_debug("info", "Loaded data matches saved data.");
 } else {
 	dbm_debug("error", "The object loaded from the database does not match what was saved to the database.");
@@ -90,7 +90,7 @@ if ($aBook->getAttribs() == $newBook->getAttribs()) {
 
 dbm_debug("info", "Creating the Book \"The Art of the Rifle\"");
 $aBook = new Book();
-$aBook->setAttribs(
+$aBook->attribs(
 	array(
 		'isbn'   => "9781581603071",
 		'author' => "Jeff Cooper",
@@ -104,7 +104,7 @@ $aBook->dumpview(true);
 
 dbm_debug("info", "Creating the Book \"The Revolution: A Manifesto\"");
 $aBook = new Book();
-$aBook->setAttribs(
+$aBook->attribs(
 	array(
 		'title'   => "The Revolution: A Manifesto",
 		'isbn'    => "0-446-53751-9",
@@ -117,7 +117,7 @@ $aBook->dumpview(true);
 
 dbm_debug("info", "Creating the Collection \"Rich's Favorite Books\"");
 $pub = new collection();
-$pub->setAttribs(array('name' => "Rich's Favorite Books"));
+$pub->attribs(array('name' => "Rich's Favorite Books"));
 $pub->save();
 $pub->dumpview(true);
 
@@ -137,7 +137,7 @@ dbm_debug("info", "Done.");
 $myReview->dumpview(true);
 
 dbm_debug("info", "Setting attributes on the Review . . . ");
-$myReview->setAttribs(
+$myReview->attribs(
 	array(
 		'reviewtext' => "RIP, Colonel.  Thanks for the great book.",
 		'reviewer'   => "A guy",
@@ -166,7 +166,7 @@ $bookReviews = $book->getLinks("Review");
 dbm_debug("info", "Done");
 
 foreach ( $bookReviews as $review ) {
-	$info = $review->getAttribs();
+	$info = $review->attribs();
  dbm_debug("info", "Book Review by ".$info['reviewer']."");
  dbm_debug("info", "\"".$info['reviewtext']."\"");
 }
@@ -179,7 +179,7 @@ $review->dumpview(true);
 dbm_debug("info", "Determining which review this book is for. . .");
 $books = $review->getBackLinks("Book");
 foreach ($books as $book) {
-	$info = $book->getAttribs();
+	$info = $book->attribs();
 	dbm_debug("info", "written about {$info['title']} by {$info['author']}.");
 }
 

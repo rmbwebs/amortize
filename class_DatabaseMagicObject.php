@@ -30,11 +30,22 @@ require_once dirname(__FILE__).'/class_DatabaseMagicInterface.php';
  */
 class DatabaseMagicObject extends DatabaseMagicInterface {
   protected $table_defs;
-	public function setAttribs($info, $clobber=false) {
-		return $this->attribs($info, $clobber);
+
+	public function __construct($data=null) {
+		$tables = array_keys($this->table_defs);
+		$tableName = $tables[0];
+		$this->table_name = $tableName;
+		$this->table_columns = $this->table_defs[$tableName];
+		unset($this->table_defs);
+		parent::__construct($data);
 	}
+
 	public function getAttribs() {
 		return $this->attribs();
+	}
+
+	public function setAttribs($one=null, $two=null) {
+		return $this->attribs($one, $two);
 	}
 
   /// An alias for the getPrimary() method.  \deprecated
