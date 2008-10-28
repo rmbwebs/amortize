@@ -34,32 +34,16 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
   /// Every instance of a DatabaseMagicFeatures has an array of attributes.  Each attribute corresponds
   /// to a column in the database table, and each instance of this class corresponds to a row in the table.
   /// Through member functions, attributes can be read and set to and from an object.
-  private $attributes = array();
+  protected $attributes = array();
 
-	/**
-	 * Extensions to inherited table_defs.
-	 * When this variable is set and $table_defs is not set in a class declaration, then table_defs are
-	 * inherited from parent classes and extended by this variable.
-	 * This array is in the same format as DatabaseMagicExecution::table_defs
-	 * @code
-	 * class Place extends DatabaseMagicFeatures {
-	 *   private $table_defs = array('places' => array('name' => "tinytext", 'address' => "text"));
-	 * }
-	 * class Business extends Place {
-	 *   private $table_def_extensions = array('businesses' => array('owner' => "tinytext"));
-	 * }
-	 * $bus = new Business;
-	 * $bus->getTableDefs() == array('businesses' => array('owner' => "tinytext", 'name' => "tinytext", 'address' => "text"))
-	 * @endcode
-	 * 
-	 */
-	protected $table_def_extensions = null;
+	
+	protected $table_defs = null;
 
 	/// Calls initialize() and calls load($id) if $id != null
 	/// Also marks the object for saving in the event of an unloadable $id
   function __construct($id = NULL) {
 		parent::__construct();
-		$this->extendTableDefs();
+		$this->setTableDefs($this->table_defs);
     $this->initialize();
     if ($id != NULL) {
       $loadResult = $this->load($id);
@@ -224,47 +208,6 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 			}
 		}
 		return $returnMe;
-	}
-
-	/// Recursively merges in any table definitions from extended classes
-	function extendTableDefs() {
-		if (get_class($this)==__CLASS__) {
-			// We are a DatabaseMagicFeatures
-			return true;
-		} else if (is_null($this->table_def_extensions)) {
-			$parentClass = get_parent_class($this);
-			$parent = new $parentClass;
-			$parentTableDefs = $parent->getTableDefs();
-			$this->setTableDefs($parentTableDefs);
-			return true;
-		} else {
-			// We are something that extends DatabaseMagicFeatures, and don't know the actual table defs
-			$parentClass = get_parent_class($this);
-			$parent = new $parentClass;
-			$parentTableDefs = $parent->getTableDefs();
-			$parentTableName = first_key($parentTableDefs);
-			$parentDefs      = first_val($parentTableDefs);
-			$parentPrimary   = $this->findKey($parentDefs);
-			$myTableDefs     = $this->table_def_extensions;
-			$myTableName     = first_key($myTableDefs);
-			$myDefs          = first_val($myTableDefs);
-			$myPrimary       = $this->findKey($myDefs);
-
-			// Purify iffy data
-			$parentDefs = (is_array($parentDefs)) ? $parentDefs : array();
-			$myDefs     = (is_array($myDefs))    ? $myDefs     : array();
-
-			// If we have two primary keys, drop the parent key
-			if ($myPrimary && $parentPrimary) {
-				unset($parentDefs[$parentPrimary]);
-			}
-
-			$mergedDefs = array_merge($parentDefs, $myDefs);
-
-			$result = array($myTableName => $mergedDefs);
-			$this->setTableDefs($result);
-			return true;
-		}
 	}
 
   /// Returns the name of the table that this object saves and loads under.

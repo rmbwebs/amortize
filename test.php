@@ -3,33 +3,33 @@
 define('DBM_DEBUG', true);
 define('DBM_DROP_TABLES', true);
 define('SQL_TABLE_PREFIX', "dbmrw_test_");
-include_once 'classes_Extras.php';
+include_once 'class_DatabaseMagicInterface.php';
 
-class Collection extends PrimaryDatabaseMagicObject {
-	protected $table_defs = array(
-		'collections' => array(
-			'name'   => "tinytext"
-		)
-	);
+class Collection extends DatabaseMagicInterface {
+	protected $table_name = 'collections';
+	protected $table_columns = array('name'   => "tinytext");
+	protected $autoprimary = true;
 }
-class Book extends PrimaryDatabaseMagicObject {
-	protected $table_defs = array(
-		'myBooks' => array(
-			'isbn'    => "varchar(20)",
-			'author'  => "tinytext",
-			'title'   => "tinytext",
-			'pubyear' => "year"
-		)
+
+class Book extends DatabaseMagicInterface {
+	protected $table_name = 'myBooks';
+	protected $table_columns = array(
+		'isbn'    => "varchar(20)",
+		'author'  => "tinytext",
+		'title'   => "tinytext",
+		'pubyear' => "year"
 	);
+	protected $autoprimary = true;
 }
-class Review extends PrimaryDatabaseMagicObject {
-	protected $table_defs = array(
-		'bookReviews' => array(
-			'reviewtext' => "text",
-			'reviewer'   => "tinytext",
-			'revdate'    => "datetime"
-		)
+
+class Review extends DatabaseMagicInterface {
+	protected $table_name = 'bookReviews';
+	protected $table_columns = array(
+		'reviewtext' => "text",
+		'reviewer'   => "tinytext",
+		'revdate'    => "datetime"
 	);
+	protected $autoprimary = true;
 }
 
 dbm_debug("heading", "Dropping testing tables");

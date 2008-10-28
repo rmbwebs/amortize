@@ -24,10 +24,92 @@ require_once dirname(__FILE__).'/class_DatabaseMagicFeatures.php';
 
 /**
  * This object makes it easy for a developer to create abstract objects which can save themselves
- * into and load themselves from an SQL database.  Objects are defined by setting a large array which
- * describes the way the data is stored in the database
+ * into and load themselves from an SQL database.
+ * This class is meant to be used as a base class for custom objects.  When a group of classes extend this class,
+ * each class represents a table in the database, with each instance of that class representing a row in the table.
+ * Table name and column definitions are hard-coded into the class.
+ * Descendents of this class can themselves be extended and pass their column definitions on to their descendants.
+ * For Example:
+ * @code
+ * class Book extends DatabaseMagicInterface {
+ *   protected $table_name = "books";
+ *   protected $table_columns = array('id' => "serial", 'isbn' => "varchar(20)");
+ * }
+ * class Novel extends Book {
+ *   protected $table_name = "novels";
+ *   protected $table_columns = array('author' => "tinytext");
+ * }
+ * $nov = new Novel;
+ * $nov->getTableDefs() will return this: array('novels' => array('id' => "serial", 'isbn' => "varchar(20)", 'author' => "tinytext"))
+ * @endcode
  */
 class DatabaseMagicInterface extends DatabaseMagicFeatures {
+
+	/**
+	 * Name of the table that this object saves and loads under.
+	 * If a table name prefix is defined in the DBM config file, it will be prepended to this value to make the table name.
+	 */
+	protected $table_name = null;
+
+
+	///Definitions for the columns in this object's table.
+	protected $table_columns = null;
+
+	/**
+	 * If this is defined in your class, table definitions are not extended further;
+	 * Use like this to declare your class as the baseclass as far as table column defs and table name are concerned:
+	 * @code
+	 * protected $baseclass = __CLASS__;
+	 * @endcode
+	 */
+	 protected $baseclass = null;
+
+	/// Automatic primary key inclusion
+	protected $autoprimary = null;
+
+	/**
+	 * Class Constructor
+	 * Kicks off the table merging process for objects that extend other objects.
+	 */
+	public function __construct($data=null) {
+		$this->mergeColumns();
+		if ($this->autoprimary) {
+			$this->table_columns['ID'] = array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment");
+		}
+		$this->table_defs = (is_null($this->table_columns)) ? $this->table_name : array($this->table_name => $this->table_columns);
+		parent::__construct($data);
+	}
+
+	/**
+	 * Merges the column definitions for ancestral objects into your object.
+	 * @code
+	 * class Book extends DatabaseMagicInterface {
+	 *   protected $table_name = "books";
+	 *   protected $table_columns = array('id' => "serial", 'isbn' => "varchar(20)");
+	 * }
+	 * class Novel extends Book {
+	 *   protected $table_name = "novels";
+	 *   protected $table_columns = array('author' => "tinytext");
+	 * }
+	 * $nov = new Novel;
+	 * $nov->getTableDefs() //returns this: array('novels' => array('id' => "serial", 'isbn' => "varchar(20)", 'author' => "tinytext"))
+	 * @endcode
+	 */
+	private function mergeColumns() {
+			if (
+				( get_class($this)        == __CLASS__        ) ||
+				( get_parent_class($this) == __CLASS__        ) ||
+				( $this->baseclass        == get_class($this) )
+			) { return true; }
+			else {
+				$par = get_parent_class($this);
+				$par = new $par;
+				$parcols = $par->getTableColumnDefs();
+				$this->table_columns = array_merge($parcols, $this->table_columns);
+				return true;
+			}
+		}
+
 
 	/**
 	 * Used to set or get the info for this object.
@@ -61,7 +143,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		$subject->save();
 
 		$link = new DatabaseMagicLink($this, $subject);
-		return $link->createLink($this->getID(), $subject->getID(),  $relation);
+		return $link->createLink($this->getPrimary(), $subject->getPrimary(),  $relation);
 
 	}
 
@@ -73,7 +155,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	 */
 	function deLink($subject, $relation=NULL) {
 		$link = new DatabaseMagicLink($this, $subject);
-		return $link->breakLink($this->getID(), $subject->getID(),  $relation);
+		return $link->breakLink($this->getPrimary(), $subject->getPrimary(),  $relation);
 	}
 
 	/** Breaks links to all previously linked $example.
@@ -87,7 +169,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 			$subject = $example;
 		}
 		$link = new DatabaseMagicLink($this, $subject);
-		return $link->breakLink($this->getID(), null,  $relation);
+		return $link->breakLink($this->getPrimary(), null,  $relation);
 	}
 
 	/**

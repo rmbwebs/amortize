@@ -30,13 +30,6 @@ require_once dirname(__FILE__).'/class_DatabaseMagicInterface.php';
  */
 class DatabaseMagicObject extends DatabaseMagicInterface {
   protected $table_defs;
-  protected $actual_table_defs;
-	function __construct ($data=null) {
-		$this->table_def_extensions = $this->table_defs;
-		$this->setTableDefs($this->actual_table_defs);
-		$this->actual_table_defs = null;
-		return parent::__construct($data);
-	}
 	public function setAttribs($info, $clobber=false) {
 		return $this->attribs($info, $clobber);
 	}
