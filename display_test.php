@@ -16,7 +16,7 @@
 			pre.data        {margin-left: 2em; border: 1px black solid; max-height: 20em; overflow: auto; }
 			pre.data:before {content: "data"; display: block; border-bottom: inherit; text-align: center;}
 
-			pre.setattribs { border-color: blue; }
+			pre.setattribs { border-color: blue;  display: none;}
 			pre.setattribs:before {content: "setAttribs() data"; color: blue;}
 
 
