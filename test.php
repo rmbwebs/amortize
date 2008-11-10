@@ -32,6 +32,23 @@ class Review extends DatabaseMagicInterface {
 	protected $autoprimary = true;
 }
 
+/*
+ This class is made simply to invoke the table updating feature of DbM.
+ Since it uses the same table name  as Book, but a superset of Book's table_column array,
+ it simulates the Book class having new columns added to it without the database being manually updated to match
+ */
+class NewBook extends DatabaseMagicInterface {
+	protected $table_name = 'myBooks';
+	protected $table_columns = array(
+		'isbn'     => "varchar(20)",
+		'author'   => "tinytext",
+		'title'    => "tinytext",
+		'pubyear'  => "year",
+		'photoURL' => "varchar(256)"
+	);
+	protected $autoprimary = true;
+}
+
 dbm_debug("heading", "Dropping testing tables");
 $classes = array(
 	new Collection,
@@ -232,6 +249,35 @@ dbm_debug("info", "Attempting to find all linked books (should be all three book
 $books = $collection->getLinks("Book");
 foreach ($books as $book) {
 	$book->dumpview(true);
+}
+
+dbm_debug("heading", "Testing table modification");
+dbm_debug("info", "Attempting to create and save a NewBook, this should invoke the table modification feature of DbM");
+$poky = new NewBook();
+$poky->attribs(
+	array(
+		'isbn'     => "978-0307021342",
+		'author'   => "Janette Sebring Lowrey",
+		'title'    => "The Poky Little Puppy",
+		'pubyear'   => 1942,
+		'photoURL' => "http://www.richbellamy.com/poky.jpg"
+	)
+);
+$poky->save(); /* This should invoke the table modification */
+dbm_debug("info", "Save Finished");
+
+dbm_debug("info", "Attempting to load a NewBook from the database, and see if the new data comes out.");
+
+$pokyID = $poky->getPrimary();  // Get the primary ID of the poky book.
+
+$savedBook = new NewBook($pokyID);
+
+if ($poky->photoURL == $savedBook->photoURL) {
+	dbm_debug("info", "It looks like the data went into and came out of the database properly!");
+	echo '<img src="'.$poky->photoURL.'" />'."\n\n";
+	echo '<img src="'.$savedBook->photoURL.'" />'."\n\n";
+} else {
+	dbm_debug("error", "The new column didn't save to the table!");
 }
 
 ?>

@@ -20,13 +20,15 @@ function first_key($arr = array()) {
 
 function dbm_debug($class, $message) {
 	if (DBM_DEBUG) {
-		echo "<pre class=\"$class\">\n";
 		if (is_string($message)) {
-			echo $message;
+			echo "<div class=\"$class\">";
+				echo $message;
+			echo "\n</div>\n";
 		} else {
-			print_r($message);
+			echo "<pre class=\"$class\">\n";
+				print_r($message);
+			echo "\n</pre>\n";
 		}
-		echo "\n</pre>\n";
 	}
 }
 

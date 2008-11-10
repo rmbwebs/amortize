@@ -5,19 +5,20 @@
 	<head>
 		<title>DatabaseMagic Testing Script</title>
 		<style>
-			pre.info     {font-size: 1.2em; color: green;}
-			pre.query    {border: 2px solid;}
-			pre.regular  {border-color: blue; margin-left: 1em;}
-			pre.system   {border-color: red;  margin-left: 2em;}
-			pre.error    {font-weight: bold; color: red;}
-			pre.heading  {font-size: 2em; color: orange;}
-			pre.tabledef {font-size: 0.8em; border: 2px solid yellow; margin-left: 3em; width: 30em;}
+			div { margin: 1em 0em 1em 0em; }
+			.info     {font-size: 1.2em; color: green;}
+			.query    {border: 2px solid; white-space: pre;}
+			.regular  {border-color: blue; margin-left: 1em;}
+			.system   {border-color: red;  margin-left: 2em;}
+			.error    {font-weight: bold; color: red;}
+			.heading  {font-size: 2em; color: orange;}
+			.tabledef {font-size: 0.8em; border: 2px solid yellow; margin-left: 3em; width: 30em;}
 
-			pre.data        {margin-left: 2em; border: 1px black solid; max-height: 20em; overflow: auto; }
-			pre.data:before {content: "data"; display: block; border-bottom: inherit; text-align: center;}
+			.data        {margin-left: 2em; border: 1px black solid; max-height: 20em; overflow: auto; }
+			.data:before {content: "data"; display: block; border-bottom: inherit; text-align: center;}
 
-			pre.setattribs { border-color: blue;  display: none;}
-			pre.setattribs:before {content: "setAttribs() data"; color: blue;}
+			.setattribs { border-color: blue;  display: none;}
+			.setattribs:before {content: "setAttribs() data"; color: blue;}
 
 
 			#file_output,
