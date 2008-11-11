@@ -284,5 +284,5 @@ if ($poky->photoURL == $savedBook->photoURL) {
 	dbm_debug("error", "The new column didn't save to the table!");
 }
 
-dbm_debug("info", "Script ran in ". (microtime(true) - $starttime) . " seconds");
+// dbm_debug("info", "Script ran in ". (microtime(true) - $starttime) . " seconds");
 ?>
