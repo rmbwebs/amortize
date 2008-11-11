@@ -5,7 +5,7 @@
 	<head>
 		<title>DatabaseMagic Testing Script</title>
 		<style>
-			div { margin: 1em 0em 1em 0em; }
+			#file_output div { margin: 1em 0em 1em 0em; }
 			.info     {font-size: 1.2em; color: green;}
 			.query    {border: 2px solid; white-space: pre;}
 			.regular  {border-color: blue; margin-left: 1em;}
