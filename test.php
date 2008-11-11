@@ -32,6 +32,9 @@ class Review extends DatabaseMagicInterface {
 	protected $autoprimary = true;
 }
 
+// Get starting time to compare later
+$starttime = microtime(true);
+
 /*
  This class is made simply to invoke the table updating feature of DbM.
  Since it uses the same table name  as Book, but a superset of Book's table_column array,
@@ -48,6 +51,7 @@ class NewBook extends DatabaseMagicInterface {
 	);
 	protected $autoprimary = true;
 }
+
 
 dbm_debug("heading", "Dropping testing tables");
 $classes = array(
@@ -280,4 +284,5 @@ if ($poky->photoURL == $savedBook->photoURL) {
 	dbm_debug("error", "The new column didn't save to the table!");
 }
 
+dbm_debug("info", "Script ran in ". (microtime(true) - $starttime) . " seconds");
 ?>
