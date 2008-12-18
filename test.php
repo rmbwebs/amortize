@@ -29,6 +29,9 @@ class Review extends DatabaseMagicInterface {
 		'reviewer'   => "tinytext",
 		'revdate'    => "datetime"
 	);
+	protected $externals = array(
+		'subject' => "Book"
+	);
 	protected $autoprimary = true;
 }
 
@@ -150,6 +153,9 @@ $greatBook->dumpview(true);
 dbm_debug('info', 'Creating a fresh Review . . . ');
 $myReview = new Review;    // Create a new review
 dbm_debug('info', 'Done.');
+
+dbm_debug('info', 'Table Definitions for $myReview:');
+dbm_debug('data', $myReview->getTableDefs());
 
 $myReview->dumpview(true);
 
@@ -306,4 +312,16 @@ if ($poky->title == $poky3->title) {
 	dbm_debug('error', 'data corrupted');
 }
 
+
+dbm_debug('heading', "Testing external objects");
+
+$review = new Review();
+$review->subject = new Book(4);
+dbm_debug('info', $review->subject->title);
+$review->subject->title .= " follows his nose home";
+dbm_debug('info', $review->subject->title);
+$review->subject->save();
+
+$poky = new Book(4);
+dbm_debug('info', $poky->title);
 ?>
