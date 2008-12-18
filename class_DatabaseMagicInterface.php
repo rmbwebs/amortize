@@ -64,7 +64,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	 */
 	 protected $baseclass = null;
 
-	/// Automatic primary key inclusion
+	/// Set to true if you want an automatic primary key to be added to your class
 	protected $autoprimary = null;
 
 	/**
@@ -200,64 +200,14 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		return $this->getLinkedObjects($example, $parameters, $relation, true);
 	}
 
-	/// Saves the object data to the database.
-	/// This function records the attributes of the object into a row in the database.
-	function save($force = false) {
-		$defs = $this->getTableDefs();
-		$columns = $this->getTableColumns($defs);
-		$allclean = array();
-		$savedata = array();
-		$key = $this->findTableKey();
+
+	public function __get($name) {
 		$a = $this->getAttribs();
-		if (!isset($a[$key]) || ($a[$key] == null)) {
-			// This object has never been saved, force save regardless of status
-			// It's very probable that this object is being linked to or is linking another object and needs an ID
-			$force = true;
-			// Exclude the ID in the sql query.  This will trigger an auto_increment ID to be generated
-			$excludeID = true;
-			dbm_debug("info", "This ".get_class($this)." is new, and we are saving all attributes regardless of status");
-		} else {
-			// Object has been saved before, OR a new ID was specified by the constructor parameters.
-			// either way, we need to include the ID in the SQL statement so that the proper row gets set,
-			// or the proper ID is used in the new row
-			$excludeID = false;
-		}
+		return (isset($a[$name])) ? $a[$name] : null;
+	}
 
-		$magicput_needs_rewrite = true;
-
-		foreach ($columns as $col) {
-			if (($this->status[$col] != "clean") || $force || $magicput_needs_rewrite){
-				if (isset($a[$col])) {
-					$savedata[$col] = $a[$col];
-				}
-			}
-		}
-
-		if ( count($savedata) >= 1 ) {
-			if (!$excludeID) {
-				$savedata[$key] = $a[$key];
-			}
-			$id = $this->sqlMagicPut($savedata);
-
-			if ($id) {
-				// Successful auto_increment Save
-				$this->attributes[$key] = $id;
-				// Set all statuses to clean.
-				$this->status = array_fill_keys(array_keys($this->status), "clean");
-				return TRUE;
-			} else if ($id !== false) {
-				// We are not working with an auto_increment ID
-				// Set all statuses to clean.
-				$this->status = array_fill_keys(array_keys($this->status), "clean");
-				return TRUE;
-			} else {
-				// ID === false, there was an error
-				die("Save Failed!\n".mysql_error());
-				return FALSE;
-			}
-
-		}
-
+	public function __set($name, $value) {
+		$this->setAttribs(array($name => $value));
 	}
 
 }

@@ -23,15 +23,17 @@
 
 			#file_output,
 			#self_source {
-				float: left;
-				width: 50%;
+				margin:   0px;
+				float:    left;
+				width:    50%;
 				overflow: scroll;
-				height: 100%
+				height:   100%
 			}
+			#file_output { width: 55%; }
+			#self_source { width: 45%; }
 		</style>
 	</head>
 	<body>
-
 		<div id="self_source">
 			<h2>Source code of test.php</h2>
 			<?php show_source("test.php"); ?>

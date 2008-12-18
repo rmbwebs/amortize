@@ -26,17 +26,18 @@ require_once dirname(__FILE__).'/class_DatabaseMagicLink.php';
 /// Backend for the DatabaseMagicObject
 class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 
-  /// Object status.
-  /// Possible statuses are "needs saving", etc.
-  protected $status = array();
+	/// Object status.
+	/// Possible statuses are "needs saving", etc.
+	protected $status = array();
 
-  /// Object attributes are the data that is stored in the object and is saved to the database.
-  /// Every instance of a DatabaseMagicFeatures has an array of attributes.  Each attribute corresponds
-  /// to a column in the database table, and each instance of this class corresponds to a row in the table.
-  /// Through member functions, attributes can be read and set to and from an object.
-  protected $attributes = array();
+	/// Object attributes are the data that is stored in the object and is saved to the database.
+	/// Every instance of a DatabaseMagicFeatures has an array of attributes.  Each attribute corresponds
+	/// to a column in the database table, and each instance of this class corresponds to a row in the table.
+	/// Through member functions, attributes can be read and set to and from an object.
+	protected $attributes = array();
 
-	
+ protected $needs_loading = false;
+
 	protected $table_defs = null;
 
 	/// Calls initialize() and calls load($id) if $id != null
@@ -44,21 +45,15 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
   public function __construct($id = NULL) {
 		parent::__construct();
 		$this->setTableDefs($this->table_defs);
-    $this->initialize();
+    $this->initialize($id);
     if ($id != NULL) {
-      $loadResult = $this->load($id);
-      if (!$loadResult) {
-        // The load failed. . . a never-before-seen primary ID is being explicitly set by the constructor.
-        // Mark it dirty so we are sure that it saves.
-        dbm_debug("failedload", "load failed");
-        $this->setAttribs(array($this->findTableKey() => $id), true);
-      }
-    }
+			$this->needs_loading = true;
+		}
   }
 
 	/// Sets all the attributes to blank and the table key to null.
 	/// used for initializing new blank objects.
-	protected function initialize() {
+	protected function initialize($id=null) {
 		$defs = $this->getTableDefs();
 		if (is_array($defs)) {
 			$cols = $this->getTableColumnDefs($defs);
@@ -66,6 +61,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 				$this->attributes[$col] = $this->getInitial($coldef);
 				$this->status[$col] = "clean";
 			}
+			$this->attributes[$this->findTableKey()] = $id;
 		}
 	}
 
@@ -90,10 +86,29 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 		}
 	}
 
+	protected function loadIfNeeded(){
+		// Perform delayed load
+		if ($this->needs_loading) {
+			$this->needs_loading = false;
+			$id = $this->getPrimary();
+      if ($this->load($id) === false) {
+        // The load failed. . . a never-before-seen primary ID is being explicitly set by the constructor.
+        // Mark it dirty so we are sure that it saves.
+        dbm_debug("failedload", "load failed");
+        $this->setAttribs(array($this->findTableKey() => $id), true);
+      }
+      return true;
+    } else {
+			return false;
+    }
+	}
+
   /// Returns the array of attributes for the object.
   protected function getAttribs() {
+		// Perform a delayed load if needed so that we have some info to return!
+		$this->loadIfNeeded();
+		// Build the return value
 		$returnMe = $this->attributes;
-
 		$key = $this->findTableKey();
 		if ($returnMe[$key] == NULL) {
 			// Unsaved Object, don't return the key attribute with the results
@@ -103,39 +118,96 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
     return $returnMe;
   }
 
-  /// Sets attribute (row) data for this object.
-  /// $clobberID is a bool that must be true to allow you to overwrite a primary key
-  protected function setAttribs($info, $clobberID = false) {
+	/// Sets attribute (row) data for this object.
+	/// $clobberID is a bool that must be true to allow you to overwrite a primary key
+	protected function setAttribs($info, $clobberID = false) {
+		// Do the delayed load now so that it doesn't happen later and overwrite these values!
+		$this->loadIfNeeded();
+
+		// Do the attribute setting
 		dbm_debug("setattribs data", $info);
-    $defs = $this->getTableDefs();
-    $columns = $defs[$this->getTableName($defs)];
-    $key = $this->getPrimaryKey();
-    if ((!$clobberID) && isset($info[$key])) {
+		$defs = $this->getTableDefs();
+		$columns = $defs[$this->getTableName($defs)];
+		$key = $this->getPrimaryKey();
+		if ((!$clobberID) && isset($info[$key])) {
 			dbm_debug("clobber", "clobber protected!");
 			unset($info[$key]);
-    }
-    $returnVal = FALSE;
-    foreach ($columns as $column => $def) {
+		}
+
+		$returnVal = FALSE;
+		foreach ($columns as $column => $def) {
 			$def = (is_array($def)) ? $def[0] : $def;
-      if (isset($info[$column])) {
+			if (isset($info[$column])) {
 				if (is_array($info[$column])) { // Filter HTML type arrays to support setAttribs($_POST);
 					$info[$column] = $this->valuesFromSet($info[$column], $def);
 				}
-        $this->attributes[$column] = $info[$column];
-        $returnVal = TRUE;
+				$this->attributes[$column] = $info[$column];
+				$returnVal = TRUE;
 				$this->status[$column] = "dirty";
-      }
-    }
-    return $returnVal;
-  }
+			}
+		}
 
-	public function __get($name) {
-		$a = $this->getAttribs();
-		return (isset($a[$name])) ? $a[$name] : null;
+		return $returnVal;
 	}
 
-	public function __set($name, $value) {
-		$this->setAttribs(array($name => $value));
+	/// Saves the object data to the database.
+	/// This function records the attributes of the object into a row in the database.
+	function save($force = false) {
+		$defs = $this->getTableDefs();
+		$columns = $this->getTableColumns($defs);
+		$allclean = array();
+		$savedata = array();
+		$key = $this->findTableKey();
+		$a = $this->getAttribs();
+		if (!isset($a[$key]) || ($a[$key] == null)) {
+			// This object has never been saved, force save regardless of status
+			// It's very probable that this object is being linked to or is linking another object and needs an ID
+			$force = true;
+			// Exclude the ID in the sql query.  This will trigger an auto_increment ID to be generated
+			$excludeID = true;
+			dbm_debug("info", "This ".get_class($this)." is new, and we are saving all attributes regardless of status");
+		} else {
+			// Object has been saved before, OR a new ID was specified by the constructor parameters.
+			// either way, we need to include the ID in the SQL statement so that the proper row gets set,
+			// or the proper ID is used in the new row
+			$excludeID = false;
+		}
+
+		$magicput_needs_rewrite = true;
+
+		foreach ($columns as $col) {
+			if (($this->status[$col] != "clean") || $force || $magicput_needs_rewrite){
+				if (isset($a[$col])) {
+					$savedata[$col] = $a[$col];
+				}
+			}
+		}
+
+		if ( count($savedata) >= 1 ) {
+			if (!$excludeID) {
+				$savedata[$key] = $a[$key];
+			}
+			$id = $this->sqlMagicPut($savedata);
+
+			if ($id) {
+				// Successful auto_increment Save
+				$this->attributes[$key] = $id;
+				// Set all statuses to clean.
+				$this->status = array_fill_keys(array_keys($this->status), "clean");
+				return TRUE;
+			} else if ($id !== false) {
+				// We are not working with an auto_increment ID
+				// Set all statuses to clean.
+				$this->status = array_fill_keys(array_keys($this->status), "clean");
+				return TRUE;
+			} else {
+				// ID === false, there was an error
+				die("Save Failed!\n".mysql_error());
+				return FALSE;
+			}
+
+		}
+
 	}
 
 
@@ -183,7 +255,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
     return $this->attributes[$key];
 	}
 
-	/** 
+	/**
 	 * Retrieve an array of all the known IDs for all saved instances of this class
 	 * If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
 	 * @deprecated This function is not used at any point in this library, and isn't really usefull.  Further, it won't scale well for multi-column primary keys.

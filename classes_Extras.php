@@ -21,13 +21,13 @@
 *******************************************/
 
 
-	require_once 'class_DatabaseMagicObject.php';
+	require_once 'class_DatabaseMagicInterface.php';
 
 /**
  * This is an extension of DatabaseMagicObject that provides form processing through a DOMDocument
  *
  */
-class DatabaseMagicObjectDomForms extends DatabaseMagicObject {
+class DatabaseMagicObjectDomForms extends DatabaseMagicInterface {
 
 	protected $input_restrictions = NULL;
 
