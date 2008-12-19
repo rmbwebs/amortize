@@ -1,5 +1,10 @@
 <?php
 	header("Content-type: text/html");
+	$testFile = (isset($_GET['test'])) ? "test_{$_GET['test']}.php" : null;
+	$testFile = (file_exists($testFile)) ? $testFile : 'test_generic.php';
+	$known_tests = array(
+		'generic' => "Object creation, saving, loading"
+	);
 ?>
 <html>
 	<head>
@@ -20,6 +25,17 @@
 			.setattribs { border-color: blue;  display: none;}
 			.setattribs:before {content: "setAttribs() data"; color: blue;}
 
+			#test_index {
+				height: 18%;
+				margin: 0px;
+				padding: 0px;
+				margin-bottom: 1%;
+				border-bottom: solid 2px #ccc;
+			}
+
+			#test_index h2 {float: left; margin-right: 2em;}
+
+			h2, ul { margin-top: 0px;}
 
 			#file_output,
 			#self_source {
@@ -27,20 +43,33 @@
 				float:    left;
 				width:    50%;
 				overflow: scroll;
-				height:   100%
+				height:   80%
 			}
 			#file_output { width: 55%; }
 			#self_source { width: 45%; }
 		</style>
 	</head>
 	<body>
+		<div id="test_index">
+			<h2>Available tests:</h2>
+			<ul>
+			<?php
+				foreach($known_tests as $testBase => $description) {
+					echo <<<LI
+				<li><a href="?test={$testBase}">{$description}</a></li>
+
+LI;
+				}
+			?>
+			</ul>
+		</div>
 		<div id="self_source">
-			<h2>Source code of test_generic.php</h2>
-			<?php show_source("test_generic.php"); ?>
+			<h2>Source code of <?php echo $testFile; ?></h2>
+			<?php show_source($testFile); ?>
 		</div>
 		<div id="file_output">
-			<h2>Output of test_generic.php</h2>
-			<?php include("test_generic.php"); ?>
+			<h2>Output of <?php echo $testFile; ?></h2>
+			<?php include($testFile); ?>
 		</div>
 	</body>
 </html>
