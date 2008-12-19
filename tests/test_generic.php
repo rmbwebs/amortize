@@ -3,7 +3,7 @@
 define('DBM_DEBUG', true);
 define('DBM_DROP_TABLES', true);
 define('SQL_TABLE_PREFIX', "dbmrw_test_");
-include_once 'class_DatabaseMagicInterface.php';
+include_once '../class_DatabaseMagicInterface.php';
 
 class Collection extends DatabaseMagicInterface {
 	protected $table_name = 'collections';

@@ -26,9 +26,9 @@
 			.setattribs:before {content: "setAttribs() data"; color: blue;}
 
 			#test_index {
-				height: 18%;
-				margin: 0px;
-				padding: 0px;
+				height:        18%;
+				margin:        0px;
+				padding:       0px;
 				margin-bottom: 1%;
 				border-bottom: solid 2px #ccc;
 			}
