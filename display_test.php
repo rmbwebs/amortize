@@ -35,12 +35,12 @@
 	</head>
 	<body>
 		<div id="self_source">
-			<h2>Source code of test.php</h2>
-			<?php show_source("test.php"); ?>
+			<h2>Source code of test_generic.php</h2>
+			<?php show_source("test_generic.php"); ?>
 		</div>
 		<div id="file_output">
-			<h2>Output of test.php</h2>
-			<?php include("test.php"); ?>
+			<h2>Output of test_generic.php</h2>
+			<?php include("test_generic.php"); ?>
 		</div>
 	</body>
 </html>
