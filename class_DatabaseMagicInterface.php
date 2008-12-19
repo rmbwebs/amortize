@@ -272,6 +272,36 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		return $this->getLinkedObjects($example, $parameters, $relation, true);
 	}
 
+	private function setExternalColumns(){
+		$externalAttribs = array();
+		foreach($this->externals as $name => $class) {
+			if (
+				isset($this->external_objects[$name])     &&
+				is_object($this->external_objects[$name]) &&
+				get_class($this->external_objects[$name]) == $class
+			) {
+				$obj = $this->external_objects[$name];
+				$keys = $obj->getPrimary(true);
+				$keys = (is_array($keys)) ? $keys : array($obj->getPrimaryKey() => $keys); // Convert to future format
+				foreach($keys as $column => $keyval) {
+					$externalAttribs["{$name}_{$column}"] = $keyval;
+				}
+			}
+		}
+		$this->setAttribs($externalAttribs);
+	}
+
+	/// A front-end for the save function at the Features level, handles externals.
+	public function save($force = false) {
+		$this->setExternalColumns();
+		parent::save($force);
+	}
+
+	/// A front-end for the load function, handles externals
+	public function load($info = null) {
+		parent::load($info);
+		$this->setExternalObjects();
+	}
 
 	public function __get($name) {
 		$a = $this->attribs();
