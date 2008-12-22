@@ -3,7 +3,8 @@
 	$testFile = (isset($_GET['test'])) ? "test_{$_GET['test']}.php" : null;
 	$testFile = (file_exists($testFile)) ? $testFile : 'test_generic.php';
 	$known_tests = array(
-		'generic' => "Object creation, saving, loading"
+		'generic' => "Object creation, saving, loading",
+		'externals' => "A demonstration on the external tables features."
 	);
 ?>
 <html>
@@ -23,6 +24,7 @@
 			.data:before {content: "data"; display: block; border-bottom: inherit; text-align: center;}
 
 			.setattribs { border-color: blue;  display: none;}
+			.deep { display: none; }
 			.setattribs:before {content: "setAttribs() data"; color: blue;}
 
 			#test_index {

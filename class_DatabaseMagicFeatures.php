@@ -165,7 +165,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 			$force = true;
 			// Exclude the ID in the sql query.  This will trigger an auto_increment ID to be generated
 			$excludeID = true;
-			dbm_debug("info", "This ".get_class($this)." is new, and we are saving all attributes regardless of status");
+			dbm_debug("info deep", "This ".get_class($this)." is new, and we are saving all attributes regardless of status");
 		} else {
 			// Object has been saved before, OR a new ID was specified by the constructor parameters.
 			// either way, we need to include the ID in the SQL statement so that the proper row gets set,
