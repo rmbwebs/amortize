@@ -3,7 +3,7 @@
 define('DBM_DEBUG', true);
 define('DBM_DROP_TABLES', true);
 define('SQL_TABLE_PREFIX', "dbmrw_test_");
-include_once 'class_DatabaseMagicInterface.php';
+include_once '../class_DatabaseMagicInterface.php';
 
 class Collection extends DatabaseMagicInterface {
 	protected $table_name = 'collections';
@@ -28,6 +28,9 @@ class Review extends DatabaseMagicInterface {
 		'reviewtext' => "text",
 		'reviewer'   => "tinytext",
 		'revdate'    => "datetime"
+	);
+	protected $externals = array(
+		'subject' => "Book"
 	);
 	protected $autoprimary = true;
 }
@@ -153,6 +156,9 @@ $greatBook->dumpview(true);
 dbm_debug('info', 'Creating a fresh Review . . . ');
 $myReview = new Review;    // Create a new review
 dbm_debug('info', 'Done.');
+
+dbm_debug('info', 'Table Definitions for $myReview:');
+dbm_debug('data', $myReview->getTableDefs());
 
 $myReview->dumpview(true);
 
@@ -309,5 +315,18 @@ if ($poky->title == $poky3->title) {
 	dbm_debug('error', 'data corrupted');
 }
 
-// dbm_debug("info", "Script ran in ". (microtime(true) - $starttime) . " seconds");
+
+dbm_debug('heading', "Testing external objects");
+
+$review = new Review();
+$review->subject = new Book(4);
+dbm_debug('info', $review->subject->title);
+$review->subject->title .= " follows his nose home";
+dbm_debug('info', $review->subject->title);
+$review->subject->save();
+
+$poky = new Book(4);
+dbm_debug('info', $poky->title);
+
+dbm_debug("info", "Script ran in ". (microtime(true) - $starttime) . " seconds");
 ?>

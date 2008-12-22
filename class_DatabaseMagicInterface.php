@@ -67,12 +67,24 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	/// Set to true if you want an automatic primary key to be added to your class
 	protected $autoprimary = null;
 
+	/// An array of external objects you would like to reference from your object.
+	/// The format is array('name' => 'ClassName');
+	protected $externals = array();
+
+	/// Actual storage of the external objects.
+	private $external_objects = array();
+
+	/// A list of columns used to store the external definitions.  Used for filtering in the attribs function.
+	private $external_columns = array();
+
 	/**
 	 * Class Constructor
 	 * Kicks off the table merging process for objects that extend other objects.
 	 */
 	public function __construct($data=null) {
 		$this->mergeColumns();
+		$this->external_columns = $this->buildExternalColumns();
+		$this->table_columns    = array_merge($this->table_columns, $this->external_columns);
 		if ($this->autoprimary) {
 			$this->table_columns['ID'] = array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment");
 		}
@@ -90,10 +102,40 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		else {
 			$par = get_parent_class($this);
 			$par = new $par;
-			$parcols = $par->getTableColumnDefs();
-			$this->table_columns = array_merge($parcols, $this->table_columns);
+			$parcols = $par->getFilteredTableColumnDefs();
+			$this->table_columns    = array_merge($parcols, $this->table_columns);
+			$parexts = $par->getExternals();
+			$this->externals        = array_merge($parexts, $this->externals);
 			return true;
 		}
+	}
+
+	private function buildExternalColumns() {
+		$returnArray = array();
+		if (is_array($this->externals)) {
+			foreach ($this->externals as $name => $class) {
+				$obj = new $class;
+				$keys = $obj->getPrimaryKey(); $keys = (is_array($keys)) ? $keys : array($keys);
+				$defs = $obj->getTableColumnDefs();
+				foreach ($keys as $key) {
+					$def = $defs[$key][0];
+					$returnArray["{$name}_{$key}"] = $def;
+				}
+			}
+		}
+		return $returnArray;
+	}
+
+	/// Returns the external class list
+	public function getExternals() { return $this->externals; }
+
+	/// Returns getTableColumnDefs with externals filtered out.
+	public function getFilteredTableColumnDefs() {
+		$defs = $this->getTableColumnDefs();
+		foreach ($this->external_columns as $col => $def) {
+			unset($defs[$col]);
+		}
+		return $defs;
 	}
 
 	/**
@@ -104,9 +146,39 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	 */
 	function attribs($info=null, $clobber=false) {
 		if (!is_null($info)) {
-			DatabaseMagicFeatures::setAttribs($info, $clobber);
+			// Filter-out external columns (which should only be modded by modding the external obj itself
+			foreach(array_keys($this->external_columns) as $key) {
+				unset($info[$key]);
+			}
+			$this->setExternalObjects($info);
+			$this->setAttribs($info, $clobber);
 		}
-		return DatabaseMagicFeatures::getAttribs();
+			$returnVal = $this->getAttribs();
+			foreach(array_keys($this->external_columns) as $key) {
+				unset($returnVal[$key]);
+			}
+			$returnVal = array_merge($returnVal, $this->getExternalObjects());
+			return $returnVal;
+	}
+
+	private function setExternalObjects($info=null) {
+		foreach ($this->externals as $name => $class) {
+			if (isset($info[$name]) && is_object($info[$name]) && get_class($info[$name])==$class) {
+				$this->external_objects[$name] = $info[$name];
+			} else if (isset($this->external_objects[$name]) && is_object($this->external_objects[$name]) && get_class($this->external_objects[$name])==$class) {
+				// Everything is good.
+			} else {
+				$obj = new $class;
+				$key = $obj->getPrimaryKey();
+				$attribs = $this->getAttribs();
+				$this->external_objects[$name] = new $class($attribs["{$name}_{$key}"]);
+			}
+		}
+	}
+
+	private function getExternalObjects() {
+		$this->setExternalObjects();
+		return $this->external_objects;
 	}
 
 	/**
@@ -200,14 +272,44 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		return $this->getLinkedObjects($example, $parameters, $relation, true);
 	}
 
+	private function setExternalColumns(){
+		$externalAttribs = array();
+		foreach($this->externals as $name => $class) {
+			if (
+				isset($this->external_objects[$name])     &&
+				is_object($this->external_objects[$name]) &&
+				get_class($this->external_objects[$name]) == $class
+			) {
+				$obj = $this->external_objects[$name];
+				$keys = $obj->getPrimary(true);
+				$keys = (is_array($keys)) ? $keys : array($obj->getPrimaryKey() => $keys); // Convert to future format
+				foreach($keys as $column => $keyval) {
+					$externalAttribs["{$name}_{$column}"] = $keyval;
+				}
+			}
+		}
+		$this->setAttribs($externalAttribs);
+	}
+
+	/// A front-end for the save function at the Features level, handles externals.
+	public function save($force = false) {
+		$this->setExternalColumns();
+		parent::save($force);
+	}
+
+	/// A front-end for the load function, handles externals
+	public function load($info = null) {
+		parent::load($info);
+		$this->setExternalObjects();
+	}
 
 	public function __get($name) {
-		$a = $this->getAttribs();
+		$a = $this->attribs();
 		return (isset($a[$name])) ? $a[$name] : null;
 	}
 
 	public function __set($name, $value) {
-		$this->setAttribs(array($name => $value));
+		$this->attribs(array($name => $value));
 	}
 
 }
