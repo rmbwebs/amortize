@@ -3,9 +3,16 @@
 	$testFile = (isset($_GET['test'])) ? "test_{$_GET['test']}.php" : null;
 	$testFile = (file_exists($testFile)) ? $testFile : 'test_generic.php';
 	$known_tests = array(
-		'generic' => "Object creation, saving, loading",
-		'externals' => "A demonstration on the external tables features."
+		'generic'   => "Object creation, saving, loading",
+		'externals' => "A demonstration on the external tables features.",
+		'ring'      => "Build a singularly-linked list in a ring shape.",
+		'ring_walk' => ". . . Walk that ring (keep refreshing the page)"
 	);
+	define('DBM_DEBUG', true);
+	define('DBM_DROP_TABLES', true);
+	define('SQL_TABLE_PREFIX', "dbm_test_");
+	include_once '../class_DatabaseMagicInterface.php';
+
 ?>
 <html>
 	<head>
@@ -36,6 +43,7 @@
 			}
 
 			#test_index h2 {float: left; margin-right: 2em;}
+			#test_list {margin-left: 15em;}
 
 			h2, ul { margin-top: 0px;}
 
@@ -54,7 +62,7 @@
 	<body>
 		<div id="test_index">
 			<h2>Available tests:</h2>
-			<ul>
+			<ul id="test_list">
 			<?php
 				foreach($known_tests as $testBase => $description) {
 					echo <<<LI

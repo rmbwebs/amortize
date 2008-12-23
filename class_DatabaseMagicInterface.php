@@ -67,14 +67,41 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	/// Set to true if you want an automatic primary key to be added to your class
 	protected $autoprimary = null;
 
-	/// An array of external objects you would like to reference from your object.
-	/// The format is array('name' => 'ClassName');
+	/**
+	 * Allows you to define attributes of your class which are actually themselves instances of DbM classes.
+	 * The format is similar to the table_columns array: an associative array where the key is the name of the attribute
+	 * and the value describes the type of data stored in that attribute.  In this case, the value is simply the name of the
+	 * class that the attribute will be an instance of.
+	 * @code
+	 * class Person extends DatabaseMagicInterface {
+	 *   protected $autoprimary=true;
+	 *   protected $table_columns = array('firstname' => 'varchar(20)', 'lastname' => 'varchar(20)');
+	 * }
+	 * class Restaurant extends DatabaseMagicInterface {
+	 *   protected $autoprimary=true;
+	 *   protected $table_columns = array('name' => 'varchar(50)', address => 'tinytext');
+	 *   protected $externals = array('owner' => "Person");
+	 * }
+	 * @endcode
+	 * In the example above, any instance $res of Restaurant will have an instance of Person that can be accessed via
+	 * $res->owner or under the 'owner' key of the array returned by $res->attribs().
+	 *
+	 * You can chain like this: @code echo "{$res->owner->firstname} {$res->owner->lastname} owns {$res->name}"; @endcode
+	 *
+	 * DbM objects which have externals defined will automatically save the primary key(s) of the external classes into
+	 * their own table columns, and therefore are able to recall identical instances of their external objects across save/load
+	 * cycles.
+	 *
+	 * External objects are not saved automatically when the holder is saved.  This is to prevent cascading saves which could be
+	 * disasterous if a linked list has been implemented  using externals, especially a ringed list.
+	 * Because of this, you need to save your externals manually: @code $res->owner->save(); @endcode will work fine.
+	 */
 	protected $externals = array();
 
-	/// Actual storage of the external objects.
+	// Actual storage of the external objects.
 	private $external_objects = array();
 
-	/// A list of columns used to store the external definitions.  Used for filtering in the attribs function.
+	// A list of columns used to store the external definitions.  Used for filtering in the attribs function.
 	private $external_columns = array();
 
 	/**
@@ -83,13 +110,25 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	 */
 	public function __construct($data=null) {
 		$this->mergeColumns();
-		$this->external_columns = $this->buildExternalColumns();
-		$this->table_columns    = array_merge($this->table_columns, $this->external_columns);
 		if ($this->autoprimary) {
 			$this->table_columns['ID'] = array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment");
 		}
 		$this->table_defs = (is_null($this->table_columns)) ? $this->table_name : array($this->table_name => $this->table_columns);
 		parent::__construct($data);
+
+		/* Handle the externals.
+		 * We need to call parent::__construct() twice to handle the special case where a class has itself listed as an external.
+		 * In that case, __construct() and buildExternalColumns will enter an endless loop unless buildExternalColumns can
+		 * use $this as the model instead of using new $class as the model (see "prevent endless loop" comment in the
+		 * buildExternalColumns function), and $this->getPrimaryKey can't be called before parent::__construct().
+		 * Thus, parent::__construct() needs to be called both before and after buildExternalColumns().
+		 */
+		if (count($this->externals) > 0) {
+			$this->external_columns = $this->buildExternalColumns();
+			$this->table_columns    = array_merge($this->table_columns, $this->external_columns);
+			$this->table_defs = (is_null($this->table_columns)) ? $this->table_name : array($this->table_name => $this->table_columns);
+			parent::__construct($data);
+		}
 	}
 
 	/// Merges the column definitions for ancestral objects into your object.
@@ -114,7 +153,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		$returnArray = array();
 		if (is_array($this->externals)) {
 			foreach ($this->externals as $name => $class) {
-				$obj = new $class;
+				$obj = ($class == get_class($this)) ? $this : new $class;  // Prevent endless loop
 				$keys = $obj->getPrimaryKey(); $keys = (is_array($keys)) ? $keys : array($keys);
 				$defs = $obj->getTableColumnDefs();
 				foreach ($keys as $key) {
