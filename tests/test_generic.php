@@ -1,12 +1,12 @@
 <?php
 
-class Collection extends DatabaseMagicInterface {
+class Collection extends AmortizeInterface {
 	protected $table_name = 'collections';
 	protected $table_columns = array('name'   => "tinytext");
 	protected $autoprimary = true;
 }
 
-class Book extends DatabaseMagicInterface {
+class Book extends AmortizeInterface {
 	protected $table_name = 'myBooks';
 	protected $table_columns = array(
 		'isbn'    => "varchar(20)",
@@ -17,7 +17,7 @@ class Book extends DatabaseMagicInterface {
 	protected $autoprimary = true;
 }
 
-class Review extends DatabaseMagicInterface {
+class Review extends AmortizeInterface {
 	protected $table_name = 'bookReviews';
 	protected $table_columns = array(
 		'reviewtext' => "text",
@@ -38,7 +38,7 @@ $starttime = microtime(true);
  Since it uses the same table name  as Book, but a superset of Book's table_column array,
  it simulates the Book class having new columns added to it without the database being manually updated to match
  */
-class NewBook extends DatabaseMagicInterface {
+class NewBook extends AmortizeInterface {
 	protected $table_name = 'myBooks';
 	protected $table_columns = array(
 		'isbn'     => "varchar(20)",
@@ -55,8 +55,8 @@ $classes = array(
 	new Collection,
 	new Book,
 	new Review,
-	new DataBaseMagicLink(new Collection, new Book),
-	new DataBaseMagicLink(new Book, new Review)
+	new AmortizeLink(new Collection, new Book),
+	new AmortizeLink(new Book, new Review)
 );
 foreach ($classes as $dbmclass) {
 	$dbmclass->dropTable();

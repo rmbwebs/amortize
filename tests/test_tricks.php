@@ -3,9 +3,9 @@
 define('DBM_DEBUG', true);
 define('DBM_DROP_TABLES', true);
 define('SQL_TABLE_PREFIX', "dbmrw_test_");
-include_once '../class_DatabaseMagicInterface.php';
+include_once '../class_AmortizeInterface.php';
 
-class Person extends DatabaseMagicInterface {
+class Person extends AmortizeInterface {
 	protected $table_name = 'people';
 	protected $table_columns = array(
 		'firstname' => 'varchar(20)',
@@ -14,7 +14,7 @@ class Person extends DatabaseMagicInterface {
 	protected $autoprimary = true;
 }
 
-class Restaurant extends DatabaseMagicInterface {
+class Restaurant extends AmortizeInterface {
 	protected $table_name = 'people';
 	protected $table_columns = array(
 		'name'   => 'varchar(20)',

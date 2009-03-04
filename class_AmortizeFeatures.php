@@ -4,34 +4,34 @@
 	Copyright Rich Bellamy, RMB Webs, 2008
 	Contact: rich@rmbwebs.com
 
-	This file is part of Database Magic.
+	This file is part of Amortize.
 
-	Database Magic is free software: you can redistribute it and/or modify
+	Amortize is free software: you can redistribute it and/or modify
 	it under the terms of the GNU Lesser General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
-	Database Magic is distributed in the hope that it will be useful,
+	Amortize is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Lesser General Public License for more details.
 
 	You should have received a copy of the GNU Lesser General Public License
-	along with Database Magic.  If not, see <http://www.gnu.org/licenses/>.
+	along with Amortize.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************/
 
-require_once dirname(__FILE__).'/class_DatabaseMagicPreparation.php';
-require_once dirname(__FILE__).'/class_DatabaseMagicLink.php';
+require_once dirname(__FILE__).'/class_AmortizePreparation.php';
+require_once dirname(__FILE__).'/class_AmortizeLink.php';
 
-/// Backend for the DatabaseMagicObject
-class DatabaseMagicFeatures extends DatabaseMagicPreparation {
+/// Backend for the AmortizeObject
+class AmortizeFeatures extends AmortizePreparation {
 
 	/// Object status.
 	/// Possible statuses are "needs saving", etc.
 	protected $status = array();
 
 	/// Object attributes are the data that is stored in the object and is saved to the database.
-	/// Every instance of a DatabaseMagicFeatures has an array of attributes.  Each attribute corresponds
+	/// Every instance of a AmortizeFeatures has an array of attributes.  Each attribute corresponds
 	/// to a column in the database table, and each instance of this class corresponds to a row in the table.
 	/// Through member functions, attributes can be read and set to and from an object.
 	protected $attributes = array();
@@ -218,10 +218,10 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 		$id = $this->getPrimary();
 
 		if (!$backLinks) {
-			$linkObject = new DatabaseMagicLink($this, $prototype);
+			$linkObject = new AmortizeLink($this, $prototype);
 			$data = $linkObject->getLinksFromID($id, $params, $relation);
 		} else {
-			$linkObject = new DatabaseMagicLink($prototype, $this);
+			$linkObject = new AmortizeLink($prototype, $this);
 			$data = $linkObject->getBackLinksFromID($id, $params, $relation);
 		}
 
@@ -246,7 +246,7 @@ class DatabaseMagicFeatures extends DatabaseMagicPreparation {
 	/** Returns the value of this object's primary key.
 	 * Primary key is the unique id for each object, used in the constructor and the load function
 	 * for example:
-	 *   $obj = new DatabaseMagicObject($key);
+	 *   $obj = new AmortizeObject($key);
 	 *   $key2 = $obj->getPrimary();
 	 *   $key2 == $key
 	 */

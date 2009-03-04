@@ -44,7 +44,7 @@ function dbm_do_backtrace ($one, $two) {
 
 define('E_SQL_CANNOT_CONNECT', "
 <h2>Cannot connect to SQL Server</h2>
-There is an error in your DatabaseMagic configuration.
+There is an error in your Amortize configuration.
 ");
 
 ?>

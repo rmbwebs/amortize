@@ -4,23 +4,23 @@
 	Copyright Rich Bellamy, RMB Webs, 2008
 	Contact: rich@rmbwebs.com
 
-	This file is part of Database Magic.
+	This file is part of Amortize.
 
-	Database Magic is free software: you can redistribute it and/or modify
+	Amortize is free software: you can redistribute it and/or modify
 	it under the terms of the GNU Lesser General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
-	Database Magic is distributed in the hope that it will be useful,
+	Amortize is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Lesser General Public License for more details.
 
 	You should have received a copy of the GNU Lesser General Public License
-	along with Database Magic.  If not, see <http://www.gnu.org/licenses/>.
+	along with Amortize.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************/
 
-$configFile = dirname(__FILE__) . '/../databasemagicconfig.php';
+$configFile = dirname(__FILE__) . '/../amortizeconfig.php';
 require_once $configFile;
 
 	/***************************************   Non-user-servicable parts below   ********************************************/
@@ -50,7 +50,7 @@ require_once $configFile;
 	if (!defined('DBM_DROP_TABLES'))     { define('DBM_DROP_TABLES',     $dbmTableDrop); }
 		else if (!$dbmAllowConfOverrides)  { die('DBM_DROP_TABLES was previously defined as "'.DBM_DROP_TABLES.'" and that is not allowed per '.$configFile); }
 
-require_once dirname(__FILE__) . '/databasemagicutils.php';
+require_once dirname(__FILE__) . '/amortizeutils.php';
 
 
 /// A class for doing SQL operations automatically on a particular table
@@ -61,7 +61,7 @@ require_once dirname(__FILE__) . '/databasemagicutils.php';
  * The purpose of this object is to provide a vehicle for developers to develop an SQL application without having to maintain their database
  * even when they change their code.  When table_defs are altered in code, the database will be altered as need be.
  */
-class DatabaseMagicExecution {
+class AmortizeExecution {
 
   /// An array that determines how the data for this object will be stored in the database or a string of an existing table name
   /**
@@ -303,7 +303,7 @@ class DatabaseMagicExecution {
 	protected function updateTable() {
 		$customDefs = $this->table_defs;
 		$tableName = first_key($customDefs);
-		
+
 		if (! isset($customDefs[$tableName])) {
 			return FALSE;
 		}

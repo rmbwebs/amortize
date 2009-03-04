@@ -4,29 +4,29 @@
 	Copyright Rich Bellamy, RMB Webs, 2008
 	Contact: rich@rmbwebs.com
 
-	This file is part of Database Magic.
+	This file is part of Amortize.
 
-	Database Magic is free software: you can redistribute it and/or modify
+	Amortize is free software: you can redistribute it and/or modify
 	it under the terms of the GNU Lesser General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
-	Database Magic is distributed in the hope that it will be useful,
+	Amortize is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Lesser General Public License for more details.
 
 	You should have received a copy of the GNU Lesser General Public License
-	along with Database Magic.  If not, see <http://www.gnu.org/licenses/>.
+	along with Amortize.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************/
 
-require_once dirname(__FILE__).'/class_DatabaseMagicPreparation.php';
+require_once dirname(__FILE__).'/class_AmortizePreparation.php';
 
 define('MAP_FROM_COL', "parentID");
 define('MAP_TO_COL',   "childID");
 
 /// Linking object to join two DBM Objects.
-class DatabaseMagicLink extends DatabaseMagicPreparation {
+class AmortizeLink extends AmortizePreparation {
 
 	private $from    = null;
 	private $to      = null;
@@ -90,7 +90,7 @@ class DatabaseMagicLink extends DatabaseMagicPreparation {
 
 	private $createTriggers = false;
 	
-	// A hook for the table creation routine in DatabaseMagicExecution
+	// A hook for the table creation routine in AmortizeExecution
 	// This function will be called once the first time that a link is created between two object types
 	protected function createTable($foo=null) {
 		// First: take care of the obligations to this function call.

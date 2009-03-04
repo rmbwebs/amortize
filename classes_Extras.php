@@ -4,30 +4,30 @@
 	Copyright Rich Bellamy, RMB Webs, 2008
 	Contact: rich@rmbwebs.com
 
-	This file is part of Database Magic.
+	This file is part of Amortize.
 
-	Database Magic is free software: you can redistribute it and/or modify
+	Amortize is free software: you can redistribute it and/or modify
 	it under the terms of the GNU Lesser General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
-	Database Magic is distributed in the hope that it will be useful,
+	Amortize is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Lesser General Public License for more details.
 
 	You should have received a copy of the GNU Lesser General Public License
-	along with Database Magic.  If not, see <http://www.gnu.org/licenses/>.
+	along with Amortize.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************/
 
 
-	require_once 'class_DatabaseMagicInterface.php';
+	require_once 'class_AmortizeInterface.php';
 
 /**
- * This is an extension of DatabaseMagicObject that provides form processing through a DOMDocument
+ * This is an extension of AmortizeObject that provides form processing through a DOMDocument
  *
  */
-class DatabaseMagicObjectDomForms extends DatabaseMagicInterface {
+class AmortizeObjectDomForms extends AmortizeInterface {
 
 	protected $input_restrictions = NULL;
 
@@ -188,20 +188,20 @@ class DatabaseMagicObjectDomForms extends DatabaseMagicInterface {
 
 
 /**
- * This is an extension of DatabaseMagicObjectDomForms that merely provides a default table Primary key
+ * This is an extension of AmortizeObjectDomForms that merely provides a default table Primary key
  */
-class PrimaryDatabaseMagicObjectDomForms extends DatabaseMagicObjectDomForms {
-	protected $table_defs = array("databasemagic" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
+class PrimaryAmortizeObjectDomForms extends AmortizeObjectDomForms {
+	protected $table_defs = array("Amortize" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
 }
 
 
 
 
 /**
- * This is an extension of DatabaseMagicObject that provides form processing
+ * This is an extension of AmortizeObject that provides form processing
  *
  */
-class DatabaseMagicObjectForms extends DatabaseMagicObject {
+class AmortizeObjectForms extends AmortizeObject {
 
 	protected $input_restrictions = NULL;
 
@@ -357,8 +357,8 @@ end;
 /**
  * This is an extension of DbMOForms that merely provides a default table Primary key
  */
-class PrimaryDatabaseMagicObjectForms extends DatabaseMagicObjectForms {
-	protected $table_defs = array("databasemagic" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
+class PrimaryAmortizeObjectForms extends AmortizeObjectForms {
+	protected $table_defs = array("Amortize" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
 }
 
 
@@ -366,7 +366,7 @@ class PrimaryDatabaseMagicObjectForms extends DatabaseMagicObjectForms {
  * The User class is a generic class that allows for logging in and out of
  * a custom app.
  */
-class DbMExtras_User extends DatabaseMagicObjectForms {
+class DbMExtras_User extends AmortizeObjectForms {
 	protected $table_defs = array(
 		'Users' => array(
 			'login'    => array("varchar(10)", "NO",  "PRI"),

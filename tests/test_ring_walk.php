@@ -1,13 +1,13 @@
 <?php
 
-class RingNode extends DatabaseMagicInterface {
+class RingNode extends AmortizeInterface {
 	protected $table_name = "ringnodes";
 	protected $table_columns = array('payload' => 'tinytext');
 	protected $externals = array('next' => 'RingNode');
 	protected $autoprimary = true;
 }
 
-class RingHandle extends DatabaseMagicInterface {
+class RingHandle extends AmortizeInterface {
 	protected $table_name = "rings";
 	protected $table_columns = array('name' => 'tinytext');
 	protected $externals = array('currentnode' => 'RingNode');

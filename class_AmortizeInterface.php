@@ -4,23 +4,23 @@
 	Copyright Rich Bellamy, RMB Webs, 2008
 	Contact: rich@rmbwebs.com
 
-	This file is part of Database Magic.
+	This file is part of Amortize.
 
-	Database Magic is free software: you can redistribute it and/or modify
+	Amortize is free software: you can redistribute it and/or modify
 	it under the terms of the GNU Lesser General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
-	Database Magic is distributed in the hope that it will be useful,
+	Amortize is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Lesser General Public License for more details.
 
 	You should have received a copy of the GNU Lesser General Public License
-	along with Database Magic.  If not, see <http://www.gnu.org/licenses/>.
+	along with Amortize.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************/
 
-require_once dirname(__FILE__).'/class_DatabaseMagicFeatures.php';
+require_once dirname(__FILE__).'/class_AmortizeFeatures.php';
 
 /**
  * This object makes it easy for a developer to create abstract objects which can save themselves
@@ -31,7 +31,7 @@ require_once dirname(__FILE__).'/class_DatabaseMagicFeatures.php';
  * Descendents of this class can themselves be extended and pass their column definitions on to their descendants.
  * For Example:
  * @code
- * class Book extends DatabaseMagicInterface {
+ * class Book extends AmortizeInterface {
  *   protected $table_name = "books";
  *   protected $table_columns = array('id' => "serial", 'isbn' => "varchar(20)");
  * }
@@ -43,7 +43,7 @@ require_once dirname(__FILE__).'/class_DatabaseMagicFeatures.php';
  * $nov->getTableDefs() will return this: array('novels' => array('id' => "serial", 'isbn' => "varchar(20)", 'author' => "tinytext"))
  * @endcode
  */
-class DatabaseMagicInterface extends DatabaseMagicFeatures {
+class AmortizeInterface extends AmortizeFeatures {
 
 	/**
 	 * Name of the table that this object saves and loads under.
@@ -73,11 +73,11 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	 * and the value describes the type of data stored in that attribute.  In this case, the value is simply the name of the
 	 * class that the attribute will be an instance of.
 	 * @code
-	 * class Person extends DatabaseMagicInterface {
+	 * class Person extends AmortizeInterface {
 	 *   protected $autoprimary=true;
 	 *   protected $table_columns = array('firstname' => 'varchar(20)', 'lastname' => 'varchar(20)');
 	 * }
-	 * class Restaurant extends DatabaseMagicInterface {
+	 * class Restaurant extends AmortizeInterface {
 	 *   protected $autoprimary=true;
 	 *   protected $table_columns = array('name' => 'varchar(50)', address => 'tinytext');
 	 *   protected $externals = array('owner' => "Person");
@@ -221,7 +221,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	}
 
 	/**
-	 * Creates a link to another instance or extension of DatabaseMagicObject.
+	 * Creates a link to another instance or extension of AmortizeObject.
 	 * This means that a relational table is created between this object's table and the
 	 * table of the object to be linked to, and an entry is placed in the relational table linking
 	 * the two objects.  From this point on, the adopted object can be retrieved as part of a list
@@ -238,7 +238,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		$this->save();
 		$subject->save();
 
-		$link = new DatabaseMagicLink($this, $subject);
+		$link = new AmortizeLink($this, $subject);
 		return $link->createLink($this->getPrimary(), $subject->getPrimary(),  $relation);
 
 	}
@@ -250,7 +250,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 	 * To break non-relational links and leave relational link intact, provide an empty string ("") as a relation here.
 	 */
 	function deLink($subject, $relation=NULL) {
-		$link = new DatabaseMagicLink($this, $subject);
+		$link = new AmortizeLink($this, $subject);
 		return $link->breakLink($this->getPrimary(), $subject->getPrimary(),  $relation);
 	}
 
@@ -264,7 +264,7 @@ class DatabaseMagicInterface extends DatabaseMagicFeatures {
 		} else {
 			$subject = $example;
 		}
-		$link = new DatabaseMagicLink($this, $subject);
+		$link = new AmortizeLink($this, $subject);
 		return $link->breakLink($this->getPrimary(), null,  $relation);
 	}
 

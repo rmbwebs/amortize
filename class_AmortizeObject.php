@@ -4,31 +4,31 @@
 	Copyright Rich Bellamy, RMB Webs, 2008
 	Contact: rich@rmbwebs.com
 
-	This file is part of Database Magic.
+	This file is part of Amortize.
 
-	Database Magic is free software: you can redistribute it and/or modify
+	Amortize is free software: you can redistribute it and/or modify
 	it under the terms of the GNU Lesser General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
-	Database Magic is distributed in the hope that it will be useful,
+	Amortize is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Lesser General Public License for more details.
 
 	You should have received a copy of the GNU Lesser General Public License
-	along with Database Magic.  If not, see <http://www.gnu.org/licenses/>.
+	along with Amortize.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************/
 
 
-require_once dirname(__FILE__).'/class_DatabaseMagicInterface.php';
+require_once dirname(__FILE__).'/class_AmortizeInterface.php';
 
 /**
  * Provides a compatibility layer for projects that used DbM before the multi-class re-write:
- * Please use DatabaseMagicInterface for new projects.
+ * Please use AmortizeInterface for new projects.
  * \deprecated
  */
-class DatabaseMagicObject extends DatabaseMagicInterface {
+class AmortizeObject extends AmortizeInterface {
   protected $table_defs;
 
 	public function __construct($data=null) {
@@ -60,10 +60,10 @@ class DatabaseMagicObject extends DatabaseMagicInterface {
 
 
 /**
- * This is an extension of DatabaseMagicObject that merely provides a default table Primary key
+ * This is an extension of AmortizeObject that merely provides a default table Primary key
  */
-class PrimaryDatabaseMagicObject extends DatabaseMagicObject {
-	protected $table_defs = array("databasemagic" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
+class PrimaryAmortizeObject extends AmortizeObject {
+	protected $table_defs = array("Amortize" => array('ID'=> array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment") ) );
 }
 
 

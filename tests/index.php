@@ -11,12 +11,12 @@
 	define('DBM_DEBUG', true);
 	define('DBM_DROP_TABLES', true);
 	define('SQL_TABLE_PREFIX', "dbm_test_");
-	include_once '../class_DatabaseMagicInterface.php';
+	include_once '../class_AmortizeInterface.php';
 
 ?>
 <html>
 	<head>
-		<title>DatabaseMagic Testing Script</title>
+		<title>Amortize Testing Script</title>
 		<style>
 			div { margin: 1em 0em 1em 0em; }
 			.info     {font-size: 1.2em; color: green;}

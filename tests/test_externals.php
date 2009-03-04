@@ -1,6 +1,6 @@
 <?php
 
-class Person extends DatabaseMagicInterface {
+class Person extends AmortizeInterface {
 	protected $table_name = 'people';
 	protected $table_columns = array(
 		'firstname' => 'varchar(20)',
@@ -9,7 +9,7 @@ class Person extends DatabaseMagicInterface {
 	protected $autoprimary = true;
 }
 
-class Restaurant extends DatabaseMagicInterface {
+class Restaurant extends AmortizeInterface {
 	protected $table_name = 'restaurants';
 	protected $table_columns = array(
 		'name'   => 'varchar(20)',
@@ -56,7 +56,7 @@ dbm_debug('info', "Notice that the returned attribs include the Person object as
 dbm_debug('data', $joes->attribs());
 dbm_debug('data', $joes->owner->attribs());
 
-dbm_debug('info', "The dumpview command runs on the DatabaseMagicFeatures level, and is ignorant of externals.  It shows you how the external data will be saved to the database.");
+dbm_debug('info', "The dumpview command runs on the AmortizeFeatures level, and is ignorant of externals.  It shows you how the external data will be saved to the database.");
 $joes->dumpview(true);
 $joes->owner->dumpview(true);
 
