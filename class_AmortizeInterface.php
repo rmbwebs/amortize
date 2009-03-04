@@ -142,6 +142,7 @@ class AmortizeInterface extends AmortizeFeatures {
 			$par = get_parent_class($this);
 			$par = new $par;
 			$parcols = $par->getFilteredTableColumnDefs();
+			$parcols = (is_array($parcols)) ? $parcols : array();
 			$this->table_columns    = array_merge($parcols, $this->table_columns);
 			$parexts = $par->getExternals();
 			$this->externals        = array_merge($parexts, $this->externals);
