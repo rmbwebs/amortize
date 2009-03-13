@@ -6,12 +6,13 @@
 		'generic'   => "Object creation, saving, loading",
 		'externals' => "A demonstration on the external tables features.",
 		'ring'      => "Build a singularly-linked list in a ring shape.",
-		'ring_walk' => ". . . Walk that ring (keep refreshing the page)"
+		'ring_walk' => ". . . Walk that ring (keep refreshing the page)",
+		'column_inheritance' => "An illustration of Amortize objects inheriting the column definitions of their ancestors"
 	);
 	define('DBM_DEBUG', true);
 	define('DBM_DROP_TABLES', true);
 	define('SQL_TABLE_PREFIX', "dbm_test_");
-	include_once '../class_AmortizeInterface.php';
+	include_once '../amortize.php';
 
 ?>
 <html>
