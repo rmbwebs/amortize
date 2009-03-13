@@ -3,11 +3,12 @@
 	$testFile = (isset($_GET['test'])) ? "test_{$_GET['test']}.php" : null;
 	$testFile = (file_exists($testFile)) ? $testFile : 'test_generic.php';
 	$known_tests = array(
-		'generic'   => "Object creation, saving, loading",
-		'externals' => "A demonstration on the external tables features.",
-		'ring'      => "Build a singularly-linked list in a ring shape.",
-		'ring_walk' => ". . . Walk that ring (keep refreshing the page)",
-		'column_inheritance' => "An illustration of Amortize objects inheriting the column definitions of their ancestors"
+		'generic'            => "Object creation, saving, loading",
+		'externals'          => "A demonstration on the external tables features.",
+		'ring'               => "Using externals to build a DB-based singularly-linked list in a ring",
+		'ring_walk'          => ". . . Walk that ring (keep refreshing the page)",
+		'column_inheritance' => "An illustration of Amortize objects inheriting the column definitions of their ancestors",
+		'custom_attribs'     => "Overwriting the attribs function to get custom attributes"
 	);
 	define('DBM_DEBUG', true);
 	define('DBM_DROP_TABLES', true);
@@ -56,8 +57,8 @@
 				overflow: scroll;
 				height:   80%
 			}
-			#file_output { width: 55%; }
-			#self_source { width: 45%; }
+			#file_output { width: 50%; }
+			#self_source { width: 50%; }
 		</style>
 	</head>
 	<body>
