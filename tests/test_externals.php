@@ -17,23 +17,33 @@ class Restaurant extends AmortizeInterface {
 	);
 	protected $autoprimary = true;
 	protected $externals = array(
-		'owner' => 'Person'
+		'owner'   => 'Person',
+		'manager' => 'Person'
 	);
 }
 
-dbm_debug('info', 'Creating and saving an example Person and Restaurant');
+dbm_debug('info', 'Creating and saving two example Persons and a Restaurant');
 $p = new Person();
 $p->firstname = "Joe";
 $p->lastname  = "Smith";
 $p->save();
 $pid = $p->getPrimary();
-dbm_debug('info', "When saving the example Person, it received a primary key value of {$pid}");
+dbm_debug('info', "When saving the first example Person, it received a primary key value of {$pid}");
+
+$m = new Person();
+$m->firstname = "Jane";
+$m->lastname  = "Doe";
+$m->save();
+$mid = $m->getPrimary();
+dbm_debug('info', "When saving the second example Person, it received a primary key value of {$mid}");
+
 
 
 $r = new Restaurant();
 $r->name = "Joe's Place";
 $r->rating = 5;
 $r->owner = $p;
+$r->manager = $m;
 $r->save();
 dbm_debug('info', 'Done saving examples.');
 
@@ -47,17 +57,23 @@ dbm_debug('info', 'The restaurant object has been created, but there won\'t be a
 // This next line will trigger the load from the database
 echo "{$joes->name} is a {$joes->rating}-star restaurant.";
 
-dbm_debug('info', 'Similarly, the external table objects, in this case the owner, have been created, but they won\'t load themselves from the database until you try to access their attributes.');
+dbm_debug('info', 'Similarly, the external table objects, in this case the owner and manager, have been created, but they won\'t load themselves from the database until you try to access their attributes.');
 
 // This next line will trigger the owner object to load itself from the database
 echo "{$joes->name} is owned by {$joes->owner->firstname} {$joes->owner->lastname}.";
 
-dbm_debug('info', "Notice that the returned attribs include the Person object as the 'owner' attribute.");
+// This next line will trigger the manager object to load itself from the database
+echo "{$joes->name} is run by {$joes->manager->firstname} {$joes->manager->lastname}.";
+
+
+dbm_debug('info', "Notice that the returned attribs include a Person object as the 'owner' and 'manager' attributes.  You get the actual objects, not just their primary keys");
 dbm_debug('data', $joes->attribs());
 dbm_debug('data', $joes->owner->attribs());
+dbm_debug('data', $joes->manager->attribs());
 
 dbm_debug('info', "The dumpview command runs on the AmortizeFeatures level, and is ignorant of externals.  It shows you how the external data will be saved to the database.");
 $joes->dumpview(true);
 $joes->owner->dumpview(true);
+$joes->manager->dumpview(true);
 
 ?>
