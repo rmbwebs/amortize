@@ -42,6 +42,7 @@
 				padding:       0px;
 				margin-bottom: 1%;
 				border-bottom: solid 2px #ccc;
+				overflow:      auto;
 			}
 
 			#test_index h2 {float: left; margin-right: 2em;}
