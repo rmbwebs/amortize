@@ -1,7 +1,6 @@
 <?php
 	header("Content-type: text/html");
-	$testFile = (isset($_GET['test'])) ? "test_{$_GET['test']}.php" : null;
-	$testFile = (file_exists($testFile)) ? $testFile : 'test_generic.php';
+	$selectedTest = (isset($_GET['test'])) ? $_GET['test'] : 'generic';
 	$known_tests = array(
 		'generic'            => "Object creation, saving, loading",
 		'externals'          => "A demonstration on the external tables features.",
@@ -10,6 +9,7 @@
 		'column_inheritance' => "An illustration of Amortize objects inheriting the column definitions of their ancestors",
 		'custom_attribs'     => "Overwriting the attribs function to get custom attributes"
 	);
+	$testFile = (isset($known_tests[$selectedTest])) ? "test_{$selectedTest}.php" : 'test_generic.php';
 	define('DBM_DEBUG', true);
 	define('DBM_DROP_TABLES', true);
 	define('SQL_TABLE_PREFIX', "dbm_test_");
@@ -45,10 +45,11 @@
 				overflow:      auto;
 			}
 
-			#test_index h2 {float: left; margin-right: 2em;}
+			#test_index h2 { display:inline; margin-right:2em;}
+			#test_index h3 {float: left; margin-right: 2em;}
 			#test_list {margin-left: 15em;}
 
-			h2, ul { margin-top: 0px;}
+			h2, h3, ul { margin-top: 0px;}
 
 			#file_output,
 			#self_source {
@@ -64,24 +65,32 @@
 	</head>
 	<body>
 		<div id="test_index">
-			<h2>Available tests:</h2>
+<!-- 			<h2>Current Test:</h2><span class="info"><?php echo $known_tests[$selectedTest] ?></span> -->
+			<h3>Available tests:</h3>
 			<ul id="test_list">
 			<?php
 				foreach($known_tests as $testBase => $description) {
-					echo <<<LI
+					if ($testBase == $selectedTest) {
+						echo <<<LI
+				<li class="info">{$description}</li>
+
+LI;
+					} else {
+						echo <<<LI
 				<li><a href="?test={$testBase}">{$description}</a></li>
 
 LI;
+					}
 				}
 			?>
 			</ul>
 		</div>
 		<div id="self_source">
-			<h2>Source code of <?php echo $testFile; ?></h2>
+			<h3>Source code of <?php echo $testFile; ?></h3>
 			<?php show_source($testFile); ?>
 		</div>
 		<div id="file_output">
-			<h2>Output of <?php echo $testFile; ?></h2>
+			<h3>Output of <?php echo $testFile; ?></h3>
 			<?php include($testFile); ?>
 		</div>
 	</body>
