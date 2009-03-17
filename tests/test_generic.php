@@ -30,9 +30,6 @@ class Review extends AmortizeInterface {
 	protected $autoprimary = true;
 }
 
-// Get starting time to compare later
-$starttime = microtime(true);
-
 /*
  This class is made simply to invoke the table updating feature of DbM.
  Since it uses the same table name  as Book, but a superset of Book's table_column array,
@@ -323,5 +320,4 @@ $review->subject->save();
 $poky = new Book(4);
 dbm_debug('info', $poky->title);
 
-dbm_debug("info", "Script ran in ". (microtime(true) - $starttime) . " seconds");
 ?>

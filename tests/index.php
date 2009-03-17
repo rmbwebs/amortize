@@ -1,6 +1,7 @@
 <?php
 	header("Content-type: text/html");
-	$selectedTest = (isset($_GET['test'])) ? $_GET['test'] : 'generic';
+	$testFile = (isset($_GET['test'])) ? "test_{$_GET['test']}.php" : null;
+	$testFile = (file_exists($testFile)) ? $testFile : 'test_generic.php';
 	$known_tests = array(
 		'generic'            => "Object creation, saving, loading",
 		'externals'          => "A demonstration on the external tables features.",
@@ -9,7 +10,6 @@
 		'column_inheritance' => "An illustration of Amortize objects inheriting the column definitions of their ancestors",
 		'custom_attribs'     => "Overwriting the attribs function to get custom attributes"
 	);
-	$testFile = (isset($known_tests[$selectedTest])) ? "test_{$selectedTest}.php" : 'test_generic.php';
 	define('DBM_DEBUG', true);
 	define('DBM_DROP_TABLES', true);
 	define('SQL_TABLE_PREFIX', "dbm_test_");
@@ -37,61 +37,91 @@
 			.setattribs:before {content: "setAttribs() data"; color: blue;}
 
 			#test_index {
-				height:        18%;
 				margin:        0px;
 				padding:       0px;
-				margin-bottom: 1%;
-				border-bottom: solid 2px #ccc;
-				overflow:      auto;
 			}
 
-			#test_index h2 { display:inline; margin-right:2em;}
-			#test_index h3 {float: left; margin-right: 2em;}
+			#test_index h2 {float: left; margin-right: 2em;}
 			#test_list {margin-left: 15em;}
 
-			h2, h3, ul { margin-top: 0px;}
+			/* Reset */
+			#test_index,
+			#self_source,
+			#file_output,
+			#results {
+				margin:        0px;
+				padding:       0px;
+			}
+			h2, ul { margin-top: 0px;}
+			h3, p  { margin: 0px; }
 
+			/* Layout */
 			#file_output,
 			#self_source {
-				margin:   0px;
 				float:    left;
 				width:    50%;
-				overflow: scroll;
-				height:   80%
+				overflow: auto;
 			}
-			#file_output { width: 50%; }
+
+			/* Adjust widths */
 			#self_source { width: 50%; }
+			#file_output { width: 50%; }
+
+			/* Adjust heights */
+			#test_index  { height: 15%; }
+			#self_source,
+			#file_output { height: 72%; }
+			#results     { height: 10%; }
+
+			/* Vertical Spacing */
+			#test_index {
+				margin-bottom: 0.5%;
+				border-bottom: solid 2px #ccc;
+			}
+
+			/* Use scrollbars */
+			#test_index,
+			#results {
+				overflow: auto;
+			}
+
+			#results { clear: left; }
+
 		</style>
 	</head>
 	<body>
 		<div id="test_index">
-<!-- 			<h2>Current Test:</h2><span class="info"><?php echo $known_tests[$selectedTest] ?></span> -->
-			<h3>Available tests:</h3>
+			<h2>Available tests:</h2>
 			<ul id="test_list">
 			<?php
 				foreach($known_tests as $testBase => $description) {
-					if ($testBase == $selectedTest) {
-						echo <<<LI
-				<li class="info">{$description}</li>
-
-LI;
-					} else {
-						echo <<<LI
+					echo <<<LI
 				<li><a href="?test={$testBase}">{$description}</a></li>
 
 LI;
-					}
 				}
 			?>
 			</ul>
 		</div>
 		<div id="self_source">
-			<h3>Source code of <?php echo $testFile; ?></h3>
+			<h2>Source code of <?php echo $testFile; ?></h2>
 			<?php show_source($testFile); ?>
 		</div>
 		<div id="file_output">
-			<h3>Output of <?php echo $testFile; ?></h3>
-			<?php include($testFile); ?>
+			<h2>Output of <?php echo $testFile; ?></h2>
+			<?php
+				// Get starting time to compare later
+				$starttime = microtime(true);
+				// Run the test file
+				include($testFile);
+				// Compute execution time
+				$scriptTime = microtime(true) - $starttime;
+			?>
+		</div>
+		<div id="results">
+			<h3>Results</h3>
+			<p>Script ran in <?php echo $scriptTime ?> seconds.</p>
+			<p>No Errors</p>
 		</div>
 	</body>
 </html>
