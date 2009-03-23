@@ -89,7 +89,7 @@ class AmortizeLink extends AmortizePreparation {
 	/*********************** Protected Support Functions below **************************/
 
 	private $createTriggers = false;
-	
+
 	// A hook for the table creation routine in AmortizeExecution
 	// This function will be called once the first time that a link is created between two object types
 	protected function createTable($foo=null) {
@@ -104,16 +104,23 @@ class AmortizeLink extends AmortizePreparation {
 			$toPrimary = $this->to->findTableKey();
 			$sql = $this->getSQLConnection();
 
-			$fromQuery =
-				"CREATE TRIGGER {$mapName}_FromDeleteTrigger\n".
-				"  AFTER DELETE ON {$fromTableName}\n".
-				"  FOR EACH ROW\n".
-				"    DELETE FROM {$mapName} WHERE ".MAP_FROM_COL."=OLD.{$fromPrimary};\n".
-			$toQuery =
-				"CREATE TRIGGER {$mapName}_ToDeleteTrigger\n".
-				"  AFTER DELETE ON {$toTableName}\n".
-				"  FOR EACH ROW\n".
-				"    DELETE FROM {$mapName} WHERE ".MAP_TO_COL."=OLD.{$toPrimary};\n".
+			$mapFromCol = MAP_FROM_COL;
+			$mapToCol   = MAP_TO_COL;
+
+
+			$fromQuery = <<<QUERY
+				CREATE TRIGGER {$mapName}_FromDeleteTrigger
+				  AFTER DELETE ON {$fromTableName}
+				  FOR EACH ROW
+				    DELETE FROM {$mapName} WHERE {$mapFromCol}=OLD.{$fromPrimary}
+QUERY;
+
+			$toQuery = <<<QUERY
+				CREATE TRIGGER {$mapName}_ToDeleteTrigger
+				  AFTER DELETE ON {$toTableName}
+				  FOR EACH ROW
+				    DELETE FROM {$mapName} WHERE {$mapToCol}=OLD.{$toPrimary}
+QUERY;
 
 			dbm_debug("system query", $fromQuery);
 			mysql_query($fromQuery, $sql) OR die($fromQuery . "\n\n" . mysql_error());
