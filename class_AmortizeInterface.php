@@ -345,6 +345,11 @@ class AmortizeInterface extends AmortizeFeatures {
 		$this->setExternalObjects();
 	}
 
+	/// Removes the row for this object
+	public function delete() {
+		return parent::removeMyRow();
+	}
+
 	public function __get($name) {
 		$a = $this->attribs();
 		return (isset($a[$name])) ? $a[$name] : null;
