@@ -40,8 +40,7 @@ class AmortizeFeatures extends AmortizePreparation {
 
 	protected $table_defs = null;
 
-	/// Calls initialize() and calls load($id) if $id != null
-	/// Also marks the object for saving in the event of an unloadable $id
+	/// Calls initialize() and sets the $needs_loading flag in an ID is passed in
   public function __construct($id = NULL) {
 		parent::__construct();
 		$this->setTableDefs($this->table_defs);
