@@ -255,6 +255,44 @@ class AmortizeFeatures extends AmortizePreparation {
 	}
 
 	/**
+	 * Removes this object's row from the table
+	 */
+	protected function removeMyRow() {
+		$keyVal = $this-getPrimaryKey();
+		// Check if the object has even been saved
+		if (!is_null($keyVal)) {
+			// The key value is non-null.  Therefore it stands to reason that the object exists in the database.  Removal is authorized
+			//Build the where clause
+			$key = $this->getPrimary();
+			$where = array($key => $keyVal);
+			// Do the remove
+			return $this->sqlMagicYank($where, false);
+		} else {
+			// The key was null, this object probably isn't in the database
+			// Don't attempt a remove.
+		}
+	}
+
+	/**
+	 * Removes any number of rows from the table, protects against accidentally removing all.
+	 * If your $where parameter does not make sense or is null, this function protects you from accidentally blanking the table
+	 * @param $where an array of matched attributes to delete on
+	 */
+	protected function removeSomeRows($where=null) {
+		return $this->sqlMagicYank($where, false);
+	}
+
+	/**
+	 * Removes any number of rows from the table, removes all rows if $where is null or invalid.
+	 * If you truly only want to remove some of the rows, removeSomeRows() is a better choice.
+	 * If your $where parameter does not make sense or is null, this function will blank your table.
+	 * @param $where An optional where array or where string. If left blank, the table will be blanked.
+	 */
+	protected function removeAllRows($where=null) {
+		return $this->sqlMagicYank($where, true);
+	}
+
+	/**
 	 * Retrieve an array of all the known IDs for all saved instances of this class
 	 * If you plan on foreach = new Blah(each), I suggest using getAllLikeMe instead, your database will thank you
 	 * @deprecated This function is not used at any point in this library, and isn't really usefull.  Further, it won't scale well for multi-column primary keys.
