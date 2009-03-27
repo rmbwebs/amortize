@@ -258,12 +258,12 @@ class AmortizeFeatures extends AmortizePreparation {
 	 * Removes this object's row from the table
 	 */
 	protected function removeMyRow() {
-		$keyVal = $this-getPrimaryKey();
+		$keyVal = $this->getPrimary();
 		// Check if the object has even been saved
 		if (!is_null($keyVal)) {
 			// The key value is non-null.  Therefore it stands to reason that the object exists in the database.  Removal is authorized
 			//Build the where clause
-			$key = $this->getPrimary();
+			$key = $this->getPrimaryKey();
 			$where = array($key => $keyVal);
 			// Do the remove
 			return $this->sqlMagicYank($where, false);
