@@ -111,12 +111,14 @@ LI;
 		<div id="file_output">
 			<h2>Output of <?php echo $testFile; ?></h2>
 			<?php
+				ob_start();
 				// Get starting time to compare later
 				$starttime = microtime(true);
 				// Run the test file
 				include($testFile);
 				// Compute execution time
 				$scriptTime = microtime(true) - $starttime;
+				ob_flush();
 			?>
 		</div>
 		<div id="results">
