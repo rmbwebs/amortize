@@ -42,11 +42,20 @@ function dbm_do_backtrace ($one, $two) {
 }
 
 $_SERVER['amtz_query_time'] = 0;
+$_SERVER['amtz_queries']    = array();
 
 function amtz_query($query, $connection=null) {
-	$startTime = microtime(true);
-	$result = mysql_query($query, $connection);
-	$_SERVER['amtz_query_time'] += (microtime(true)-$startTime);
+	$startTime   = microtime(true);
+	$result      = mysql_query($query, $connection);
+	$endTime     = microtime(true);
+	$elapsedTime = $endTime - $startTime;
+	$_SERVER['amtz_queries'][] = array(
+		'startTime'   => $startTime,
+		'endTime'     => $endTime,
+		'elapsedTime' => $elapsedTime,
+		'query'       => $query
+	);
+	$_SERVER['amtz_query_time'] += $elapsedTime;
 	return $result;
 }
 

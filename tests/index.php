@@ -68,11 +68,11 @@
 			#self_source { width: 50%; }
 			#file_output { width: 50%; }
 
-			/* Adjust heights */
-			#test_index  { height: 15%; }
+			/* Adjust heights. Add up to 97% to allow 3% for spacing */
+			#test_index  { height: 20%; }
 			#self_source,
-			#file_output { height: 72%; }
-			#results     { height: 10%; }
+			#file_output { height: 57%; }
+			#results     { height: 20%; }
 
 			/* Vertical Spacing */
 			#test_index {
@@ -120,8 +120,17 @@
 		</div>
 		<div id="results">
 			<h3>Results</h3>
-			<p>Script ran in <?php echo round($scriptTime, 3) ?> seconds.</p>
-			<p>Total time in the database was <?php echo round($_SERVER['amtz_query_time'], 3) ?> seconds.</p>
+			<p>Script ran in <?php echo round($scriptTime, 4) ?> seconds.</p>
+			<p>Total time in the database was <?php echo round($_SERVER['amtz_query_time'], 4) ?> seconds.</p>
+			<table class="query_report">
+				<tr><td>Time</td><td>Query</td></tr>
+				<?php foreach ($_SERVER['amtz_queries'] as $queryReport) : ?>
+				<tr>
+					<td class="time"><?php echo round($queryReport['elapsedTime'],4) ?> seconds</td>
+					<td class="query"><?php echo $queryReport['query'] ?></td>
+				</tr>
+				<?php endforeach ?>
+			</table>
 			<p>No Errors</p>
 		</div>
 	</body>
