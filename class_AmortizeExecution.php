@@ -232,7 +232,7 @@ class AmortizeExecution {
 		$sql   = mysql_connect($this->sql_host, $this->sql_user, $this->sql_pass) OR die(SQL_CANNOT_CONNECT);
 						mysql_select_db($this->sql_dbase, $sql)             OR die(SQL_CANNOT_CONNECT);
 		// Prep connection for strict error handling.
-		mysql_query("set sql_mode=strict_all_Tables", $sql);
+		amtz_query("set sql_mode=strict_all_Tables", $sql);
 		return $sql;
 	}
 	/// @endcond
@@ -243,7 +243,7 @@ class AmortizeExecution {
 	protected function getActualTableDefs() {
 		$sqlConnection = $this->getSQLConnection();
 		$query = "DESCRIBE ".$this->sql_prfx.$this->table_name;
-		if (! $results = mysql_query($query, $sqlConnection) ) {
+		if (! $results = amtz_query($query, $sqlConnection) ) {
 			return FALSE;
 		}
 		$definition = array();
@@ -273,7 +273,7 @@ class AmortizeExecution {
 	*/
 	protected function table_exists() {
 		$sql = $this->getSQLConnection();
-		$result = mysql_query("SHOW TABLES", $sql);
+		$result = amtz_query("SHOW TABLES", $sql);
 		while ($row = mysql_fetch_row($result)) {
 			if ($row[0] == $this->sql_prfx.$this->table_name)
 				return TRUE;
@@ -287,7 +287,7 @@ class AmortizeExecution {
 		dbm_debug("info", "Creating table");
 		dbm_debug("system query", $query);
 		$sql = $this->getSQLConnection();
-		$result = mysql_query($query, $sql) OR die($query . "\n\n" . mysql_error());
+		$result = amtz_query($query, $sql) OR die($query . "\n\n" . mysql_error());
 		if ($result) {
 			dbm_debug("info", "Success creating table");
 			return TRUE;
@@ -321,13 +321,13 @@ class AmortizeExecution {
 				$query  = "ALTER TABLE ".$this->sql_prfx.$tableName."\n";
 				$query .= "  DROP PRIMARY KEY";
 				dbm_debug("server query", $query);
-				if (! mysql_query($query, $sqlConnection) ) return FALSE;
+				if (! amtz_query($query, $sqlConnection) ) return FALSE;
 			}
 			if ($wantedKey) {
 				$query  = "ALTER TABLE ".$this->sql_prfx.$tableName."\n";
 				$query .= "  ADD PRIMARY KEY (".$wantedKey.")";
 				dbm_debug("server query", $query);
-				if (! mysql_query($query, $sqlConnection) ) return FALSE;
+				if (! amtz_query($query, $sqlConnection) ) return FALSE;
 			}
 		}
 
@@ -340,14 +340,14 @@ class AmortizeExecution {
 				$query  = "ALTER TABLE ".$this->sql_prfx.$tableName."\n";
 				$query .= "  ADD COLUMN " . $creationDef . " " . $location;
 				dbm_debug("server query", $query);
-				if (! mysql_query($query, $sqlConnection) ) return FALSE;
+				if (! amtz_query($query, $sqlConnection) ) return FALSE;
 			}
 			// Find a column that needs modifying
 			else if ($wanteddef[$name] != $actualdef[$name]) {
 				$query  = "ALTER TABLE ".$this->sql_prfx.$tableName."\n";
 				$query .= "  MODIFY COLUMN " . $creationDef . " " . $location;
 				dbm_debug("server query", $query);
-				if (! mysql_query($query, $sqlConnection) ) return FALSE;
+				if (! amtz_query($query, $sqlConnection) ) return FALSE;
 
 			}
 			// Change location so it will be set properly for the next iteration
@@ -362,7 +362,7 @@ class AmortizeExecution {
 				$query  = "ALTER TABLE ".$this->sql_prfx.$tableName."\n";
 				$query .= "  DROP COLUMN " . $name;
 				dbm_debug("server query", $query);
-				if (! mysql_query($query, $sqlConnection) ) return FALSE;
+				if (! amtz_query($query, $sqlConnection) ) return FALSE;
 			}
 		}
 
@@ -378,7 +378,7 @@ class AmortizeExecution {
 		$tableName  = $this->table_name;
 		dbm_debug("regular query", $query);
 		$sql = $this->getSQLConnection();
-		$result = mysql_query($query, $sql);
+		$result = amtz_query($query, $sql);
 		if (! $result) {
 			// We have a problem here
 			dbm_debug("system error", mysql_error());
@@ -392,7 +392,7 @@ class AmortizeExecution {
 				}
 			}
 			dbm_debug("regular query", $query);
-			$result = mysql_query($query, $sql);
+			$result = amtz_query($query, $sql);
 			if (! $result) {
 				// We tried :(
 				dbm_debug("error", "Query Retry Failed . . . table $tableName could not be fixed.");

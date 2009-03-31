@@ -41,6 +41,14 @@ function dbm_do_backtrace ($one, $two) {
 	echo "</pre>\n\n";
 }
 
+$_SERVER['amtz_query_time'] = 0;
+
+function amtz_query($query, $connection=null) {
+	$startTime = microtime(true);
+	$result = mysql_query($query, $connection);
+	$_SERVER['amtz_query_time'] += (microtime(true)-$startTime);
+	return $result;
+}
 
 define('E_SQL_CANNOT_CONNECT', "
 <h2>Cannot connect to SQL Server</h2>

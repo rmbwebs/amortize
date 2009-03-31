@@ -94,23 +94,19 @@
 		<div id="test_index">
 			<h2>Available tests:</h2>
 			<ul id="test_list">
-			<?php
-				foreach($known_tests as $testBase => $description) {
-					echo <<<LI
-				<li><a href="?test={$testBase}">{$description}</a></li>
-
-LI;
-				}
-			?>
+			<?php foreach($known_tests as $testBase => $description): ?>
+				<li><a href="?test=<?php echo $testBase ?>"><?php echo $description ?></a></li>
+			<?php endforeach ?>
 			</ul>
 		</div>
 		<div id="self_source">
-			<h2>Source code of <?php echo $testFile; ?></h2>
+			<h2>Source code of <?php echo $testFile ?></h2>
 			<?php show_source($testFile); ?>
 		</div>
 		<div id="file_output">
 			<h2>Output of <?php echo $testFile; ?></h2>
 			<?php
+				// Start the output buffer
 				ob_start();
 				// Get starting time to compare later
 				$starttime = microtime(true);
@@ -118,12 +114,14 @@ LI;
 				include($testFile);
 				// Compute execution time
 				$scriptTime = microtime(true) - $starttime;
+				// Fluch the output buffer
 				ob_flush();
 			?>
 		</div>
 		<div id="results">
 			<h3>Results</h3>
-			<p>Script ran in <?php echo $scriptTime ?> seconds.</p>
+			<p>Script ran in <?php echo round($scriptTime, 3) ?> seconds.</p>
+			<p>Total time in the database was <?php echo round($_SERVER['amtz_query_time'], 3) ?> seconds.</p>
 			<p>No Errors</p>
 		</div>
 	</body>
