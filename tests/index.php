@@ -148,6 +148,7 @@
 			<p>Out-of-database execution was  <?php echo round($exTime,     4) ?> seconds.</p>
 			<p>Average database time (over <?php echo $dbSamples ?> samples) is <?php echo round($dbAverage,4) ?> seconds.</p>
 			<p>Average execution time (over <?php echo $exSamples ?> samples) is <?php echo round($exAverage,4) ?> seconds.</p>
+			<h4>Times for <?php echo count($_SERVER['amtz_queries']) ?> queries</h4>
 			<table class="query_report">
 				<tr><td>Time</td><td>Query</td></tr>
 				<?php foreach ($_SERVER['amtz_queries'] as $queryReport) : ?>
