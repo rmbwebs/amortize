@@ -1,4 +1,5 @@
 <?php
+	session_start();
 	header("Content-type: text/html");
 	$testFile = (isset($_GET['test'])) ? "test_{$_GET['test']}.php" : null;
 	$testFile = (file_exists($testFile)) ? $testFile : 'test_generic.php';
@@ -87,6 +88,7 @@
 			}
 
 			#results { clear: left; }
+			#results p {width: 50%; text-align: right;}
 
 		</style>
 	</head>
@@ -114,14 +116,38 @@
 				include($testFile);
 				// Compute execution time
 				$scriptTime = microtime(true) - $starttime;
-				// Fluch the output buffer
+				// Flush the output buffer
 				ob_flush();
+				// Set Times
+				
+				//Database Time
+				$dbTime = $_SERVER['amtz_query_time'];
+				$log = &$_SESSION['dbTimes'][$_GET['test']];
+				$log[]=$dbTime;
+				while (count($log) > 20) {
+					array_shift($log);
+				}
+				$dbSamples = count($log);
+				$dbAverage = array_sum($log) / $dbSamples;
+				
+				// Execution Time
+				$log = &$_SESSION['exTimes'][$_GET['test']];
+				$exTime = $scriptTime - $dbTime;
+				$log[]=$exTime;
+				while (count($log) > 20) {
+					array_shift($log);
+				}
+				$exSamples = count($log);
+				$exAverage = array_sum($log) / $exSamples;
 			?>
 		</div>
 		<div id="results">
 			<h3>Results</h3>
-			<p>Script ran in <?php echo round($scriptTime, 4) ?> seconds.</p>
-			<p>Total time in the database was <?php echo round($_SERVER['amtz_query_time'], 4) ?> seconds.</p>
+			<p>Script ran in                  <?php echo round($scriptTime, 4) ?> seconds.</p>
+			<p>Total time in the database was <?php echo round($dbTime,     4) ?> seconds.</p>
+			<p>Out-of-database execution was  <?php echo round($exTime,     4) ?> seconds.</p>
+			<p>Average database time (over <?php echo $dbSamples ?> samples) is <?php echo round($dbAverage,4) ?> seconds.</p>
+			<p>Average execution time (over <?php echo $exSamples ?> samples) is <?php echo round($exAverage,4) ?> seconds.</p>
 			<table class="query_report">
 				<tr><td>Time</td><td>Query</td></tr>
 				<?php foreach ($_SERVER['amtz_queries'] as $queryReport) : ?>
