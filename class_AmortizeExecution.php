@@ -225,15 +225,22 @@ class AmortizeExecution {
 			") ENGINE=MyISAM DEFAULT CHARSET=latin1\n";
 	}
 
+	private static $sqlConnections = array();
+
 	/** @cond UTILITIES
 	* Returns a valid SQL connection identifier
 	*/
 	protected function getSQLConnection() {
-		$sql   = mysql_connect($this->sql_host, $this->sql_user, $this->sql_pass) OR die(SQL_CANNOT_CONNECT);
-						mysql_select_db($this->sql_dbase, $sql)             OR die(SQL_CANNOT_CONNECT);
-		// Prep connection for strict error handling.
-		amtz_query("set sql_mode=strict_all_Tables", $sql);
-		return $sql;
+// 		$unique = get_class($this);
+		$unique = md5("{$this->sql_host};{$this->sql_user};{$this->sql_pass}");
+		if (!isset(self::$sqlConnections[$unique])) {
+			$sql   = mysql_connect($this->sql_host, $this->sql_user, $this->sql_pass) OR die(SQL_CANNOT_CONNECT);
+							mysql_select_db($this->sql_dbase, $sql)             OR die(SQL_CANNOT_CONNECT);
+			// Prep connection for strict error handling.
+			amtz_query("set sql_mode=strict_all_Tables", $sql);
+			self::$sqlConnections[$unique] = $sql;
+		}
+		return self::$sqlConnections[$unique];
 	}
 	/// @endcond
 
