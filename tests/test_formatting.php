@@ -3,6 +3,7 @@
 class FormattingTest extends Amortize {
 	protected $table_name = 'format_testing';
 	protected $table_columns = array(
+		'options'     => "set('foo','bar','boo','baz')",
 		'someDate'    => 'date',
 		'pointInTime' => 'datetime',
 		'aTime'       => 'time'
@@ -14,13 +15,30 @@ $test = new FormattingTest();
 
 dbm_debug('info', 'Setting the info:');
 
+$options = array(
+	'foo'           => true,
+	'bar'           => false,
+	'invalidoption' => true,
+	'baz'           => true
+);
+
+$test->options     = $options;
 $test->someDate    = "Last Tuesday";
 $test->pointInTime = "Saturday, 5:00 PM";
 $test->aTime       = "Noon";
 
-dbm_debug('info', 'Doing the save: The SQL statement should have sql-compatible time and date strings.');
+
+dbm_debug('info', 'Doing the save: The SQL statement should have sql-compatible formats for our info.');
 
 $test->save();
+
+dbm_debug('info', 'Loading back out of the database:');
+
+$id = $test->getPrimary();
+
+$newTest = new FormattingTest($id);
+
+dbm_debug('data', $newTest->attribs());
 
 dbm_debug('heading', "End of test.");
 
