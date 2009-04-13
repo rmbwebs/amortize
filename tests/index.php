@@ -6,6 +6,7 @@
 	$known_tests = array(
 		'generic'            => "Object creation, saving, loading",
 		'deleting'           => "Deleting",
+		'formatting'         => "Automatic Data Formatting",
 		'externals'          => "A demonstration on the external tables features.",
 		'ring'               => "Using externals to build a DB-based singularly-linked list in a ring",
 		'ring_walk'          => ". . . Walk that ring (keep refreshing the page)",
