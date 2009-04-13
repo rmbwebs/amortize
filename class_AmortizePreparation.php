@@ -375,7 +375,7 @@ class AmortizePreparation extends AmortizeExecution {
 			$columnDef = $columnDef[0];
 		}
 		if (strtoupper(substr($columnDef, 0, 3)) == "SET") {
-			return valuesFromSet(array(), $columnDef);
+			return $this->valuesFromSet(array(), $columnDef);
 		} else {
 			return null;
 		}
