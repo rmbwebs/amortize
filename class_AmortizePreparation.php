@@ -289,7 +289,7 @@ class AmortizePreparation extends AmortizeExecution {
 	protected function sqlDataPrep($data) {
 		$defs = $this->getTableColumnDefs();
 		foreach ($data as $colname => &$value) {  // PHP4 porters: remove the & and change all $value='blah' to $data[$colname]='blah';
-			$rawDef = $defs[$colname][0];                                       // Get the column Definition
+			$rawDef = $defs[$colname][0];                                    // Get the column Definition
 			$pos = strpos($rawDef, '(');                                     // Check for existance of () in the definition
 			$trimDef = ($pos===false) ? $rawDef : substr($rawDef, 0, $pos);  // If no (), just use rawDef, otherwise, use what comes before ()
 			switch (strtoupper($trimDef)) {
@@ -324,7 +324,7 @@ class AmortizePreparation extends AmortizeExecution {
 	public function sqlDataDePrep($data) {
 		$defs = $this->getTableColumnDefs();
 		foreach ($data as $colname => &$value) {  // PHP4 porters: remove the & and change all $value='blah' to $data[$colname]='blah';
-			$rawDef = $defs[$colname];                                       // Get the column Definition
+			$rawDef = $defs[$colname][0];                                    // Get the column Definition
 			$pos = strpos($rawDef, '(');                                     // Check for existance of () in the definition
 			$trimDef = ($pos===false) ? $rawDef : substr($rawDef, 0, $pos);  // If no (), just use rawDef, otherwise, use what comes before ()
 			switch (strtoupper($trimDef)) {
