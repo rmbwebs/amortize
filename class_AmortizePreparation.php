@@ -20,6 +20,13 @@
 	along with Amortize.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************/
 
+date_default_timezone_set('America/New_York');
+
+define('SQL_DATE_FORMAT', 'Y-m-d');
+define('SQL_TIME_FORMAT', 'H:i:s');
+define('SQL_DATETIME_FORMAT', 'Y-m-d H:i:s');
+
+
 require_once dirname(__FILE__) . '/class_AmortizeExecution.php';
 
 /**
@@ -271,16 +278,40 @@ class AmortizePreparation extends AmortizeExecution {
 		return $retVal;
 	}
 
-	/// Preps data for insertion into the database.  As of right now it only converts true valued arrays into csv strings
+	/**
+	 * Preps special data for insertion into the database.
+	 * Converts SET arrays to comma-delineated string
+	 * Converts DATE columns to an SQL-compatible date representation from any date expression that strtotime() can translate
+	 * Converts TIME columns to an SQL-compatible time representation from any time expression that strtotime() can translate
+	 * Converts DATETIME columns to an SQL-compatible date and time representation from any expression that strtotime() can translate
+	 * Converts BOOL and BOOLEAN columns to 1 or 0
+	 */
 	protected function sqlDataPrep($data) {
-		foreach ($data as $colname => $value) {
-			if (is_array($value)) { // We likely have a SET column here
-				// Collect all the array keys whose value is true
-				$value = array_keys($value, true);
-				// Convert to text-based representation
-				$value = implode(',', $value);
-				// Replace old with new
-				$data[$colname] = $value;
+		$defs = $this->getTableColumnDefs();
+		foreach ($data as $colname => &$value) {  // PHP4 porters: remove the & and change all $value='blah' to $data[$colname]='blah';
+			$rawDef = $defs[$colname][0];                                       // Get the column Definition
+			$pos = strpos($rawDef, '(');                                     // Check for existance of () in the definition
+			$trimDef = ($pos===false) ? $rawDef : substr($rawDef, 0, $pos);  // If no (), just use rawDef, otherwise, use what comes before ()
+			switch (strtoupper($trimDef)) {
+				case "SET":
+					// Convert to text-based representation
+					$value = implode(',',
+						array_keys($value, true) // Collect all the array keys whose value is true
+					);
+				break;
+				case "DATE":
+					$value = date(SQL_DATE_FORMAT, strtotime($value));
+				break;
+				case "TIME":
+					$value = date(SQL_TIME_FORMAT, strtotime($value));
+				break;
+				case "DATETIME":
+					$value = date(SQL_DATETIME_FORMAT, strtotime($value));
+				break;
+				case "BOOL":
+				case "BOOLEAN":
+					$value = ($value) ? 1 : 0;
+				break;
 			}
 		}
 		return $data;
@@ -291,12 +322,16 @@ class AmortizePreparation extends AmortizeExecution {
 	 * Currently it is used to check for SET data csv strings and convert it to true valued arrays
 	 */
 	public function sqlDataDePrep($data) {
-		// Walk through the column definitions searching for "SET" Columns
-		foreach ($this->getTableColumnDefs() as $colname => $def) {
-			$def = (is_array($def)) ? $def[0] : $def;
-			if ((strtoupper(substr($def, 0, 3)) == "SET") && array_key_exists($colname, $data)) {
-				$values = explode(',', $data[$colname]);
-				$data[$colname] = $this->valuesFromSet($values, $def);
+		$defs = $this->getTableColumnDefs();
+		foreach ($data as $colname => &$value) {  // PHP4 porters: remove the & and change all $value='blah' to $data[$colname]='blah';
+			$rawDef = $defs[$colname];                                       // Get the column Definition
+			$pos = strpos($rawDef, '(');                                     // Check for existance of () in the definition
+			$trimDef = ($pos===false) ? $rawDef : substr($rawDef, 0, $pos);  // If no (), just use rawDef, otherwise, use what comes before ()
+			switch (strtoupper($trimDef)) {
+				case "SET":
+					$troofs = explode(',', $data[$colname]);
+					$value = $this->valuesFromSet($troofs, $rawDef);
+				break;
 			}
 		}
 		return $data;
