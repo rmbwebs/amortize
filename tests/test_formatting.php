@@ -6,7 +6,8 @@ class FormattingTest extends Amortize {
 		'options'     => "set('foo','bar','boo','baz')",
 		'someDate'    => 'date',
 		'pointInTime' => 'datetime',
-		'aTime'       => 'time'
+		'aTime'       => 'time',
+		'testBool'    => 'boolean'
 	);
 	protected $autoprimary = true;
 }
@@ -26,7 +27,7 @@ $test->options     = $options;
 $test->someDate    = "Last Tuesday";
 $test->pointInTime = "Saturday, 5:00 PM";
 $test->aTime       = "Noon";
-
+$test->testBool    = true;
 
 dbm_debug('info', 'Doing the save: The SQL statement should have sql-compatible formats for our info.');
 

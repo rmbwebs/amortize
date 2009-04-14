@@ -172,15 +172,16 @@ class AmortizePreparation extends AmortizeExecution {
 	/**
 	 * Creates an inner join to another table.
 	 * Gets all values from the other table that match your inner join.
-	 * @param $that An instance of this class (or extension) that uses a different table
-	 * @param $on What we are going to join on: array(thisColumnName => thatColumnName [, . . .])
+	 * @param $that      An instance of this class (or extension) that uses a different table
+	 * @param $on        What we are going to join on: array(thisColumnName => thatColumnName [, . . .])
 	 * @param $thisWhere A whereClause-format array of optional search parameters for this table
 	 * @param $thatWhere A whereClause-format array of optional search parameters for the joining table
 	 */
 	protected function getInnerJoin($that, $on, $thisWhere=null, $thatWhere=null) {
 		$thatTableFullName = $that->getFullTableName();
 		$thisTableFullName = $this->getFullTableName();
-		$on = (is_array($on)) ? $on : array();
+
+		$on        = (is_array($on))        ? $on        : array();
 		$thisWhere = (is_array($thisWhere)) ? $thisWhere : array();
 		$thatWhere = (is_array($thatWhere)) ? $thatWhere : array();
 
@@ -310,7 +311,7 @@ class AmortizePreparation extends AmortizeExecution {
 				break;
 				case "BOOL":
 				case "BOOLEAN":
-					$value = ($value) ? 1 : 0;
+					$value = ($value) ? "1" : "0";
 				break;
 			}
 		}
@@ -319,7 +320,8 @@ class AmortizePreparation extends AmortizeExecution {
 
 	/**
 	 * Translates data from database format to easily useable arrays of data.
-	 * Currently it is used to check for SET data csv strings and convert it to true valued arrays
+	 * Converts SET() strings to true/false arrays
+	 * Converts BOOL and BOOLEAN values to PHP boolean true and false
 	 */
 	public function sqlDataDePrep($data) {
 		$defs = $this->getTableColumnDefs();
@@ -331,6 +333,10 @@ class AmortizePreparation extends AmortizeExecution {
 				case "SET":
 					$troofs = explode(',', $data[$colname]);
 					$value = $this->valuesFromSet($troofs, $rawDef);
+				break;
+				case "BOOL":
+				case "BOOLEAN":
+					$value = ($value) ? true : false;
 				break;
 			}
 		}

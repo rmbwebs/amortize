@@ -26,7 +26,9 @@ function dbm_debug($class, $message) {
 			echo "\n</div>\n";
 		} else {
 			echo "<pre class=\"$class\">\n";
-				print_r($message);
+// 				var_dump($message);
+// 				print_r($message);
+				var_export($message);
 			echo "\n</pre>\n";
 		}
 	}
