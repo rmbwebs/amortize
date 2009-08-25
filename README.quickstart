@@ -1,6 +1,8 @@
 Quick-Start instructions for playing with Amortize
 
-0. Place the amortize.php file anywhere.
-1. Edit the configuration options at the top of the file.
-2. Use PHP's require() or require_once() to bring it into your scripts
-3. A multi-file layout with interactive tests is available on the master branch
+1. Place the amortize folder in your web tree.
+2. Edit the top of amortize.php, filling in your sql settings
+3. Browse to http://your-server-name-here/amortize/tests/ to see examples of how to use Amortize and verify that it's working.
+4. Read the output of the tests carefully, the tests are meant to show debugging errors.  For example, you will see "table missing" errors, followed by Amortize creating the table that is missing.
+5. If the tests appear to be working, you can copy amortize.php to anywhere you want on your server and include it from there.
+6. If you plan on modifying Amortize, you might want to use a different branch of the Amortize git repository.  This branch is meant to create a standalone file.  Amortize exists in other branches as seperate files per class, making it much easier to modify/develop.
