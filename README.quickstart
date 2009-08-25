@@ -1,10 +1,6 @@
 Quick-Start instructions for playing with Amortize
 
-1. Place the amortize folder in your web tree. 
-2. cp amortizeconfig.php.tmpl ../amortizeconfig.php
-3. Edit ../amortizeconfig.php, filling in your sql settings
-4. Browse to http://your-server-name-here/amortize/tests/ to see examples of how to use Amortize and verify that it's working.
-5. Read the output of the tests carefully, the tests are meant to show debugging errors.  For example, you will see "table missing" 
-errors, followed by Amortize creating the table that is missing.
-
-
+0. Place the amortize.php file anywhere.
+1. Edit the configuration options at the top of the file.
+2. Use PHP's require() or require_once() to bring it into your scripts
+3. A multi-file layout with interactive tests is available on the master branch
