@@ -85,6 +85,9 @@ class AmortizeFeatures extends AmortizePreparation {
 		}
 	}
 
+	/**
+	 * Perform a load only if necessary
+	 */
 	protected function loadIfNeeded(){
 		// Perform delayed load
 		if ($this->needs_loading) {
