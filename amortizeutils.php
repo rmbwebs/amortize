@@ -18,6 +18,39 @@ function first_key($arr = array()) {
 	}
 }
 
+// A function to dump information without accessing private members
+function safe_dump($subject, $padding="") {
+	switch (gettype($subject)) {
+		case 'boolean':
+			echo ($subject) ? "True" : "False";
+			echo "\n";
+		break;
+		case 'integer':
+		case 'double':
+		case 'string':
+			echo "{$subject}\n";
+		break;
+		case 'array':
+			echo "Array(\n";
+			$newPadding = "{$padding}\t";
+			foreach($subject as $in => $value) {
+				echo "{$newPadding}[{$in}] => ";
+				safe_dump($value, $newPadding);
+			}
+			echo "{$padding})\n";
+		break;
+		case 'object':
+			echo get_class($subject)." Object\n";
+		break;
+		case 'resource':
+		case 'NULL':
+		case 'unknown type':
+		default:
+			echo "\n";
+		break;
+	}
+}
+
 function dbm_debug($class, $message) {
 	if (DBM_DEBUG) {
 		if (is_string($message)) {
@@ -28,7 +61,8 @@ function dbm_debug($class, $message) {
 			echo "<pre class=\"$class\">\n";
 // 				var_dump($message);
 // 				print_r($message);
-				var_export($message);
+//				var_export($message);
+				safe_dump($message);
 			echo "\n</pre>\n";
 		}
 	}
