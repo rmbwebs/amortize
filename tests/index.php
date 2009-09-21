@@ -98,7 +98,10 @@
 			<h2>Available tests:</h2>
 			<ul id="test_list">
 			<?php foreach($known_tests as $testBase => $description): ?>
-				<li><a href="?test=<?php echo $testBase ?>"><?php echo $description ?></a></li>
+				<li>
+					<?php if ($_GET['test'] == $testBase): ?><span style="color:red; font-weight:bold;"> Currently Viewing --&gt; </span><?php endif; ?>
+					<a href="?test=<?php echo $testBase ?>"><?php echo $description ?></a>
+				</li>
 			<?php endforeach ?>
 			</ul>
 		</div>
