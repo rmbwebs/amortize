@@ -42,7 +42,7 @@ class NewBook extends AmortizeInterface {
 		'author'   => "tinytext",
 		'title'    => "tinytext",
 		'pubyear'  => "year",
-		'photoURL' => "varchar(256)"
+		'photoURL' => "varchar(255)"
 	);
 	protected $autoprimary = true;
 }

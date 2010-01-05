@@ -1,8 +1,9 @@
 <?php
 	session_start();
 	header("Content-type: text/html");
-	$testFile = (isset($_GET['test'])) ? "test_{$_GET['test']}.php" : null;
-	$testFile = (file_exists($testFile)) ? $testFile : 'test_generic.php';
+	$curTest  = (isset($_GET['test'])) ? $_GET['test'] : 'generic';
+	$testFile = dirname(__FILE)."/test_{$curTest}.php";
+	$testFile = (file_exists($testFile)) ? $testFile : dirname(__FILE)."/test_generic.php";
 	$known_tests = array(
 		'generic'            => "Object creation, saving, loading",
 		'deleting'           => "Deleting",
@@ -99,7 +100,7 @@
 			<ul id="test_list">
 			<?php foreach($known_tests as $testBase => $description): ?>
 				<li>
-					<?php if ($_GET['test'] == $testBase): ?><span style="color:red; font-weight:bold;"> Currently Viewing --&gt; </span><?php endif; ?>
+					<?php if ($curTest == $testBase): ?><span style="color:red; font-weight:bold;"> Currently Viewing --&gt; </span><?php endif; ?>
 					<a href="?test=<?php echo $testBase ?>"><?php echo $description ?></a>
 				</li>
 			<?php endforeach ?>
@@ -123,7 +124,7 @@
 				// Flush the output buffer
 				ob_flush();
 				// Set Times
-				
+
 				//Database Time
 				$dbTime = $_SERVER['amtz_query_time'];
 				$log = &$_SESSION['dbTimes'][$_GET['test']];
@@ -133,7 +134,7 @@
 				}
 				$dbSamples = count($log);
 				$dbAverage = array_sum($log) / $dbSamples;
-				
+
 				// Execution Time
 				$log = &$_SESSION['exTimes'][$_GET['test']];
 				$exTime = $scriptTime - $dbTime;
