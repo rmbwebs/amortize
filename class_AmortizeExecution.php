@@ -222,7 +222,7 @@ class AmortizeExecution {
 		return
 			"CREATE TABLE `{$this->sql_prfx}{$tableName}` (\n  " .
 			implode(",\n  ", $columns)."\n  " .
-			") ENGINE=MyISAM DEFAULT CHARSET=latin1\n";
+			") ENGINE=MyISAM\n";
 	}
 
 	private static $sqlConnections = array();
