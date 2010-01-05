@@ -105,7 +105,7 @@ class AmortizeExecution {
 	protected function setTableDefs($defs=null) {
 		$defs = (is_null($defs)) ? $this->table_defs : $defs;
 		if (is_string($defs)) { // Allow use of existing tables
-			$this->table_defs = $this->getActualTableDefs();
+			$this->table_defs = array($this->table_name => $this->getActualTableDefs());
 		} else if (is_array($defs)) {  // Purify table definition
 			foreach ($defs as $tableName => $tableDef) {
 				foreach ($tableDef as $colName => $colDef) {
