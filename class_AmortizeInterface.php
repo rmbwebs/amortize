@@ -53,7 +53,7 @@ class AmortizeInterface extends AmortizeFeatures {
 
 
 	///Definitions for the columns in this object's table.
-	protected $table_columns = null;
+	protected $table_columns = array();
 
 	/**
 	 * If this is defined in your class, table definitions are not extended further;

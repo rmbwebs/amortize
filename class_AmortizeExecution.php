@@ -105,7 +105,7 @@ class AmortizeExecution {
 	protected function setTableDefs($defs=null) {
 		$defs = (is_null($defs)) ? $this->table_defs : $defs;
 		if (is_string($defs)) { // Allow use of existing tables
-			$this->table_defs = array($this->table_name => $this->getActualTableDefs());
+			$this->table_defs = array($this->getTableName() => $this->getActualTableDefs());
 		} else if (is_array($defs)) {  // Purify table definition
 			foreach ($defs as $tableName => $tableDef) {
 				foreach ($tableDef as $colName => $colDef) {
@@ -249,7 +249,7 @@ class AmortizeExecution {
 	*/
 	protected function getActualTableDefs() {
 		$sqlConnection = $this->getSQLConnection();
-		$query = "DESCRIBE ".$this->sql_prfx.$this->table_name;
+		$query = "DESCRIBE ".$this->sql_prfx.$this->getTableName();
 		if (! $results = amtz_query($query, $sqlConnection) ) {
 			return FALSE;
 		}
@@ -266,6 +266,11 @@ class AmortizeExecution {
 		return $definition;
 	}
 
+	/* Apperently this is illegal in PHP (protected __get())
+	 * I removed references to $this->table_name from this class
+	 * leaving for now in case there's a good reason top keep.
+	 * I doubt it though
+	 * 
 	protected function __get($name) {
 		switch ($name) {
 			case 'table_name':
@@ -274,6 +279,7 @@ class AmortizeExecution {
 				trigger_error("Unknown property {$name} in Class ".__CLASS__);
 		}
 	}
+	/* End of commented-out function */
 
 	/**
 	* returns true if the table exists in the current database, false otherwise.
@@ -282,7 +288,7 @@ class AmortizeExecution {
 		$sql = $this->getSQLConnection();
 		$result = amtz_query("SHOW TABLES", $sql);
 		while ($row = mysql_fetch_row($result)) {
-			if ($row[0] == $this->sql_prfx.$this->table_name)
+			if ($row[0] == $this->sql_prfx.$this->getTableName())
 				return TRUE;
 		}
 		return FALSE;
@@ -382,7 +388,7 @@ class AmortizeExecution {
 	 */
 	protected function makeQueryHappen($query) {
 		$tableDefs = $this->table_defs;
-		$tableName  = $this->table_name;
+		$tableName  = $this->getTableName();
 		dbm_debug("regular query", $query);
 		$sql = $this->getSQLConnection();
 		$result = amtz_query($query, $sql);
