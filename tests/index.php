@@ -12,6 +12,7 @@
 		'ring'               => "Using externals to build a DB-based singularly-linked list in a ring",
 		'ring_walk'          => ". . . Walk that ring (keep refreshing the page)",
 		'column_inheritance' => "An illustration of Amortize objects inheriting the column definitions of their ancestors",
+		'learntabledefs'     => "Amortize can learn how to use a table you haven't defined",
 		'custom_attribs'     => "Overwriting the attribs function to get custom attributes"
 	);
 	define('DBM_DEBUG', true);

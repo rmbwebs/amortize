@@ -103,8 +103,9 @@ class AmortizeExecution {
 
 	/// Sets the table definitions for this object
 	protected function setTableDefs($defs=null) {
-		$defs = (is_null($defs)) ? $this->table_defs : $defs;
+		$defs = (empty($defs)) ? $this->table_defs : $defs;
 		if (is_string($defs)) { // Allow use of existing tables
+			$this->table_defs = $defs;
 			$this->table_defs = array($this->getTableName() => $this->getActualTableDefs());
 		} else if (is_array($defs)) {  // Purify table definition
 			foreach ($defs as $tableName => $tableDef) {
@@ -168,8 +169,14 @@ class AmortizeExecution {
 	 * Optionally takes a table definition as an argument to use instead of this objects table def
 	 */
 	protected function getTableName($defs = null) {
-		$defs = (is_null($defs)) ? $this->table_defs : $defs;
-		return first_key($defs);
+		$defs = (empty($defs)) ? $this->table_defs : $defs;
+		if (is_array($defs)) {
+			return first_key($defs);
+		} else if (is_string($defs)) {
+			return $defs;
+		} else {
+			return false;
+		}
 	}
 
 	/**

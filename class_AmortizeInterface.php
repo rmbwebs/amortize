@@ -115,7 +115,7 @@ class AmortizeInterface extends AmortizeFeatures {
 			$ID_array = array('ID' => array("bigint(20) unsigned", "NO",  "PRI", "", "auto_increment"));
 			$this->table_columns = array_merge($ID_array, $this->table_columns);
 		}
-		$this->table_defs = (is_null($this->table_columns)) ? $this->table_name : array($this->table_name => $this->table_columns);
+		$this->table_defs = (empty($this->table_columns)) ? $this->table_name : array($this->table_name => $this->table_columns);
 		parent::__construct($data);
 
 		/* Handle the externals.
