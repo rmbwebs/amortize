@@ -137,7 +137,7 @@ class AmortizePreparation extends AmortizeExecution {
 		if ($offset && is_numeric($offset)) {
 			$query .= " OFFSET {$offset}";
 		}
-
+		
 		$data = $this->makeQueryHappen($query);
 		if ($data) {
 			// We have a successful Query!
@@ -177,7 +177,7 @@ class AmortizePreparation extends AmortizeExecution {
 	 * @param $thisWhere A whereClause-format array of optional search parameters for this table
 	 * @param $thatWhere A whereClause-format array of optional search parameters for the joining table
 	 */
-	protected function getInnerJoin($that, $on, $thisWhere=null, $thatWhere=null) {
+	protected function getInnerJoin($that, $on, $thisWhere=null, $thatWhere=null, $wherelike=null) {
 		$thatTableFullName = $that->getFullTableName();
 		$thisTableFullName = $this->getFullTableName();
 
@@ -193,8 +193,10 @@ class AmortizePreparation extends AmortizeExecution {
 			"SELECT DISTINCT {$thatTableFullName}.*\n".
 			"  FROM {$thatTableFullName} INNER JOIN {$thisTableFullName}\n".
 			"    ".$this->buildOnClause($onTranslated)."\n".
-			"  ".$this->buildWhereClause($where)."\n".
+			"  ".$this->buildWhereClause($where,$wherelike)."\n".
 			"  ORDER BY {$thisTableFullName}.ordering";
+
+		//echo "Query: ".$query."<br>";
 
 		$data = $this->makeQueryHappen($query);
 		if ($data) {
@@ -244,8 +246,9 @@ class AmortizePreparation extends AmortizeExecution {
 		return implode(" {$and} ", $clause);
 	}
 
-	protected function buildWhereClause($params=null) {
+	protected function buildWhereClause($params=null,$wherelike=null) {
 		$clause = $this->buildConditionalClause($params);
+		if (strlen($wherelike) > 0) $clause = $clause." AND ".$wherelike;
 		return (strlen($clause) > 0) ? "WHERE {$clause}" : "";
 	}
 

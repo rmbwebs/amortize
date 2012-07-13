@@ -292,11 +292,15 @@ class AmortizeInterface extends AmortizeFeatures {
 	function getLinks($example) {
 		$parameters = null;
 		$relation = null;
+		$wherelike = null;
 		foreach (array_slice(func_get_args(),1) as $arg) {
 			if (is_array($arg))  { $parameters = $arg; }
-			if (is_string($arg)) { $relation   = $arg; }
+			if (is_string($arg)) {
+				if (substr($arg,0,1) != '(') $relation   = $arg;
+				else $wherelike  = $arg;
+			}
 		}
-		return $this->getLinkedObjects($example, $parameters, $relation, false);
+		return $this->getLinkedObjects($example, $parameters, $relation, false, $wherelike);
 	}
 	/**
 	 * Works in reverse to getLinks().

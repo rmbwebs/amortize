@@ -420,7 +420,7 @@ class AmortizeExecution {
 			}
 		}
 		// If we got to here, that means we have got a valid result!
-		switch (strtoupper(first_val(split(' ', $query)))) {
+		switch (strtoupper(first_val(explode(' ', $query)))) {
 		case 'SELECT':
 			$returnVal = array();
 			while ($row = mysql_fetch_assoc($result)) {

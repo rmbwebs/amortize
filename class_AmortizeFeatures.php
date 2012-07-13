@@ -213,7 +213,7 @@ class AmortizeFeatures extends AmortizePreparation {
 	}
 
 
-	protected function getLinkedObjects($example, $params=null, $relation=null, $backLinks=false) {
+	protected function getLinkedObjects($example, $params=null, $relation=null, $backLinks=false, $wherelike=null) {
 		$example = (is_object($example)) ? get_class($example) : $example;
 		$prototype = new $example;
 
@@ -221,7 +221,7 @@ class AmortizeFeatures extends AmortizePreparation {
 
 		if (!$backLinks) {
 			$linkObject = new AmortizeLink($this, $prototype);
-			$data = $linkObject->getLinksFromID($id, $params, $relation);
+			$data = $linkObject->getLinksFromID($id, $params, $relation, $wherelike);
 		} else {
 			$linkObject = new AmortizeLink($prototype, $this);
 			$data = $linkObject->getBackLinksFromID($id, $params, $relation);
@@ -310,11 +310,14 @@ class AmortizeFeatures extends AmortizePreparation {
 		$list = $this->getAllSomething("*", $limit, $offset, $params);
 		$key = $this->findTableKey();
 		$returnMe = array();
-
+		
+		$proto = get_class($this);
+		$proto = new $proto;
+		
 		if (is_array($list)) {
 			foreach ($list as $data) {
 // 				print_r($data);
-				$temp = clone $this;
+				$temp = clone $proto;
 				$temp->setAttribs($data, true);
 				$returnMe[$data[$key]] = $temp;
 			}
