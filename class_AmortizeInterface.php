@@ -104,6 +104,23 @@ class AmortizeInterface extends AmortizeFeatures {
 	// A list of columns used to store the external definitions.  Used for filtering in the attribs function.
 	private $external_columns = array();
 
+
+
+	static private $constructor_block = array();
+	private function blockConstructor() {
+		AmortizeInterface::$constructor_block[get_class($this)] = true;
+	}
+	private function unBlockConstructor() {
+		AmortizeInterface::$constructor_block[get_class($this)] = false;
+	}
+	private function is_constructor_blocked() {
+		return (
+			isset(AmortizeInterface::$constructor_block[get_class($this)]) &&
+			      AmortizeInterface::$constructor_block[get_class($this)]
+		);
+	}
+
+
 	/**
 	 * Class Constructor
 	 * Kicks off the table merging process for objects that extend other objects.
@@ -116,21 +133,17 @@ class AmortizeInterface extends AmortizeFeatures {
 			$this->table_columns = array_merge($ID_array, $this->table_columns);
 		}
 		$this->table_defs = (empty($this->table_columns)) ? $this->table_name : array($this->table_name => $this->table_columns);
-		parent::__construct($data);
 
-		/* Handle the externals.
-		 * We need to call parent::__construct() twice to handle the special case where a class has itself listed as an external.
-		 * In that case, __construct() and buildExternalColumns will enter an endless loop unless buildExternalColumns can
-		 * use $this as the model instead of using new $class as the model (see "prevent endless loop" comment in the
-		 * buildExternalColumns function), and $this->getPrimaryKey can't be called before parent::__construct().
-		 * Thus, parent::__construct() needs to be called both before and after buildExternalColumns().
-		 */
-		if (count($this->externals) > 0) {
+		if (count($this->externals) > 0 && !$this->is_constructor_blocked()) {
+			$this->blockConstructor();
 			$this->external_columns = $this->buildExternalColumns();
 			$this->table_columns    = array_merge($this->table_columns, $this->external_columns);
 			$this->table_defs = (is_null($this->table_columns)) ? $this->table_name : array($this->table_name => $this->table_columns);
-			parent::__construct($data);
+			$this->unBlockConstructor();
 		}
+		
+		// Finish defining the table columns and such in lower levels of the library
+		parent::__construct($data);
 	}
 
 	/// Merges the column definitions for ancestral objects into your object.
@@ -156,7 +169,7 @@ class AmortizeInterface extends AmortizeFeatures {
 		$returnArray = array();
 		if (is_array($this->externals)) {
 			foreach ($this->externals as $name => $class) {
-				$obj = ($class == get_class($this)) ? $this : new $class;  // Prevent endless loop
+				$obj = new $class;
 				$keys = $obj->getPrimaryKey(); $keys = (is_array($keys)) ? $keys : array($keys);
 				$defs = $obj->getTableColumnDefs();
 				foreach ($keys as $key) {
