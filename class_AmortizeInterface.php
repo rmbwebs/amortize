@@ -120,12 +120,15 @@ class AmortizeInterface extends AmortizeFeatures {
 		);
 	}
 
+	// Something to keep track of the original table_coluns of the top-level class.
+	private $local_table_columns = array();
 
 	/**
 	 * Class Constructor
 	 * Kicks off the table merging process for objects that extend other objects.
 	 */
 	public function __construct($data=null) {
+		$this->local_table_columns = $this->table_columns;
 		$this->mergeColumns();
 		if ($this->autoprimary) {
 			// Add the ID index to the front of the table_columns array
@@ -199,7 +202,7 @@ class AmortizeInterface extends AmortizeFeatures {
 	 * \param $info Optional array of data to set our attribs to
 	 * \param $clobber Optional boolean: set to true if you need to overwrite the primary key(s) of this object (default: false)
 	 */
-	function attribs($info=null, $clobber=false) {
+	public function attribs($info=null, $clobber=false) {
 		if (!is_null($info)) {
 			// Filter-out external columns (which should only be modded by modding the external obj itself
 			foreach(array_keys($this->external_columns) as $key) {
@@ -214,6 +217,23 @@ class AmortizeInterface extends AmortizeFeatures {
 			}
 			$returnVal = array_merge($returnVal, $this->getExternalObjects());
 			return $returnVal;
+	}
+	
+	/**
+	 * Makes setting values from an API call to an external app a little bit safer.
+	 * Disallows changing values for the table_columns defined by your class, while allowing inherited table_columns to be set.
+	 * The idea of this function is that you have an external app which you routinely get data from and then pass that data into attribs(),
+	 * having setup your $table_columns array to match the API data set.
+	 * If you want to grow your local data set, but don't want to worry about the API eventually clobbering your local data if the spec changes,
+	 * Then just extend your class witha new class that has your local data in its table_columns, and use this function inplace of attribs()
+	 * when passing in data from the external API.
+	 */
+	public function apiSafeAttribs($info=null, $clobber=false) {
+		$keys = array_keys($this->local_table_columns);
+		foreach($keys as $key) {
+			unset($info[$key]);
+		}
+			return $this->attribs($info, $clobber);
 	}
 
 	private function setExternalObjects($info=null) {
