@@ -326,14 +326,16 @@ class AmortizeInterface extends AmortizeFeatures {
 		$parameters = null;
 		$relation = null;
 		$wherelike = null;
+		$ordering = null;
 		foreach (array_slice(func_get_args(),1) as $arg) {
 			if (is_array($arg))  { $parameters = $arg; }
 			if (is_string($arg)) {
-				if (substr($arg,0,1) != '(') $relation   = $arg;
-				else $wherelike  = $arg;
+				if     (strtolower(substr($arg,0,8)) == "order by") { $ordering  = $arg; }
+				elseif (substr($arg,0,1) != '(')                    { $relation  = $arg; }
+				else                                                { $wherelike = $arg; }
 			}
 		}
-		return $this->getLinkedObjects($example, $parameters, $relation, false, $wherelike);
+		return $this->getLinkedObjects($example, $parameters, $relation, false, $wherelike, $ordering);
 	}
 	/**
 	 * Works in reverse to getLinks().
@@ -348,7 +350,7 @@ class AmortizeInterface extends AmortizeFeatures {
 			if (is_array($arg))  { $parameters = $arg; }
 			if (is_string($arg)) { $relation   = $arg; }
 		}
-		return $this->getLinkedObjects($example, $parameters, $relation, true);
+		return $this->getLinkedObjects($example, $parameters, $relation, true, $wherelike, $ordering);
 	}
 
 	private function setExternalColumns(){

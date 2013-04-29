@@ -70,18 +70,18 @@ class AmortizeLink extends AmortizePreparation {
 		return $this->sqlMagicYank($params);
 	}
 
-	public function getLinksFromID($id, $params=null, $relation=null, $wherelike=null) {
+	public function getLinksFromID($id, $params=null, $relation=null, $wherelike=null, $ordering=null) {
 		$joinOn = array(MAP_TO_COL => $this->to->findTableKey());
 		$thisWhere = array(MAP_FROM_COL => $id);
 		if (!is_null($relation)) { $thisWhere['relation'] = $relation; };
-		return $this->getInnerJoin($this->to, $joinOn, $thisWhere, $params, $wherelike);
+		return $this->getInnerJoin($this->to, $joinOn, $thisWhere, $params, $wherelike, $ordering);
 	}
 
-	public function getBackLinksFromID($id, $params=null, $relation=null) {
+	public function getBackLinksFromID($id, $params=null, $relation=null, $wherelike=null, $ordering=null) {
 		$joinOn = array(MAP_FROM_COL => $this->from->findTableKey());
 		$thisWhere = array(MAP_TO_COL => $id);
 		if (!is_null($relation)) { $thisWhere['relation'] = $relation; };
-		return $this->getInnerJoin($this->from, $joinOn, $thisWhere, $params);
+		return $this->getInnerJoin($this->from, $joinOn, $thisWhere, $params, $wherelike, $ordering);
 	}
 
 

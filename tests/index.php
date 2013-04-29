@@ -2,7 +2,7 @@
 	session_start();
 	header("Content-type: text/html");
 	$curTest  = (isset($_GET['test'])) ? $_GET['test'] : 'generic';
-	$testFile = dirname(__FILE)."/test_{$curTest}.php";
+	$testFile = dirname(__FILE__)."/test_{$curTest}.php";
 	$testFile = (file_exists($testFile)) ? $testFile : dirname(__FILE)."/test_generic.php";
 	$known_tests = array(
 		'generic'            => "Object creation, saving, loading",
@@ -13,7 +13,8 @@
 		'ring_walk'          => ". . . Walk that ring (keep refreshing the page)",
 		'column_inheritance' => "An illustration of Amortize objects inheriting the column definitions of their ancestors",
 		'learntabledefs'     => "Amortize can learn how to use a table you haven't defined",
-		'custom_attribs'     => "Overwriting the attribs function to get custom attributes"
+		'custom_attribs'     => "Overwriting the attribs function to get custom attributes",
+		'advanced_links'     => "Test out some advanced link retrieval"
 	);
 	define('DBM_DEBUG', true);
 	define('DBM_DROP_TABLES', true);

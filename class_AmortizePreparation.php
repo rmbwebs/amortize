@@ -41,14 +41,14 @@ class AmortizePreparation extends AmortizeExecution {
 	 * @param $params a whereClause-like array of data to determine what rows we are going to yank
 	 * @param $yankAll (optional, default=false) must be set to true to enable yanking all rows (protection against you passing a value in $params that doesn't generate a valid WHERE clause)
 	 */
-	protected function sqlMagicYank($params, $yankAll=false) {
+	protected function sqlMagicYank($params, $yankAll=FALSE) {
 
 		$whereClause = $this->buildWhereClause($params);
-		if ($whereClause == null && $yankAll == false) { return false; } // yankAll protection
+		if ($whereClause == NULL && $yankAll == FALSE) { return FALSE; } // yankAll protection
 		$query = "DELETE FROM ".$this->sql_prfx.$this->getTableName()." ".$whereClause;
 		$success = $this->makeQueryHappen($query);
 
-		return ($success) ? true : false;
+		return ($success) ? TRUE : FALSE;
 	}
 
 	/**
@@ -94,7 +94,7 @@ class AmortizePreparation extends AmortizeExecution {
 			return $this->sqlDataDePrep($data[0]);
 		} else {
 			// we didn't get valid data.
-			return null;
+			return NULL;
 		}
 	}
 
@@ -104,11 +104,11 @@ class AmortizePreparation extends AmortizeExecution {
 	 * @param $where A whereClause-like array that dictates WHERE the updating will take place
 	 * @param $setAll (optional, defaults to false) A safety that prevents you from setting all rows if your $where value doesn't generate a proper where clause. Pass a true to this parameter to override the safety.
 	 */
-	protected function sqlMagicSet($set, $where, $setAll=false) {
+	protected function sqlMagicSet($set, $where, $setAll=FALSE) {
 		$whereClause = $this->buildWhereClause($where);
 		$setClause = $this->buildSetClause($set);
 		// setAll protection
-		if ($whereClause == null && $setAll == false) { return false; }
+		if ($whereClause == NULL && $setAll == FALSE) { return FALSE; }
 		// generate query
 		$query = "UPDATE ".$this->sql_prfx.$this->getTableName." ".$setClause." ".$whereClause;
 		return $this->makeQueryHappen($query);
@@ -147,7 +147,7 @@ class AmortizePreparation extends AmortizeExecution {
 			}
 			return $return;
 		} else {
-			return null;
+			return NULL;
 		}
 	}
 
@@ -165,7 +165,7 @@ class AmortizePreparation extends AmortizeExecution {
 			}
 			return $returnVal;
 		} else {
-			return null;
+			return NULL;
 		}
 	}
 
@@ -177,7 +177,7 @@ class AmortizePreparation extends AmortizeExecution {
 	 * @param $thisWhere A whereClause-format array of optional search parameters for this table
 	 * @param $thatWhere A whereClause-format array of optional search parameters for the joining table
 	 */
-	protected function getInnerJoin($that, $on, $thisWhere=null, $thatWhere=null, $wherelike=null) {
+	protected function getInnerJoin($that, $on, $thisWhere=NULL, $thatWhere=NULL, $wherelike=NULL, $ordering=NULL) {
 		$thatTableFullName = $that->getFullTableName();
 		$thisTableFullName = $this->getFullTableName();
 
@@ -189,12 +189,14 @@ class AmortizePreparation extends AmortizeExecution {
 		foreach($thisWhere as $param => $value) { $where[$thisTableFullName.'.'.$param] = $value; }
 		foreach($thatWhere as $param => $value) { $where[$thatTableFullName.'.'.$param] = $value; }
 
+		$finalOrdering = (is_null($ordering)) ? "  ORDER BY {$thisTableFullName}.ordering" : $ordering;
+
 		$query =
 			"SELECT DISTINCT {$thatTableFullName}.*\n".
 			"  FROM {$thatTableFullName} INNER JOIN {$thisTableFullName}\n".
 			"    ".$this->buildOnClause($onTranslated)."\n".
 			"  ".$this->buildWhereClause($where,$wherelike)."\n".
-			"  ORDER BY {$thisTableFullName}.ordering";
+			$finalOrdering;
 
 		//echo "Query: ".$query."<br>";
 
@@ -223,7 +225,7 @@ class AmortizePreparation extends AmortizeExecution {
 		return array_keys($this->getTableColumnDefs());
 	}
 
-	private function buildConditionalClause($params=null, $q=true, $and="AND") {
+	private function buildConditionalClause($params=NULL, $q=TRUE, $and="AND") {
 		if (is_string($params)) {
 			return $params;
 		} else if (is_array($params)) {
@@ -246,19 +248,19 @@ class AmortizePreparation extends AmortizeExecution {
 		return implode(" {$and} ", $clause);
 	}
 
-	protected function buildWhereClause($params=null,$wherelike=null) {
+	protected function buildWhereClause($params=NULL,$wherelike=NULL) {
 		$clause = $this->buildConditionalClause($params);
 		if (strlen($wherelike) > 0) $clause = $clause." AND ".$wherelike;
 		return (strlen($clause) > 0) ? "WHERE {$clause}" : "";
 	}
 
-	protected function buildOnClause($params=null) {
-		$clause = $this->buildConditionalClause($params, false);
+	protected function buildOnClause($params=NULL) {
+		$clause = $this->buildConditionalClause($params, FALSE);
 		return (strlen($clause) > 0) ? "ON {$clause}" : "";
 	}
 
-	protected function buildSetClause($params=null) {
-		$clause = $this->buildConditionalClause($params, true, ',');
+	protected function buildSetClause($params=NULL) {
+		$clause = $this->buildConditionalClause($params, TRUE, ',');
 		return (strlen($clause) > 0) ? "SET {$clause}" : "";
 	}
 	/// @endcond
@@ -295,12 +297,12 @@ class AmortizePreparation extends AmortizeExecution {
 		foreach ($data as $colname => &$value) {  // PHP4 porters: remove the & and change all $value='blah' to $data[$colname]='blah';
 			$rawDef = $defs[$colname][0];                                    // Get the column Definition
 			$pos = strpos($rawDef, '(');                                     // Check for existance of () in the definition
-			$trimDef = ($pos===false) ? $rawDef : substr($rawDef, 0, $pos);  // If no (), just use rawDef, otherwise, use what comes before ()
+			$trimDef = ($pos===FALSE) ? $rawDef : substr($rawDef, 0, $pos);  // If no (), just use rawDef, otherwise, use what comes before ()
 			switch (strtoupper($trimDef)) {
 				case "SET":
 					// Convert to text-based representation
 					$value = implode(',',
-						array_keys($value, true) // Collect all the array keys whose value is true
+						array_keys($value, TRUE) // Collect all the array keys whose value is true
 					);
 				break;
 				case "DATE":
@@ -329,9 +331,9 @@ class AmortizePreparation extends AmortizeExecution {
 	public function sqlDataDePrep($data) {
 		$defs = $this->getTableColumnDefs();
 		foreach ($data as $colname => &$value) {  // PHP4 porters: remove the & and change all $value='blah' to $data[$colname]='blah';
-			$rawDef = isset($defs[$colname][0]) ? $defs[$colname][0] : null; // Get the column Definition
+			$rawDef = isset($defs[$colname][0]) ? $defs[$colname][0] : NULL; // Get the column Definition
 			$pos = strpos($rawDef, '(');                                     // Check for existance of () in the definition
-			$trimDef = ($pos===false) ? $rawDef : substr($rawDef, 0, $pos);  // If no (), just use rawDef, otherwise, use what comes before ()
+			$trimDef = ($pos===FALSE) ? $rawDef : substr($rawDef, 0, $pos);  // If no (), just use rawDef, otherwise, use what comes before ()
 			switch (strtoupper($trimDef)) {
 				case "SET":
 					$troofs = explode(',', $data[$colname]);
@@ -339,7 +341,7 @@ class AmortizePreparation extends AmortizeExecution {
 				break;
 				case "BOOL":
 				case "BOOLEAN":
-					$value = ($value) ? true : false;
+					$value = ($value) ? TRUE : FALSE;
 				break;
 			}
 		}
@@ -359,9 +361,9 @@ class AmortizePreparation extends AmortizeExecution {
 	 */
 	protected function valuesFromSet($truevalues, $def) {
 		// Check format of $truevalues
-		if ((count(array_keys($truevalues, true, true)) + count(array_keys($truevalues, false, true))) == count($truevalues)) {
+		if ((count(array_keys($truevalues, TRUE, TRUE)) + count(array_keys($truevalues, FALSE, TRUE))) == count($truevalues)) {
 			// Truevalues is an array composed entirely of true and false values. Convert!
-			$truevalues = array_keys($truevalues, true, true);
+			$truevalues = array_keys($truevalues, TRUE, TRUE);
 			// Why not simply return $truevalues here?  Because we want to ensure that we include all the possibles in the return
 		}
 		$returnMe = array();
@@ -369,11 +371,11 @@ class AmortizePreparation extends AmortizeExecution {
 		preg_match_all("/[\"']([^'\"]+)[\"'],*/", $match[1], $possibles); // Split the possibles into an array
 		$possibles = (isset($possibles[1])) ? $possibles[1] : array();  // The array we want is stored in position 1
 		foreach ($possibles as $possible) {
-			$returnMe[$possible] = false; // set default values
+			$returnMe[$possible] = FALSE; // set default values
 		}
 		foreach ($truevalues as $truevalue) {
 			if (isset($returnMe[$truevalue])) { // Filter junk from $truevalues
-				$returnMe[$truevalue] = true; // set true for the values we want
+				$returnMe[$truevalue] = TRUE; // set true for the values we want
 			}
 		}
 		return $returnMe;
@@ -386,7 +388,7 @@ class AmortizePreparation extends AmortizeExecution {
 		if (strtoupper(substr($columnDef, 0, 3)) == "SET") {
 			return $this->valuesFromSet(array(), $columnDef);
 		} else {
-			return null;
+			return NULL;
 		}
 	}
 

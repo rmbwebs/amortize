@@ -213,7 +213,7 @@ class AmortizeFeatures extends AmortizePreparation {
 	}
 
 
-	protected function getLinkedObjects($example, $params=null, $relation=null, $backLinks=false, $wherelike=null) {
+	protected function getLinkedObjects($example, $params=null, $relation=null, $backLinks=false, $wherelike=null, $ordering=null) {
 		$example = (is_object($example)) ? get_class($example) : $example;
 		$prototype = new $example;
 
@@ -221,10 +221,10 @@ class AmortizeFeatures extends AmortizePreparation {
 
 		if (!$backLinks) {
 			$linkObject = new AmortizeLink($this, $prototype);
-			$data = $linkObject->getLinksFromID($id, $params, $relation, $wherelike);
+			$data = $linkObject->getLinksFromID($id, $params, $relation, $wherelike, $ordering);
 		} else {
 			$linkObject = new AmortizeLink($prototype, $this);
-			$data = $linkObject->getBackLinksFromID($id, $params, $relation);
+			$data = $linkObject->getBackLinksFromID($id, $params, $relation, $wherelike, $ordering);
 		}
 
 		$data = (is_array($data)) ? $data : array();
