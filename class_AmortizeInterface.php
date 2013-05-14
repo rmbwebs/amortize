@@ -196,27 +196,102 @@ class AmortizeInterface extends AmortizeFeatures {
 		return $defs;
 	}
 
+	/// Used by attribs() to prevent setter and getter callback loops
+	private $set_callback_locks = array();
+	/// Used by attribs() to prevent setter and getter callback loops
+	private $get_callback_locks = array();
+
+	/**
+	 * Used to invoke any pre-set info callbacks.  If they are defined.
+	 */
+	private function run_preset_callbacks($info) {
+		// call any defined pre-set callback functions
+		foreach (array_keys($info) as $key) {
+			// normalize the mutex flag
+			if (!isset($this->set_callback_locks[$key])) {
+				$this->set_callback_locks[$key] = FALSE;
+			}
+			// determine callback name
+			$callback_name = "preset_callback_{$key}";
+			// if unlocked and callback exists, run it.
+			if (!$this->set_callback_locks[$key] && method_exists($this, $callback_name)) {
+				$this->set_callback_locks[$key] = TRUE;
+				try {
+					$result     = $this->$callback_name($info[$key]);
+					$info[$key] = $result;
+				} catch (Exception $e) {
+					unset($info[$key]);
+				}
+				$this->set_callback_locks[$key] = FALSE;
+			}
+		}
+		return $info;
+	}
+
+	/**
+	 * Used to invoke any pre-get info callbacks.  If they are defined.
+	 */
+	private function run_preget_callbacks($info) {
+		// call any defined pre-get callback functions
+		foreach (array_keys($info) as $key) {
+			// normalize the mutex flag
+			if (!isset($this->get_callback_locks[$key])) {
+				$this->get_callback_locks[$key] = FALSE;
+			}
+			// determine callback name
+			$callback_name = "preget_callback_{$key}";
+			// if unlocked and callback exists, run it.
+			if (!$this->get_callback_locks[$key] && method_exists($this, $callback_name)) {
+				$this->get_callback_locks[$key] = TRUE;
+				try {
+					$result     = $this->$callback_name($info[$key]);
+					$info[$key] = $result;
+				} catch (Exception $e) {
+					// We don't unset the info here, because attribs would not return a value
+				}
+				$this->get_callback_locks[$key] = FALSE;
+			}
+		}
+		return $info;
+	}
+
 	/**
 	 * Used to set or get the info for this object.
 	 * Filters out bad info or unknown data that won't go into our database table.
 	 * \param $info Optional array of data to set our attribs to
 	 * \param $clobber Optional boolean: set to true if you need to overwrite the primary key(s) of this object (default: false)
 	 */
-	public function attribs($info=null, $clobber=false) {
+	public function attribs($info=NULL, $clobber=FALSE) {
 		if (!is_null($info)) {
 			// Filter-out external columns (which should only be modded by modding the external obj itself
 			foreach(array_keys($this->external_columns) as $key) {
 				unset($info[$key]);
 			}
+
+			// Run pre-set callbacks
+			$info = $this->run_preset_callbacks($info);
+
+			// set the new info
 			$this->setExternalObjects($info);
 			$this->setAttribs($info, $clobber);
 		}
-			$returnVal = $this->getAttribs();
-			foreach(array_keys($this->external_columns) as $key) {
-				unset($returnVal[$key]);
-			}
-			$returnVal = array_merge($returnVal, $this->getExternalObjects());
-			return $returnVal;
+
+		// get the new info
+		$newAttribs = $this->getAttribs();
+		$newExterns = $this->getExternalObjects();
+
+		// Filter-out external columns (which should be hidden from normal use
+		foreach(array_keys($this->external_columns) as $key) {
+			unset($newAttribs[$key]);
+		}
+
+		// Merge attribs and externals together
+		$newInfo = array_merge($newAttribs, $newExterns);
+
+		// run the pre-get callbacks
+		$returnVal = $this->run_preget_callbacks($newInfo);
+
+		return $returnVal;
 	}
 	
 	/**
