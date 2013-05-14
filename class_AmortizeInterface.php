@@ -49,7 +49,7 @@ class AmortizeInterface extends AmortizeFeatures {
 	 * Name of the table that this object saves and loads under.
 	 * If a table name prefix is defined in the DBM config file, it will be prepended to this value to make the table name.
 	 */
-	protected $table_name = null;
+	protected $table_name = NULL;
 
 
 	///Definitions for the columns in this object's table.
@@ -62,10 +62,10 @@ class AmortizeInterface extends AmortizeFeatures {
 	 * protected $baseclass = __CLASS__;
 	 * @endcode
 	 */
-	 protected $baseclass = null;
+	 protected $baseclass = NULL;
 
 	/// Set to true if you want an automatic primary key to be added to your class
-	protected $autoprimary = null;
+	protected $autoprimary = NULL;
 
 	/**
 	 * Allows you to define attributes of your class which are actually themselves instances of DbM classes.
@@ -108,10 +108,10 @@ class AmortizeInterface extends AmortizeFeatures {
 
 	static private $constructor_block = array();
 	private function blockConstructor() {
-		AmortizeInterface::$constructor_block[get_class($this)] = true;
+		AmortizeInterface::$constructor_block[get_class($this)] = TRUE;
 	}
 	private function unBlockConstructor() {
-		AmortizeInterface::$constructor_block[get_class($this)] = false;
+		AmortizeInterface::$constructor_block[get_class($this)] = FALSE;
 	}
 	private function is_constructor_blocked() {
 		return (
@@ -127,7 +127,7 @@ class AmortizeInterface extends AmortizeFeatures {
 	 * Class Constructor
 	 * Kicks off the table merging process for objects that extend other objects.
 	 */
-	public function __construct($data=null) {
+	public function __construct($data=NULL) {
 		$this->local_table_columns = $this->table_columns;
 		$this->mergeColumns();
 		if ($this->autoprimary) {
@@ -155,7 +155,7 @@ class AmortizeInterface extends AmortizeFeatures {
 			( get_class($this)        == __CLASS__        ) ||
 			( get_parent_class($this) == __CLASS__        ) ||
 			( $this->baseclass        == get_class($this) )
-		) { return true; }
+		) { return TRUE; }
 		else {
 			$par = get_parent_class($this);
 			$par = new $par;
@@ -164,7 +164,7 @@ class AmortizeInterface extends AmortizeFeatures {
 			$this->table_columns    = array_merge($parcols, $this->table_columns);
 			$parexts = $par->getExternals();
 			$this->externals        = array_merge($parexts, $this->externals);
-			return true;
+			return TRUE;
 		}
 	}
 
@@ -228,7 +228,7 @@ class AmortizeInterface extends AmortizeFeatures {
 	 * Then just extend your class witha new class that has your local data in its table_columns, and use this function inplace of attribs()
 	 * when passing in data from the external API.
 	 */
-	public function apiSafeAttribs($info=null, $clobber=false) {
+	public function apiSafeAttribs($info=NULL, $clobber=FALSE) {
 		$keys = array_keys($this->local_table_columns);
 		foreach($keys as $key) {
 			unset($info[$key]);
@@ -236,7 +236,7 @@ class AmortizeInterface extends AmortizeFeatures {
 			return $this->attribs($info, $clobber);
 	}
 
-	private function setExternalObjects($info=null) {
+	private function setExternalObjects($info=NULL) {
 		foreach ($this->externals as $name => $class) {
 			if (isset($info[$name]) && is_object($info[$name]) && get_class($info[$name])==$class) {
 				$this->external_objects[$name] = $info[$name];
@@ -301,7 +301,7 @@ class AmortizeInterface extends AmortizeFeatures {
 			$subject = $example;
 		}
 		$link = new AmortizeLink($this, $subject);
-		return $link->breakLink($this->getPrimary(), null,  $relation);
+		return $link->breakLink($this->getPrimary(), NULL,  $relation);
 	}
 
 	/**
@@ -323,10 +323,10 @@ class AmortizeInterface extends AmortizeFeatures {
 	 * \endcode
 	 */
 	function getLinks($example) {
-		$parameters = null;
-		$relation = null;
-		$wherelike = null;
-		$ordering = null;
+		$parameters = NULL;
+		$relation = NULL;
+		$wherelike = NULL;
+		$ordering = NULL;
 		foreach (array_slice(func_get_args(),1) as $arg) {
 			if (is_array($arg))  { $parameters = $arg; }
 			if (is_string($arg)) {
@@ -335,7 +335,7 @@ class AmortizeInterface extends AmortizeFeatures {
 				else                                                { $wherelike = $arg; }
 			}
 		}
-		return $this->getLinkedObjects($example, $parameters, $relation, false, $wherelike, $ordering);
+		return $this->getLinkedObjects($example, $parameters, $relation, FALSE, $wherelike, $ordering);
 	}
 	/**
 	 * Works in reverse to getLinks().
@@ -344,13 +344,13 @@ class AmortizeInterface extends AmortizeFeatures {
 	 * C is an array that contains A \n
 	 */
 	function getBackLinks($example) {
-		$parameters = null;
-		$relation = null;
+		$parameters = NULL;
+		$relation = NULL;
 		foreach (array_slice(func_get_args(),1) as $arg) {
 			if (is_array($arg))  { $parameters = $arg; }
 			if (is_string($arg)) { $relation   = $arg; }
 		}
-		return $this->getLinkedObjects($example, $parameters, $relation, true, $wherelike, $ordering);
+		return $this->getLinkedObjects($example, $parameters, $relation, TRUE, $wherelike, $ordering);
 	}
 
 	private function setExternalColumns(){
@@ -362,7 +362,7 @@ class AmortizeInterface extends AmortizeFeatures {
 				get_class($this->external_objects[$name]) == $class
 			) {
 				$obj = $this->external_objects[$name];
-				$keys = $obj->getPrimary(true);
+				$keys = $obj->getPrimary(TRUE);
 				$keys = (is_array($keys)) ? $keys : array($obj->getPrimaryKey() => $keys); // Convert to future format
 				foreach($keys as $column => $keyval) {
 					$externalAttribs["{$name}_{$column}"] = $keyval;
@@ -373,13 +373,13 @@ class AmortizeInterface extends AmortizeFeatures {
 	}
 
 	/// A front-end for the save function at the Features level, handles externals.
-	public function save($force = false) {
+	public function save($force = FALSE) {
 		$this->setExternalColumns();
 		parent::save($force);
 	}
 
 	/// A front-end for the load function, handles externals
-	public function load($info = null) {
+	public function load($info = NULL) {
 		parent::load($info);
 		$this->setExternalObjects();
 	}
@@ -391,7 +391,7 @@ class AmortizeInterface extends AmortizeFeatures {
 
 	public function __get($name) {
 		$a = $this->attribs();
-		return (isset($a[$name])) ? $a[$name] : null;
+		return (isset($a[$name])) ? $a[$name] : NULL;
 	}
 
 	public function __set($name, $value) {
